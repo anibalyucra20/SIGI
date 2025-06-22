@@ -1,0 +1,56 @@
+<?php
+
+namespace Core;
+
+use Core\Auth;
+
+class Controller
+{
+    public function __construct()
+    {
+        \Core\Auth::start();
+        $allowedNoAuth = ['logout', 'login', 'login/acceder']; // rutas públicas
+
+        $current = $_GET['url'] ?? '';
+
+        if (
+            !str_starts_with(static::class, 'App\Controllers\Auth')
+            && \Core\Auth::user() === null
+            && !in_array($current, $allowedNoAuth)
+        ) {
+            //echo "Bloqueado por middleware. Ruta actual: $current";
+            header('Location: ' . BASE_URL . '/login');
+            exit;
+        }
+        // Refresca permisos SOLO si está logueado y la ruta no es pública
+        if (\Core\Auth::user() !== null && !in_array($current, $allowedNoAuth) && isset($_SESSION['sigi_user_id'])) {
+            $id_usuario = $_SESSION['sigi_user_id'];
+            $db = (new \Core\Model())->getDB();
+            $sql = "SELECT psu.id_sistema, s.nombre as sistema, psu.id_rol, r.nombre as rol
+                FROM sigi_permisos_usuarios psu
+                INNER JOIN sigi_sistemas_integrados s ON s.id = psu.id_sistema
+                INNER JOIN sigi_roles r ON r.id = psu.id_rol
+                WHERE psu.id_usuario = ?";
+            $stmt = $db->prepare($sql);
+            $stmt->execute([$id_usuario]);
+            $_SESSION['sigi_permisos_usuario'] = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        }
+    }
+    public function modelo($modelo)
+    {
+        var_dump($modelo);
+        $modelo = str_replace('/', '\\', $modelo);
+        $clase = "App\\Models\\" . $modelo;
+        var_dump($clase);
+        return new $clase();
+    }
+
+    /**
+     * Cargar una vista y pasarle datos (array keys = variables)
+     */
+    public function view(string $view, array $data = [])
+    {
+        extract($data);
+        require __DIR__ . '/../app/views/' . $view . '.php';
+    }
+}
