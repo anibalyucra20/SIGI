@@ -13,33 +13,35 @@
                 </a>
             </li>
             <!-- Menú normal solo si es administrador -->
-            <?php if (\Core\Auth::esAdminAcademico()): ?>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle arrow-none" href="#" id="nav-periodos" role="button"
-                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <i class="mdi mdi-format-page-break"></i> Planificación <div class="arrow-down"></div>
-                    </a>
-                    <div class="dropdown-menu" aria-labelledby="nav-periodos">
-                        <a href="<?= BASE_URL ?>/academico/programacionClases" class="dropdown-item">Programación de Clases</a>
-                    </div>
-                </li>
+            <?php if (\Core\Auth::tieneRolEnAcademico()): ?>
+                <?php if (\Core\Auth::esAdminAcademico()): ?>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle arrow-none" href="#" id="nav-periodos" role="button"
+                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="mdi mdi-format-page-break"></i> Planificación <div class="arrow-down"></div>
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="nav-periodos">
+                            <a href="<?= BASE_URL ?>/academico/programacionUnidadDidactica" class="dropdown-item">Programación de Clases</a>
+                        </div>
+                    </li>
 
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle arrow-none" href="#" id="nav-matriculas" role="button"
-                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <i class="mdi mdi-bank-transfer"></i> Matrículas <div class="arrow-down"></div>
-                    </a>
-                    <div class="dropdown-menu" aria-labelledby="nav-matriculas">
-                        <a href="<?= BASE_URL ?>/academico/matriculas" class="dropdown-item">Registro de Matrículas</a>
-                        <a href="<?= BASE_URL ?>/academico/licenciasEstudio" class="dropdown-item">Licencias de Estudio</a>
-                    </div>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link <?= strpos($_SERVER['REQUEST_URI'], '/docentes') !== false ? 'active' : '' ?>"
-                        href="<?= BASE_URL ?>/academico/estudiantes">
-                        <i class="mdi mdi-school"></i> Estudiantes
-                    </a>
-                </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle arrow-none" href="#" id="nav-matriculas" role="button"
+                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="mdi mdi-bank-transfer"></i> Matrículas <div class="arrow-down"></div>
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="nav-matriculas">
+                            <a href="<?= BASE_URL ?>/academico/matriculas" class="dropdown-item">Registro de Matrículas</a>
+                            <a href="<?= BASE_URL ?>/academico/licenciasEstudio" class="dropdown-item">Licencias de Estudio</a>
+                        </div>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <?= strpos($_SERVER['REQUEST_URI'], '/docentes') !== false ? 'active' : '' ?>"
+                            href="<?= BASE_URL ?>/academico/estudiantes">
+                            <i class="mdi mdi-school"></i> Estudiantes
+                        </a>
+                    </li>
+                <?php endif; ?>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle arrow-none" href="#" id="nav-matriculas" role="button"
                         data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

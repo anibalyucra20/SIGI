@@ -144,9 +144,20 @@ return [
   'sigi/logs'                        => 'Sigi/LogsController@logs',
   'sigi/logs/data'    => 'Sigi/LogsController@data',
 
-  // SIGO/SISTEMAS INTERGRADOS
+  // SIGO/SISTEMAS INTREGRADOS
   'sigi/sistemasIntegrados'      => 'Sigi/SistemasIntegradosController@index',
   'sigi/sistemasIntegrados/data' => 'Sigi/SistemasIntegradosController@data',
+
+
+
+  // ------------------------------  RUTAS ACADEMICO-------------------------------------------->>
+
+  // ACADEMICO/PROGRAMACION DE UNIDADES DIDACTICAS
+  'academico/programacionUnidadDidactica'                        => 'Academico/ProgramacionUnidadDidacticaController@index',
+  'academico/programacionUnidadDidactica/nuevo'                  => 'Academico/ProgramacionUnidadDidacticaController@nuevo',
+  'academico/programacionUnidadDidactica/guardar'                => 'Academico/ProgramacionUnidadDidacticaController@guardar',
+  'academico/programacionUnidadDidactica/editar/{id}'            => 'Academico/ProgramacionUnidadDidacticaController@editar',
+  'academico/programacionUnidadDidactica/listar'                   => 'Academico/ProgramacionUnidadDidacticaController@listar',
 
 
 ];
