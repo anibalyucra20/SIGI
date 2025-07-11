@@ -31,8 +31,8 @@
                             <i class="mdi mdi-bank-transfer"></i> Matrículas <div class="arrow-down"></div>
                         </a>
                         <div class="dropdown-menu" aria-labelledby="nav-matriculas">
-                            <a href="<?= BASE_URL ?>/academico/matriculas" class="dropdown-item">Registro de Matrículas</a>
-                            <a href="<?= BASE_URL ?>/academico/licenciasEstudio" class="dropdown-item">Licencias de Estudio</a>
+                            <a href="<?= BASE_URL ?>/academico/matricula" class="dropdown-item">Registro de Matrículas</a>
+                            <a href="<?= BASE_URL ?>/academico/licencias" class="dropdown-item">Licencias de Estudio</a>
                         </div>
                     </li>
                     <li class="nav-item">

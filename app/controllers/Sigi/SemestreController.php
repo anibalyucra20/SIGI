@@ -131,4 +131,17 @@ class SemestreController extends Controller
         echo json_encode($this->model->getSemestresByModulo($idModulo), JSON_UNESCAPED_UNICODE);
         exit;
     }
+    // AJAX: Obtener semestres por plan de estudio
+    public function PorPlan($id_plan)
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        if (!$id_plan) {
+            //echo json_encode([]);
+            echo $id_plan;
+            exit;
+        }
+        $semestres = $this->model->getSemestresPorPlan($id_plan);
+        echo json_encode($semestres, JSON_UNESCAPED_UNICODE);
+        exit;
+    }
 }

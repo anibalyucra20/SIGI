@@ -95,5 +95,12 @@ class PeriodoAcademico extends Model
         return !empty($data['id']) ? $data['id'] : self::$db->lastInsertId();
     }
 
-    
+     // Devuelve información del periodo académico y si está vigente
+     public function getPeriodoVigente($id_periodo)
+     {
+         $stmt = self::$db->prepare("SELECT id, nombre, fecha_inicio, fecha_fin, (CURDATE() BETWEEN fecha_inicio AND fecha_fin) as vigente 
+             FROM sigi_periodo_academico WHERE id = ?");
+         $stmt->execute([$id_periodo]);
+         return $stmt->fetch(PDO::FETCH_ASSOC);
+     }
 }

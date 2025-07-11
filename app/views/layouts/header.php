@@ -7,11 +7,14 @@ $logueado = Auth::user() !== null;
 
 if ($logueado) {
   $db = (new \Core\Model())->getDB();
-
-  $sedes = $db->query("SELECT id, nombre FROM sigi_sedes ORDER BY nombre")->fetchAll(PDO::FETCH_ASSOC);
+  $userLogin = $_SESSION['sigi_user_id'] ?? null;
+  //"SELECT s.id, s.nombre FROM sigi_sedes s INNER JOIN sigi_usuarios u ON u.id_sede = s.id WHERE u.id='$userLogin' ORDER BY s.nombre"
+  //SELECT id, nombre FROM sigi_sedes ORDER BY nombre"
+  $sedess = $db->query("SELECT s.id, s.nombre FROM sigi_sedes s INNER JOIN sigi_usuarios u ON u.id_sede = s.id WHERE u.id='$userLogin' ORDER BY s.nombre")->fetchAll(PDO::FETCH_ASSOC);
   $periodos = $db->query("SELECT id, nombre FROM sigi_periodo_academico ORDER BY fecha_inicio DESC")->fetchAll(PDO::FETCH_ASSOC);
 
-  $sedeActual    = $_SESSION['sigi_sede_actual']      ?? ($sedes[0]['id']    ?? 0);
+  $_SESSION['sigi_sede_actual'] = $sedess[0]['id'] ?? 0;
+  $sedeActual    = $_SESSION['sigi_sede_actual'] ?? 0;
   $periodoActual = $_SESSION['sigi_periodo_actual_id'] ?? ($periodos[0]['id'] ?? 0);
 
   // Definir el id de admin en una variable por claridad
@@ -48,20 +51,21 @@ if ($logueado) {
             </button>
           </div>
           <div class="d-flex align-items-center">
+
+            <div class="dropdown d-inline-block">
+              <form action="<?= BASE_URL ?>/sedes/cambiarSesion" method="get" class="d-flex align-items-center">
+                <label for="sedeee" class="me-2 small">Sede:</label>
+                <input type="hidden" name="redirect" value="<?= htmlspecialchars($_SERVER['REQUEST_URI']) ?>">
+                <select id="sedeee" name="sede" class="form-control me-2" onchange="this.form.submit()">
+                  <?php foreach ($sedess as $s): ?>
+                    <option value="<?= $s['id'] ?>" <?= $s['id'] == $sedeActual ? 'selected' : '' ?>>
+                      <?= $s['nombre'] ?>
+                    </option>
+                  <?php endforeach; ?>
+                </select>
+              </form>
+            </div>
             <?php if ($_SESSION['sigi_modulo_actual'] != 0): ?>
-              <div class="dropdown d-inline-block">
-                <form action="<?= BASE_URL ?>/sedes/cambiarSesion" method="get" class="d-flex align-items-center">
-                  <label for="sede" class="me-2 small">Sede:</label>
-                  <input type="hidden" name="redirect" value="<?= htmlspecialchars($_SERVER['REQUEST_URI']) ?>">
-                  <select name="sede" class="form-control me-2" onchange="this.form.submit()">
-                    <?php foreach ($sedes as $s): ?>
-                      <option value="<?= $s['id'] ?>" <?= $s['id'] == $sedeActual ? 'selected' : '' ?>>
-                        <?= $s['nombre'] ?>
-                      </option>
-                    <?php endforeach; ?>
-                  </select>
-                </form>
-              </div>
               <div class="dropdown d-inline-block">
                 <form action="<?= BASE_URL ?>/sigi/periodoAcademico/cambiarSesion" method="get" class="d-flex align-items-center">
                   <label for="periodo" class="me-2 small">Periodo:</label>

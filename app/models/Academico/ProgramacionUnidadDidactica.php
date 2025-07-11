@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models\Academico;
 
 use Core\Model;
@@ -8,133 +9,230 @@ class ProgramacionUnidadDidactica extends Model
 {
     protected $table = 'acad_programacion_unidad_didactica';
 
-    /**
-     * Obtener registros paginados y filtrados para DataTables server-side
-     */
-    public function getDataTable($params, $periodo_academico_id)
+    // Devuelve los datos de la programación
+    public function find($id)
     {
-        $columns = [
-            'pud.id',
-            'ud.nombre',
-            'd.apellidos_nombres',
-            'pe.nombre',
-            'mf.descripcion',
-            's.descripcion',
-            'pud.turno',
-            'pud.seccion'
+        $stmt = self::$db->prepare("SELECT * FROM acad_programacion_unidad_didactica WHERE id = ?");
+        $stmt->execute([$id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function getPaginated($filters, $length, $start, $orderCol, $orderDir)
+    {
+        $columnas = [
+            0 => 'pud.id',
+            1 => 'pr.nombre',
+            2 => 'pl.nombre',
+            3 => 'mf.descripcion',
+            4 => 's.descripcion',
+            5 => 'ud.nombre',
+            6 => 'd.apellidos_nombres',
+            7 => 'pud.turno',
+            8 => 'pud.seccion',
         ];
-        
-        $sql = "FROM acad_programacion_unidad_didactica pud
-                JOIN sigi_unidad_didactica ud ON pud.id_unidad_didactica = ud.id
-                JOIN sigi_usuarios d ON pud.id_docente = d.id
-                JOIN sigi_semestre s ON ud.id_semestre = s.id
-                JOIN sigi_modulo_formativo mf ON s.id_modulo_formativo = mf.id
-                JOIN sigi_planes_estudio pe ON mf.id_plan_estudio = pe.id
-                JOIN sigi_programa_estudios p ON pe.id_programa_estudios = p.id
-                WHERE pud.id_periodo_academico = :periodo";
+        $ordenarPor = $columnas[$orderCol] ?? 'pud.id';
 
-        $bindings = [':periodo' => $periodo_academico_id];
+        $where = [
+            "pud.id_sede = :id_sede",
+            "pud.id_periodo_academico = :id_periodo"
+        ];
+        $params = [
+            ':id_sede' => $filters['id_sede'],
+            ':id_periodo' => $filters['id_periodo']
+        ];
 
-        // Filtros
-        if (!empty($params['programa'])) {
-            $sql .= " AND p.id = :programa";
-            $bindings[':programa'] = $params['programa'];
+        if (!empty($filters['programa'])) {
+            $where[] = "pr.id = :programa";
+            $params[':programa'] = $filters['programa'];
         }
-        if (!empty($params['plan'])) {
-            $sql .= " AND pe.id = :plan";
-            $bindings[':plan'] = $params['plan'];
+        if (!empty($filters['plan'])) {
+            $where[] = "pl.id = :plan";
+            $params[':plan'] = $filters['plan'];
         }
-        if (!empty($params['modulo'])) {
-            $sql .= " AND mf.id = :modulo";
-            $bindings[':modulo'] = $params['modulo'];
+        if (!empty($filters['modulo'])) {
+            $where[] = "mf.id = :modulo";
+            $params[':modulo'] = $filters['modulo'];
         }
-        if (!empty($params['semestre'])) {
-            $sql .= " AND s.id = :semestre";
-            $bindings[':semestre'] = $params['semestre'];
+        if (!empty($filters['semestre'])) {
+            $where[] = "s.id = :semestre";
+            $params[':semestre'] = $filters['semestre'];
         }
-        if (!empty($params['docente'])) {
-            $sql .= " AND d.id = :docente";
-            $bindings[':docente'] = $params['docente'];
+        if (!empty($filters['docente'])) {
+            $where[] = "pud.id_docente = :docente";
+            $params[':docente'] = $filters['docente'];
         }
-        if (!empty($params['unidad'])) {
-            $sql .= " AND ud.id = :unidad";
-            $bindings[':unidad'] = $params['unidad'];
+        if (!empty($filters['turno'])) {
+            $where[] = "pud.turno = :turno";
+            $params[':turno'] = $filters['turno'];
         }
-        if (!empty($params['search'])) {
-            $sql .= " AND ud.nombre LIKE :search";
-            $bindings[':search'] = '%' . $params['search'] . '%';
+        if (!empty($filters['seccion'])) {
+            $where[] = "pud.seccion = :seccion";
+            $params[':seccion'] = $filters['seccion'];
+        }
+        if (!empty($filters['unidad'])) {
+            $where[] = "ud.nombre LIKE :unidad";
+            $params[':unidad'] = '%' . $filters['unidad'] . '%';
         }
 
-        // Total records filtrados
-        $stmt = self::$db->prepare("SELECT COUNT(*) $sql");
-        $stmt->execute($bindings);
-        $recordsFiltered = $stmt->fetchColumn();
+        $sqlWhere = $where ? ("WHERE " . implode(" AND ", $where)) : "";
 
-        // Paginación
-        $start = isset($params['start']) ? intval($params['start']) : 0;
-        $length = isset($params['length']) ? intval($params['length']) : 10;
+        $sql = "SELECT pud.id, 
+                       pr.nombre AS programa_nombre,
+                       pl.nombre AS plan_nombre,
+                       mf.descripcion AS modulo_nombre,
+                       s.descripcion AS semestre_nombre,
+                       ud.nombre AS unidad_nombre, 
+                       d.apellidos_nombres AS docente_nombre,
+                       pud.turno, pud.seccion
+                FROM acad_programacion_unidad_didactica pud
+                INNER JOIN sigi_unidad_didactica ud ON pud.id_unidad_didactica = ud.id
+                INNER JOIN sigi_usuarios d ON pud.id_docente = d.id
+                INNER JOIN sigi_semestre s ON ud.id_semestre = s.id
+                INNER JOIN sigi_modulo_formativo mf ON s.id_modulo_formativo = mf.id
+                INNER JOIN sigi_planes_estudio pl ON mf.id_plan_estudio = pl.id
+                INNER JOIN sigi_programa_estudios pr ON pl.id_programa_estudios = pr.id
+                $sqlWhere
+                ORDER BY $ordenarPor $orderDir
+                LIMIT :limit OFFSET :offset";
+        $stmt = self::$db->prepare($sql);
 
-        $stmt = self::$db->prepare("SELECT pud.*, 
-                                           ud.nombre AS nombre_unidad_didactica,
-                                           d.apellidos_nombres AS nombre_docente,
-                                           p.nombre AS nombre_programa,
-                                           pe.nombre AS nombre_plan,
-                                           mf.descripcion AS nombre_modulo,
-                                           s.descripcion AS nombre_semestre
-                                    $sql
-                                    ORDER BY pud.id DESC
-                                    LIMIT $start, $length");
-        $stmt->execute($bindings);
+        foreach ($params as $k => $v) {
+            $stmt->bindValue($k, $v, is_int($v) ? PDO::PARAM_INT : PDO::PARAM_STR);
+        }
+        $stmt->bindValue(':limit', (int)$length, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int)$start, PDO::PARAM_INT);
+        $stmt->execute();
         $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Total records sin filtro
-        $stmt = self::$db->prepare("SELECT COUNT(*) FROM acad_programacion_unidad_didactica WHERE id_periodo_academico = :periodo");
-        $stmt->execute([':periodo' => $periodo_academico_id]);
-        $recordsTotal = $stmt->fetchColumn();
+        // Conteo total
+        $sqlTotal = "SELECT COUNT(*)
+                FROM acad_programacion_unidad_didactica pud
+                INNER JOIN sigi_unidad_didactica ud ON pud.id_unidad_didactica = ud.id
+                INNER JOIN sigi_usuarios d ON pud.id_docente = d.id
+                INNER JOIN sigi_semestre s ON ud.id_semestre = s.id
+                INNER JOIN sigi_modulo_formativo mf ON s.id_modulo_formativo = mf.id
+                INNER JOIN sigi_planes_estudio pl ON mf.id_plan_estudio = pl.id
+                INNER JOIN sigi_programa_estudios pr ON pl.id_programa_estudios = pr.id
+                $sqlWhere";
+        $stmtTotal = self::$db->prepare($sqlTotal);
+        foreach ($params as $k => $v) {
+            $stmtTotal->bindValue($k, $v, is_int($v) ? PDO::PARAM_INT : PDO::PARAM_STR);
+        }
+        $stmtTotal->execute();
+        $total = $stmtTotal->fetchColumn();
 
-        return [
-            'recordsTotal' => $recordsTotal,
-            'recordsFiltered' => $recordsFiltered,
-            'data' => $data
-        ];
+        return ['data' => $data, 'total' => $total];
     }
 
-    // Métodos de filtros para select (AJAX)
-    public function getProgramas() {
-        return self::$db->query("SELECT id, nombre FROM sigi_programa_estudios ORDER BY nombre")->fetchAll(PDO::FETCH_ASSOC);
+
+
+
+    // 1. Verifica existencia de programación duplicada (combinación única)
+    public function existeProgramacion($id_unidad_didactica, $id_sede, $id_periodo_academico, $turno, $seccion)
+    {
+        $sql = "SELECT COUNT(*) FROM acad_programacion_unidad_didactica
+            WHERE id_unidad_didactica = ? AND id_sede = ? AND id_periodo_academico = ? AND turno = ? AND seccion = ?";
+        $stmt = self::$db->prepare($sql);
+        $stmt->execute([$id_unidad_didactica, $id_sede, $id_periodo_academico, $turno, $seccion]);
+        return $stmt->fetchColumn() > 0;
     }
-    public function getPlanes($programa = null) {
-        $sql = "SELECT id, nombre FROM sigi_planes_estudio";
-        if ($programa) {
-            $sql .= " WHERE id_programa_estudios = ?";
-            $stmt = self::$db->prepare($sql);
-            $stmt->execute([$programa]);
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        }
-        return self::$db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+
+    // 2. Registra programación principal
+    public function registrarProgramacion($data)
+    {
+        $sql = "INSERT INTO acad_programacion_unidad_didactica
+            (id_unidad_didactica, id_docente, id_sede, id_periodo_academico, turno, seccion,
+             supervisado, reg_evaluacion, reg_auxiliar, prog_curricular, otros,
+             logros_obtenidos, dificultades, sugerencias)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $stmt = self::$db->prepare($sql);
+        $stmt->execute([
+            $data['id_unidad_didactica'],
+            $data['id_docente'],
+            $data['id_sede'],
+            $data['id_periodo_academico'],
+            $data['turno'],
+            $data['seccion'],
+            $data['supervisado'],
+            $data['reg_evaluacion'],
+            $data['reg_auxiliar'],
+            $data['prog_curricular'],
+            $data['otros'],
+            $data['logros_obtenidos'],
+            $data['dificultades'],
+            $data['sugerencias'],
+        ]);
+        return self::$db->lastInsertId();
     }
-    public function getModulos($plan = null) {
-        $sql = "SELECT id, descripcion FROM sigi_modulo_formativo";
-        if ($plan) {
-            $sql .= " WHERE id_plan_estudio = ?";
-            $stmt = self::$db->prepare($sql);
-            $stmt->execute([$plan]);
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        }
-        return self::$db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+
+    // 3. Registra sílabo
+    // en el modelo de silabos.php
+
+
+    // 4. Devuelve cantidad de semanas (sigi_datos_sistema.cant_semanas)
+    // desde modelo DatosSistenma.php
+
+    // 5. Devuelve primer id_ind_logro_capacidad según unidad didáctica
+    //desde modelo Indicador logro capacidad
+
+    // 6. Registra actividad silabo
+    // DESDE MODELO SILABOS
+
+    // 7. Devuelve id_modulo_formativo de la unidad didáctica
+
+
+    // Trae los datos completos para la edición (incluyendo campos para mostrar en el formulario)
+    public function getProgramacionById($id)
+    {
+        $sql = "SELECT pud.*, 
+                   ud.nombre AS unidad_nombre,
+                   s.descripcion AS semestre_nombre,
+                   mf.descripcion AS modulo_nombre,
+                   pl.nombre AS plan_nombre,
+                   pr.nombre AS programa_nombre
+            FROM acad_programacion_unidad_didactica pud
+            INNER JOIN sigi_unidad_didactica ud ON pud.id_unidad_didactica = ud.id
+            INNER JOIN sigi_semestre s ON ud.id_semestre = s.id
+            INNER JOIN sigi_modulo_formativo mf ON s.id_modulo_formativo = mf.id
+            INNER JOIN sigi_planes_estudio pl ON mf.id_plan_estudio = pl.id
+            INNER JOIN sigi_programa_estudios pr ON pl.id_programa_estudios = pr.id
+            WHERE pud.id = ?";
+        $stmt = self::$db->prepare($sql);
+        $stmt->execute([$id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
-    public function getSemestres($modulo = null) {
-        $sql = "SELECT id, descripcion FROM sigi_semestre";
-        if ($modulo) {
-            $sql .= " WHERE id_modulo_formativo = ?";
-            $stmt = self::$db->prepare($sql);
-            $stmt->execute([$modulo]);
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        }
-        return self::$db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+
+    // Actualiza solo el docente asignado
+    public function actualizarDocente($id_programacion, $id_docente)
+    {
+        $sql = "UPDATE acad_programacion_unidad_didactica SET id_docente = ? WHERE id = ?";
+        $stmt = self::$db->prepare($sql);
+        return $stmt->execute([$id_docente, $id_programacion]);
     }
-    public function getDocentes() {
-        $sql = "SELECT id, apellidos_nombres FROM sigi_usuarios WHERE id_rol = (SELECT id FROM sigi_roles WHERE nombre = 'DOCENTE')";
-        return self::$db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+    public function getIdDocente($id_programacion)
+    {
+        $stmt = self::$db->prepare("SELECT id_docente FROM acad_programacion_unidad_didactica WHERE id = ?");
+        $stmt->execute([$id_programacion]);
+        return $stmt->fetchColumn();
+    }
+
+    public function puedeVerCalificaciones($id_programacion)
+    {
+        // Supón que el rol de Administrador Académico es 1 (ajusta según tu sistema)
+        $idUsuario = $_SESSION['sigi_user_id'] ?? 0;
+        $rolActual = $_SESSION['sigi_rol_actual'] ?? 0;
+
+        // Administrador académico
+        if ($rolActual == 1) return true;
+
+        // Docente encargado de la programación
+        $stmt = self::$db->prepare("SELECT id_docente FROM acad_programacion_unidad_didactica WHERE id = ?");
+        $stmt->execute([$id_programacion]);
+        $idDocente = $stmt->fetchColumn();
+
+        if ($idDocente && $idDocente == $idUsuario) return true;
+
+        // (Puedes añadir aquí otras reglas, como coordinadores, etc.)
+        return false;
     }
 }

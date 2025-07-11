@@ -35,6 +35,7 @@ class DatosSistema extends Model
                     puerto_email = :puerto_email,
                     color_correo = :color_correo,
                     cant_semanas = :cant_semanas,
+                    nota_inasistencia = :nota_inasistencia,
                     token_sistema = :token_sistema
                 WHERE id = :id";
         $stmt = self::$db->prepare($sql);
@@ -42,5 +43,17 @@ class DatosSistema extends Model
         // registro de Log
         self::log($_SESSION['sigi_user_id'], 'EDITAR', 'Editó datos de sistema', 'sigi_datos_sistema', $data['id']);
         return $stmt->execute($data);
+    }
+    public function getCantidadSemanas()
+    {
+        $stmt = self::$db->query("SELECT cant_semanas FROM sigi_datos_sistema LIMIT 1");
+        $res = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $res ? (int)$res['cant_semanas'] : 16; // Valor por defecto si no existe
+    }
+    public function getNotaSiInasistencia()
+    {
+        $stmt = self::$db->query("SELECT nota_inasistencia FROM sigi_datos_sistema LIMIT 1");
+        $res = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $res; // Valor por defecto si no existe
     }
 }

@@ -13,7 +13,7 @@ class Rol extends Model
     // Obtener todos los docentes (roles distintos de ESTUDIANTE y EXTERNO)
     public function buscar()
     {
-        $sql = "SELECT * FROM sigi_roles";
+        $sql = "SELECT * FROM sigi_roles ORDER BY id";
         $stmt = self::$db->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -23,7 +23,7 @@ class Rol extends Model
     {
         $sql = "SELECT id, nombre FROM sigi_roles 
                 WHERE nombre NOT IN ('ESTUDIANTE','EXTERNO')
-                ORDER BY nombre";
+                ORDER BY id";
         return self::$db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
     }
 }

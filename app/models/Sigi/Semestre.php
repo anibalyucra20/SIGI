@@ -67,7 +67,7 @@ class Semestre extends Model
 
         return ['data' => $data, 'total' => $total];
     }
-    
+
     public function find($id)
     {
         $stmt = self::$db->prepare("SELECT * FROM sigi_semestre WHERE id = ?");
@@ -97,6 +97,18 @@ class Semestre extends Model
     {
         $stmt = self::$db->prepare("SELECT id, descripcion FROM sigi_semestre WHERE id_modulo_formativo = ? ORDER BY id");
         $stmt->execute([$id_modulo]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    public function getSemestresPorPlan($id_plan_estudio)
+    {
+        // Cada semestre está vinculado a un módulo del plan
+        $sql = "SELECT s.id, s.descripcion
+            FROM sigi_semestre s
+            INNER JOIN sigi_modulo_formativo mf ON s.id_modulo_formativo = mf.id
+            WHERE mf.id_plan_estudio = ?
+            ORDER BY s.id";
+        $stmt = self::$db->prepare($sql);
+        $stmt->execute([$id_plan_estudio]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

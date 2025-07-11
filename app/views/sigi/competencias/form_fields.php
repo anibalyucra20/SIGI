@@ -46,6 +46,7 @@
             <option value="">Seleccione...</option>
             <option value="ESPECÍFICA" <?= (isset($comp['tipo']) && $comp['tipo'] == 'ESPECÍFICA') ? 'selected' : '' ?>>ESPECÍFICA</option>
             <option value="EMPLEABILIDAD" <?= (isset($comp['tipo']) && $comp['tipo'] == 'EMPLEABILIDAD') ? 'selected' : '' ?>>EMPLEABILIDAD</option>
+            <option value="TRANSVERSAL" <?= (isset($comp['tipo']) && $comp['tipo'] == 'TRANSVERSAL') ? 'selected' : '' ?>>TRANSVERSAL</option>
         </select>
     </div>
     <div class="col-md-2">

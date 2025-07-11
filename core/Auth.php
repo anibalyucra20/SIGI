@@ -98,13 +98,7 @@ class Auth
     }
 
     // VALIDACION DE ROL Y PERMISOS ACADEMICO
-    public static function esAdminAcademico()
-    {
-        return (isset($_SESSION['sigi_modulo_actual'], $_SESSION['sigi_rol_actual'])
-            && $_SESSION['sigi_modulo_actual'] == 2    // ACADEMICO
-            && $_SESSION['sigi_rol_actual'] == 1);     // ADMINISTRADOR
-    }
-
+    
     public static function tieneRolEnAcademico($roles = [])
     {
         if (!isset($_SESSION['sigi_modulo_actual'], $_SESSION['sigi_rol_actual'])) {
@@ -116,6 +110,19 @@ class Auth
         if (empty($roles)) return true; // Cualquier rol en ACADEMICO
         return in_array($_SESSION['sigi_rol_actual'], (array)$roles);
     }
+    public static function esAdminAcademico()
+    {
+        return (isset($_SESSION['sigi_modulo_actual'], $_SESSION['sigi_rol_actual'])
+            && $_SESSION['sigi_modulo_actual'] == 2    // ACADEMICO
+            && $_SESSION['sigi_rol_actual'] == 1);     // ADMINISTRADOR
+    }
+    public static function esDocenteAcademico()
+    {
+        return (isset($_SESSION['sigi_modulo_actual'], $_SESSION['sigi_rol_actual'])
+            && $_SESSION['sigi_modulo_actual'] == 2    // ACADEMICO
+            && $_SESSION['sigi_rol_actual'] == 6);     // DOCENTE
+    }
+
 
     // VALIDACION DE ROL Y PERMISOS ACADEMICO
 }

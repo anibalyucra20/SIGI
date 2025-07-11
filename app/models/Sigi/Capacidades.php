@@ -96,16 +96,6 @@ class Capacidades extends Model
         return ['data' => $data, 'total' => $total];
     }
 
-    // FILTROS DEPENDIENTES
-    
-    public function getModulosByPlan($id_plan)
-    {
-        $stmt = self::$db->prepare("SELECT id, descripcion FROM sigi_modulo_formativo WHERE id_plan_estudio = ? ORDER BY nro_modulo");
-        $stmt->execute([$id_plan]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-    
-    
 
     // CRUD
     public function find($id)
@@ -152,4 +142,20 @@ class Capacidades extends Model
         }
         return $data['id'];
     }
+
+     // Trae capacidades y sus indicadores para la unidad didáctica
+     public function getCapacidadesUnidadDidactica($id_unidad_didactica)
+     {
+         $stmt = self::$db->prepare("SELECT id, descripcion FROM sigi_capacidades WHERE id_unidad_didactica = ?");
+         $stmt->execute([$id_unidad_didactica]);
+         $capacidades = $stmt->fetchAll(PDO::FETCH_ASSOC);
+ 
+         foreach ($capacidades as &$cap) {
+             $stmt2 = self::$db->prepare("SELECT descripcion FROM sigi_ind_logro_capacidad WHERE id_capacidad = ? ORDER BY id");
+             $stmt2->execute([$cap['id']]);
+             $cap['indicadores'] = $stmt2->fetchAll(PDO::FETCH_ASSOC);
+         }
+         return $capacidades;
+     }
+ 
 }

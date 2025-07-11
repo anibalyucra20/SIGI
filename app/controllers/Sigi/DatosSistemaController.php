@@ -53,6 +53,7 @@ class DatosSistemaController extends Controller
              'puerto_email'     => $_POST['puerto_email'],
              'color_correo'     => $_POST['color_correo'],
              'cant_semanas'     => $_POST['cant_semanas'],
+             'nota_inasistencia'     => $_POST['nota_inasistencia'],
              'token_sistema'    => $_POST['token_sistema'],
          ];
  

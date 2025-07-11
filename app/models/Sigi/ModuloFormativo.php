@@ -98,4 +98,16 @@ class ModuloFormativo extends Model
         $stmt->execute([$id_plan]);
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
+    public function getModuloByUnidadDidactica($id_unidad_didactica)
+    {
+        $sql = "SELECT s.id_modulo_formativo
+            FROM sigi_unidad_didactica ud
+            INNER JOIN sigi_semestre s ON ud.id_semestre = s.id
+            WHERE ud.id = ?
+            LIMIT 1";
+        $stmt = self::$db->prepare($sql);
+        $stmt->execute([$id_unidad_didactica]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ? $row['id_modulo_formativo'] : null;
+    }
 }

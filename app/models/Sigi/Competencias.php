@@ -131,4 +131,71 @@ class Competencias extends Model
         $stmt->execute([$id_modulo]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    // 8. Devuelve primer id de sigi_competencias tipo TRANSVERSAL del módulo
+    public function getPrimerCompetenciaTransversal($id_modulo)
+    {
+        $sql = "SELECT c.id 
+            FROM sigi_competencias c
+            INNER JOIN sigi_competencia_moduloFormativo cmf ON c.id = cmf.id_competencia
+            WHERE cmf.id_modulo_formativo = ? AND c.tipo = 'TRANSVERSAL'
+            ORDER BY c.id ASC LIMIT 1";
+        $stmt = self::$db->prepare($sql);
+        $stmt->execute([$id_modulo]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ? $row['id'] : null;
+    }
+    
+    // Trae competencias transversales del modulo
+    public function getCompetenciasTransversalesByUD($id_unidad_didactica)
+    {
+        // Buscar el modulo de la unidad
+        $stmt = self::$db->prepare("SELECT s.id_modulo_formativo
+            FROM sigi_unidad_didactica ud
+            INNER JOIN sigi_semestre s ON ud.id_semestre = s.id
+            WHERE ud.id = ? LIMIT 1");
+        $stmt->execute([$id_unidad_didactica]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$row) return [];
+
+        // Buscar competencias transversales
+        $stmt = self::$db->prepare(
+            "SELECT c.id, c.codigo, c.descripcion
+             FROM sigi_competencias c
+             INNER JOIN sigi_competencia_moduloFormativo cmf ON c.id = cmf.id_competencia
+             WHERE cmf.id_modulo_formativo = ? AND c.tipo = 'TRANSVERSAL'"
+        );
+        $stmt->execute([$row['id_modulo_formativo']]);
+        $competencias = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Añadir estrategias como lista de indicadores de logro (puedes adaptarlo según cómo almacenes esto)
+        foreach ($competencias as &$ct) {
+            $stmt2 = self::$db->prepare("SELECT descripcion FROM sigi_ind_logro_competencia WHERE id_competencia = ? ORDER BY correlativo");
+            $stmt2->execute([$ct['id']]);
+            $ct['estrategias'] = array_column($stmt2->fetchAll(PDO::FETCH_ASSOC), 'descripcion');
+        }
+        return $competencias;
+    }
+
+
+    public function getCompetenciasDeUnidadDidactica($id_unidad_didactica)
+    {
+        // 1. Buscar competencias vinculadas a las capacidades de la UD
+        $stmt = self::$db->prepare("
+        SELECT DISTINCT c.id, c.codigo, c.descripcion
+        FROM sigi_capacidades cap
+        JOIN sigi_competencias c ON cap.id_competencia = c.id
+        WHERE cap.id_unidad_didactica = ?
+    ");
+        $stmt->execute([$id_unidad_didactica]);
+        $competencias = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // 2. Traer indicadores de logro de cada competencia
+        foreach ($competencias as &$comp) {
+            $stmt2 = self::$db->prepare("SELECT correlativo, descripcion FROM sigi_ind_logro_competencia WHERE id_competencia = ? ORDER BY correlativo");
+            $stmt2->execute([$comp['id']]);
+            $comp['indicadores'] = $stmt2->fetchAll(PDO::FETCH_ASSOC);
+        }
+        return $competencias;
+    }
 }

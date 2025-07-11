@@ -80,8 +80,13 @@
         </div>
         <div class="mb-3">
             <label class="form-label">Cantidad de Semanas *</label>
-            <input type="number" name="cant_semanas" class="form-control" min="1" max="52" required
+            <input type="number" name="cant_semanas" class="form-control" min="1" max="26" required
                    value="<?= htmlspecialchars($sistema['cant_semanas'] ?? '') ?>" readonly>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Calificacion si estudiante sobrepasa 30% de inasistencia *</label>
+            <input type="number" name="nota_inasistencia" class="form-control" min="0" max="20" required
+                   value="<?= htmlspecialchars($sistema['nota_inasistencia'] ?? '') ?>" readonly>
         </div>
         <div class="mb-3">
             <label class="form-label">Token Sistema *</label>

@@ -96,6 +96,7 @@ return [
   'sigi/semestre/data'         => 'Sigi/SemestreController@data',
   // Endpoints AJAX para selects dependientes:
   'sigi/semestre/porModulo/{id_modulo}' => 'Sigi/SemestreController@porModulo',
+  'sigi/semestre/porPlan/{id_plan}' => 'Sigi/SemestreController@porPlan',
 
   // SIGI/UNIDAD DIDACTICA
   'sigi/unidadDidactica'               => 'Sigi/UnidadDidacticaController@index',
@@ -152,12 +153,60 @@ return [
 
   // ------------------------------  RUTAS ACADEMICO-------------------------------------------->>
 
+  // ACADEMICO/ESTUDIANTES
+  'academico/estudiantes'             => 'Academico/EstudiantesController@index',
+  'academico/estudiantes/data'        => 'Academico/EstudiantesController@data',
+  'academico/estudiantes/nuevo'           => 'Academico/EstudiantesController@nuevo',
+  'academico/estudiantes/guardar'         => 'Academico/EstudiantesController@guardar',
+  'academico/estudiantes/editar/{id}'     => 'Academico/EstudiantesController@editar',
+
+
   // ACADEMICO/PROGRAMACION DE UNIDADES DIDACTICAS
   'academico/programacionUnidadDidactica'                        => 'Academico/ProgramacionUnidadDidacticaController@index',
   'academico/programacionUnidadDidactica/nuevo'                  => 'Academico/ProgramacionUnidadDidacticaController@nuevo',
-  'academico/programacionUnidadDidactica/guardar'                => 'Academico/ProgramacionUnidadDidacticaController@guardar',
-  'academico/programacionUnidadDidactica/editar/{id}'            => 'Academico/ProgramacionUnidadDidacticaController@editar',
+  'academico/programacionUnidadDidactica/editar/{id}' => 'Academico/ProgramacionUnidadDidacticaController@editar',
+  'academico/programacionUnidadDidactica/guardarEdicion' => 'Academico/ProgramacionUnidadDidacticaController@guardarEdicion',
   'academico/programacionUnidadDidactica/listar'                   => 'Academico/ProgramacionUnidadDidacticaController@listar',
+
+
+  'academico/silabos/pdf/{id}' => 'Academico/SilabosController@pdf',
+
+
+  // ACADEMICO/ SESIONES
+  'academico/sesiones/ver/{id_programacion}'         => 'Academico/SesionesController@index',
+  'academico/sesiones/data/{id_programacion}'    => 'Academico/SesionesController@data',
+  'academico/sesiones/editar/{id_sesion}'        => 'Academico/SesionesController@editar',
+  'academico/sesiones/guardarEdicionSesion/{id_sesion}' => 'Academico/SesionesController@guardarEdicionSesion',
+  'academico/sesiones/duplicar/{id}' => 'Academico/SesionesController@duplicar',
+  'academico/sesiones/eliminar/{id}' => 'Academico/SesionesController@eliminar',
+  'academico/sesiones/imprimir/{id}' => 'Academico/SesionesController@imprimir',
+  'academico/sesiones/pdf/{id}' => 'Academico/SesionesController@pdf',
+
+  //ACADEMICO / MATRICULA
+  'academico/matricula/nuevo'    => 'Academico/MatriculaController@nuevo',
+  'academico/matricula/agregarUd/{id_matricula}'    => 'Academico/MatriculaController@agregarUd',
+
+  // ACADEMICO / LICENCIAS
+  'academico/licencias'                         => 'Academico/LicenciasController@index',
+  'academico/licencias/guardar'                 => 'Academico/LicenciasController@guardar',
+  'academico/licencias/eliminar/{id}'           => 'Academico/LicenciasController@eliminar',
+  'academico/licencias/buscarMatriculaAjax'     => 'Academico/LicenciasController@buscarMatriculaAjax',
+
+  // ACADEMICO / ASISTENCIA
+  'academico/asistencia/ver/{id_programacion_ud}'  => 'Academico/AsistenciaController@ver',
+
+  //ACADEMICO / CALIFICACIONES
+  '/academico/calificaciones/ver/{id_prog_ud}'  => 'Academico/CalificacionesController@evaluar',
+  '/academico/calificaciones/actualizarPonderado'  => 'Academico/CalificacionesController@actualizarPonderado',
+  '/academico/calificaciones/agregarCriterio'  => 'Academico/CalificacionesController@agregarCriterio',
+  '/academico/calificaciones/getCriterios'  => 'Academico/CalificacionesController@getCriterios',
+  '/academico/calificaciones/actualizarCriterios'  => 'Academico/CalificacionesController@actualizarCriterios',
+
+
+
+
+
+
 
 
 ];

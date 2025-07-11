@@ -71,4 +71,31 @@ class IndicadorLogroCapacidad extends Model
         $stmt = self::$db->prepare("DELETE FROM sigi_ind_logro_capacidad WHERE id = ?");
         return $stmt->execute([$id]);
     }
+    public function getPrimerIndLogroCapacidad($id_unidad_didactica)
+    {
+        $sql = "SELECT ilc.id
+            FROM sigi_unidad_didactica ud
+            INNER JOIN sigi_capacidades c ON c.id_unidad_didactica = ud.id
+            INNER JOIN sigi_ind_logro_capacidad ilc ON ilc.id_capacidad = c.id
+            WHERE ud.id = ?
+            ORDER BY ilc.id ASC
+            LIMIT 1";
+        $stmt = self::$db->prepare($sql);
+        $stmt->execute([$id_unidad_didactica]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ? $row['id'] : null;
+    }
+
+    // Lista de indicadores de logro de capacidad para el select
+    public function getIndicadoresLogroCapacidad($id_unidad_didactica)
+    {
+        $sql = "SELECT ilc.id, ilc.codigo, ilc.descripcion
+            FROM sigi_capacidades cap
+            INNER JOIN sigi_ind_logro_capacidad ilc ON ilc.id_capacidad = cap.id
+            WHERE cap.id_unidad_didactica = ?
+            ORDER BY ilc.id";
+        $stmt = self::$db->prepare($sql);
+        $stmt->execute([$id_unidad_didactica]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }

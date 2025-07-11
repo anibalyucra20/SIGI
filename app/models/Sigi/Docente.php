@@ -44,6 +44,18 @@ class Docente extends Model
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+    public function getDocentesPorSede($id_sede)
+    {
+        $sql = "SELECT id, apellidos_nombres 
+            FROM sigi_usuarios
+            WHERE id_sede = ?
+              AND id_rol BETWEEN 1 AND 6
+              AND estado = 1
+            ORDER BY apellidos_nombres";
+        $stmt = self::$db->prepare($sql);
+        $stmt->execute([$id_sede]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
     // Para el select de directores (usuarios activos, solo rol Director)
     public function getDirectores()
     {
@@ -318,5 +330,13 @@ class Docente extends Model
                 $stmt->execute([$id_usuario, $perm['id_sistema'], $perm['id_rol']]);
             }
         }
+    }
+
+    // (Ya existente, pero útil aquí)
+    public function existeDocente($id_docente, $id_sede)
+    {
+        $stmt = self::$db->prepare("SELECT COUNT(*) FROM sigi_usuarios WHERE id = ? AND id_sede = ? AND id_rol BETWEEN 2 AND 6 AND estado = 1");
+        $stmt->execute([$id_docente, $id_sede]);
+        return $stmt->fetchColumn() > 0;
     }
 }
