@@ -95,7 +95,7 @@ class App
         if (!empty($_GET['url'])) {
             $route = rtrim($_GET['url'], '/');
         } else {
-            $base  = '/SIGI_2025'; // ajusta si cambias folder
+            $base  = '/'; // ajusta si cambias folder
             $uri   = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '/';
             $route = trim(substr($uri, strlen($base)), '/');
         }
