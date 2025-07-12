@@ -1,4 +1,4 @@
-<?php require __DIR__ . '/../layouts/header.php'; ?>
+<?php require '../layouts/header.php'; ?>
 <style>
     body {
         margin: 0;
@@ -92,4 +92,4 @@
     </form>
     <a href="#">¿Olvidaste tu contraseña?</a>
   </div>
-<?php require __DIR__ . '/../layouts/footer.php'; ?>
+<?php require '../layouts/footer.php'; ?>
