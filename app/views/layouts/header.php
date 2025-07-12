@@ -5,7 +5,7 @@ use Core\Auth;
 Auth::start();
 $logueado = Auth::user() !== null;
 
-if ($logueado) {
+if ($logueado):
   $db = (new \Core\Model())->getDB();
   $userLogin = $_SESSION['sigi_user_id'] ?? null;
   //"SELECT s.id, s.nombre FROM sigi_sedes s INNER JOIN sigi_usuarios u ON u.id_sede = s.id WHERE u.id='$userLogin' ORDER BY s.nombre"
@@ -20,7 +20,7 @@ if ($logueado) {
   // Definir el id de admin en una variable por claridad
   $rolAdmin = 1;
   $rolActual = $_SESSION['sigi_rol_actual'] ?? null;
-}
+  endif;
 ?>
 <!DOCTYPE html>
 <html lang="es">
