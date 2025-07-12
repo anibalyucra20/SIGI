@@ -1,7 +1,7 @@
 RewriteEngine On
 
 # ‼️  SOLO la ruta; NADA tras ella en la misma línea
-RewriteBase /SIGI_2025         
+RewriteBase /         
 
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
