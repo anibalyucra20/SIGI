@@ -47,7 +47,8 @@ class App
 
         /* ---------- 2. Controlador ---------- */
         if (!empty($segments[0])) {
-            $ctrlName = ucfirst(strtolower($segments[0])) . 'Controller';
+            $ctrlName = ucfirst($segments[0]) . 'Controller';
+            //$ctrlName = ucfirst(strtolower($segments[0])) . 'Controller';
             $ctrlFile = __DIR__ . "/../app/controllers/{$this->module}/{$ctrlName}.php";
             if (file_exists($ctrlFile)) {
                 $this->controller = $ctrlName;
@@ -79,12 +80,13 @@ class App
         /* ---------- 5. Parámetros ---------- */
         $this->params = $segments;
 
-        /* ---------- 6. Ejecutar ---------- */
-        return call_user_func_array([$this->controller, $this->method], $this->params);
-
         set_error_handler(function ($severity, $message, $file, $line) {
             error_log("[Error $severity] $message in $file on line $line");
         });
+        /* ---------- 6. Ejecutar ---------- */
+        return call_user_func_array([$this->controller, $this->method], $this->params);
+
+        
     }
 
     /* ------------------------------------ */
