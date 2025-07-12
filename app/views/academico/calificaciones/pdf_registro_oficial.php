@@ -128,7 +128,7 @@
                 ?>
                     <tr>
                         <td width="10%"><?= $contador_ind_logro_capacidad; ?></td>
-                        <td width="90%"style="text-align:justify;"><?= $indicador['descripcion'] ?>
+                        <td width="90%" style="text-align:justify;"><?= $indicador['descripcion'] ?>
                         </td>
                     </tr>
                 <?php
@@ -175,12 +175,17 @@
             }
             return $return;
         }
+
         ?>
         <!-- DATOS UNIDAD DIDÁCTICA -->
         <td width="33%" class="tabla-cell">
             <table class="datos-table">
                 <tr>
-                    <th style="text-align:center;" colspan="2"><img src="../../../../public/img/logo_minedu.png" width="120px"> <img src="../../../../public/img/logo.png" height="20"></th>
+                    <th style="text-align:center;" colspan="2">
+                        <br>
+                        <br>
+                        <br>
+                    </th>
                 </tr>
                 <tr>
                     <td colspan="2" class="titulo" style="font-size:20px; padding:10px 2px;">REGISTRO DE EVALUACION Y NOTAS <?= htmlspecialchars($datosGenerales['periodo_lectivo']) ?></td>
@@ -249,7 +254,10 @@
 <?php
 $html = ob_get_clean();
 $pdf->writeHTML($html, true, false, true, false, '');
-
+$logoMineduPath = (__DIR__ . '/../../../../public/img/logo_minedu.jpeg');
+$logoPath = (__DIR__ . '/../../../../public/img/logo.png');
+$pdf->Image($logoMineduPath, 200, 15, 30); // (x, y, width en mm)
+$pdf->Image($logoPath, 255, 15, 30); // (x, y, width en mm)
 $pdf->AddPage(); // Segunda página
 
 ob_start();

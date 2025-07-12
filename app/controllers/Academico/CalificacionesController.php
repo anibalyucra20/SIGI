@@ -185,7 +185,7 @@ class CalificacionesController extends Controller
             return;
         }
         // INFORMACION PARA ASISTENCIAS
-         // Datos generales
+        // Datos generales
         $datos_asistencia = $this->objAsistencia->getDatosAsistencia($id_programacion_ud);
 
         /*$this->view('academico/asistencia/index', [
@@ -226,9 +226,9 @@ class CalificacionesController extends Controller
         // --- GENERA EL HTML ---
         ob_start();
         include __DIR__ . '/../../views/academico/calificaciones/pdf_registro_oficial.php';
-        $html2 = ob_get_clean();
-        $pdf->writeHTML($html2, true, false, true, false, '');
-
+        $html = ob_get_clean();
+        $pdf->writeHTML($html, true, false, true, false, '');
+        
         $pdf->Output('registro_oficial.pdf', 'I');
     }
 }
