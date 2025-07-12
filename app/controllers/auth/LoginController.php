@@ -3,8 +3,6 @@
 namespace App\Controllers\Auth;
 
 use Core\Controller;
-use Core\Auth;
-use Core\Model;      // ← importa la clase Model
 use PDO;
 
 class LoginController extends Controller
