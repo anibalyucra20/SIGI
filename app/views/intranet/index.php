@@ -1,5 +1,4 @@
-<!--<?php require __DIR__ . '/../layouts/header.php'; ?>-->
-<?php require '../layouts/header.php'; ?>
+<?php require __DIR__ . '/../layouts/header.php'; ?>
 <?php if (!empty($_SESSION['flash_error'])): ?>
   <div class="alert alert-danger alert-dismissible">
     <?= $_SESSION['flash_error'] ?>
@@ -24,5 +23,4 @@
   <?php endforeach; ?>
 </div>
 
-<!--<?php require __DIR__ . '/../layouts/footer.php'; ?>-->
-<?php require '../layouts/footer.php'; ?>
+<?php require __DIR__ . '/../layouts/footer.php'; ?>
