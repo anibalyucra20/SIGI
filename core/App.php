@@ -4,15 +4,15 @@ namespace Core;
 
 class App
 {
-    protected string $module     = 'Sigi';
+    protected  $module     = 'Sigi';
     protected $controller = 'HomeController';
-    protected string $method     = 'index';
-    protected array  $params     = [];
+    protected  $method     = 'index';
+    protected  $params     = [];
 
     public function __construct()
     {
-        date_default_timezone_set('America/Lima'); 
-        
+        date_default_timezone_set('America/Lima');
+
         $segments = $this->parseUrl();   // ej: ['sigi','docentes','edit',5]
         if (!empty($segments[0]) && strtolower($segments[0]) === 'logout') {
             $this->module     = 'Auth';
@@ -81,6 +81,9 @@ class App
 
         /* ---------- 6. Ejecutar ---------- */
         return call_user_func_array([$this->controller, $this->method], $this->params);
+        set_error_handler(function ($severity, $message, $file, $line) {
+            error_log("[Error $severity] $message in $file on line $line");
+        });
     }
 
     /* ------------------------------------ */
