@@ -81,6 +81,7 @@ class App
 
         /* ---------- 6. Ejecutar ---------- */
         return call_user_func_array([$this->controller, $this->method], $this->params);
+
         set_error_handler(function ($severity, $message, $file, $line) {
             error_log("[Error $severity] $message in $file on line $line");
         });
