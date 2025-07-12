@@ -14,7 +14,7 @@ session_set_cookie_params([
 
 
 // Configuración general
-require_once __DIR__ . '/../../config/config.php';
+require_once __DIR__ . '/../config/config.php';
 
 // Núcleo MVC
 require_once __DIR__ . '/../core/Model.php';
