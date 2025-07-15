@@ -1,6 +1,6 @@
 <?php
 // Configuración base
-const BASE_URL = 'http://localhost:8888/SIGI_2025';
+const BASE_URL = 'http://localhost';
 
 // Configuración de la base de datos
 const DB_HOST = 'localhost';

@@ -165,6 +165,15 @@ class CalificacionesController extends Controller
         exit;
     }
 
+    public function guardarRecuperacion()
+    {
+        $id_detalle_mat = $_POST['id_detalle_mat'] ?? 0;
+        $valor = trim($_POST['valor'] ?? '');
+        $ok = $this->model->guardarRecuperacion($id_detalle_mat, $valor);
+        echo json_encode(['ok' => $ok]);
+        exit;
+    }
+
 
 
 
@@ -211,7 +220,7 @@ class CalificacionesController extends Controller
 
         $id_unidad_didactica = $datos['idUnidadDidactica'];
         $ind_logro_capacidad = $this->objIndLogroCapacidad->getIndicadoresLogroCapacidad($id_unidad_didactica);
-        foreach ($estudiantes as $est) {
+        foreach ($estudiantes as $est){
             $id_detalle = $est['id_detalle_matricula'];
             $inhabilitado = $this->model->inhabilitadoPorInasistencia($id_detalle);
             $estudiantes_inhabilitados[$id_detalle] = $inhabilitado;
@@ -219,6 +228,7 @@ class CalificacionesController extends Controller
         $datosGenerales = $this->objSilabo->getDatosGenerales($id_programacion_ud);
 
         $pdf = new TCPDF('L', 'mm', 'A4', true, 'UTF-8', false);
+        $pdf->SetTitle('Registro Oficial - '.$datosGenerales['unidad']);
         $pdf->SetMargins(8, 15, 8);
         $pdf->SetAutoPageBreak(true, 5);
         $pdf->AddPage();
@@ -229,6 +239,6 @@ class CalificacionesController extends Controller
         $html = ob_get_clean();
         $pdf->writeHTML($html, true, false, true, false, '');
         
-        $pdf->Output('registro_oficial.pdf', 'I');
+        $pdf->Output('registro oficial - '.$datosGenerales['unidad'].'.pdf', 'I');
     }
 }

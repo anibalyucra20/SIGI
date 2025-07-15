@@ -84,6 +84,12 @@ class Calificaciones extends Model
     {
         return in_array($promedio_final, [10, 11, 12]);
     }
+    public function guardarRecuperacion($id_detalle_mat, $valor)
+    {
+        $stmt = self::$db->prepare("UPDATE acad_detalle_matricula SET recuperacion = ? WHERE id = ?");
+        return $stmt->execute([$valor, $id_detalle_mat]);
+    }
+
 
     // =========================
     //      VISTA GENERAL

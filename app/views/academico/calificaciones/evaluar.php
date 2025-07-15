@@ -136,7 +136,7 @@ require __DIR__ . '/../../layouts/header.php';
                                         </span>
                                     <?php else: ?>
                                         <input type="number"
-                                            class="nota-criterio"
+                                            class="nota-criterio <?= ($criterio['calificacion'] < 13) ? 'text-danger' : 'text-primary' ?>"
                                             data-id-criterio="<?= $criterio['id'] ?>"
                                             value="<?= htmlspecialchars($criterio['calificacion'] ?? '') ?>"
                                             min="0" max="20" style="width: 40px;">
@@ -203,6 +203,13 @@ require __DIR__ . '/../../layouts/header.php';
                         if (data.ok) {
                             this.classList.add('border-success');
                             setTimeout(() => this.classList.remove('border-success'), 1500);
+                             if (valor < 13) {
+                                    this.classList.remove('text-primary');
+                                    this.classList.add('text-danger');
+                                } else {
+                                    this.classList.remove('text-danger');
+                                    this.classList.add('text-primary');
+                                }
                         } else {
                             this.classList.add('border-danger');
                             alert(data.msg || 'Error al guardar');

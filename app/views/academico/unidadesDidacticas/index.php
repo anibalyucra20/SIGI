@@ -1,9 +1,8 @@
 <?php require __DIR__ . '/../../layouts/header.php'; ?>
-
 <div class="card p-2">
     <h3 class="mb-2">Mis Unidades Didácticas Programadas</h3>
-    <div class="table-responsive">
-        <table id="tabla-unidades" class="table table-bordered table-hover table-sm align-middle">
+    <div class="table-responsive col-12">
+        <table id="tabla-unidades" class="table table-bordered table-hover table-sm align-middle col-12">
             <thead class="table-light">
                 <tr>
                     <th>#</th>

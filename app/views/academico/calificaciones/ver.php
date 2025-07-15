@@ -10,7 +10,7 @@ require __DIR__ . '/../../layouts/header.php'; ?>
         </h5>
         <div>
             <div class="col-4 col-md-2 mb-3">
-                <a class="btn btn-info btn-sm btn-block mb-2" href="<?= BASE_URL ?>/academico/calificaciones/registroOficial/<?= $id_programacion_ud ?>">Imprimir Registro Oficial</a>
+                <a class="btn btn-info btn-sm btn-block mb-2" target="_blank" href="<?= BASE_URL ?>/academico/calificaciones/registroOficial/<?= $id_programacion_ud ?>">Imprimir Registro Oficial</a>
                 <button class="btn btn-success btn-sm btn-block mb-2">Imprimir Acta Final</button>
                 <button class="btn btn-primary btn-sm btn-block mb-2">Imprimir Acta Recuperacion</button>
                 <button class="btn btn-warning btn-sm btn-block mb-2 text-white">Reporte Registra</button>
@@ -81,27 +81,36 @@ require __DIR__ . '/../../layouts/header.php'; ?>
                                         <?php
                                         $recup = $recuperaciones[$id_detalle] ?? '';
                                         $promedio_final = $promedios[$id_detalle];
-                                        if (in_array($promedio_final, [10, 11, 12])) { ?>
-                                            <input type="text" class="form-control form-control-sm text-center" value="<?= $recup; ?>" style="max-width:50px;display:inline-block;">
-                                        <?php } ?>
+                                        if (in_array($promedio_final, [10, 11, 12]) || $recup != ''): ?>
+                                            <input type="number" class="form-control form-control-sm text-center nota-recuperacion <?= ($recup < 13) ? 'text-danger' : 'text-primary' ?>" data-id-recuperacion="<?= $id_detalle ?>" value="<?= $recup; ?>" style="max-width:50px;display:inline-block;">
+                                        <?php endif; ?>
                                     </td>
-                                    <td class="text-center font-weight-bold <?= (is_array($promedios[$id_detalle]) ? (reset($promedios[$id_detalle]) < 13) : ($promedios[$id_detalle] < 13)) || $inhabilitado ? "text-danger" : "text-primary"; ?>">
-                                        <!-- Mostrar nota de inasistencia si el estudiante está inhabilitado -->
-                                        <?php
-                                        if ($inhabilitado) {
-                                            if (is_array($nota_inasistencia)) {
-                                                echo reset($nota_inasistencia);
+                                    <?php
+                                    if ($recup != '') {
+                                        $promedio_finalll = $recup;
+                                    } else {
+                                        $promedio_finalll = $promedios[$id_detalle];
+                                    }
+                                    ?>
+                                    <td class="text-center font-weight-bold <?= (is_array($promedio_finalll) ? (reset($promedio_finalll) < 13) : ($promedio_finalll < 13)) || $inhabilitado ? "text-danger" : "text-primary"; ?>">
+                                        <label id="promedio_finalll_<?= $id_detalle ?>">
+                                            <!-- Mostrar nota de inasistencia si el estudiante está inhabilitado -->
+                                            <?php
+                                            if ($inhabilitado) {
+                                                if (is_array($nota_inasistencia)) {
+                                                    echo reset($nota_inasistencia);
+                                                } else {
+                                                    echo $nota_inasistencia;
+                                                }
                                             } else {
-                                                echo $nota_inasistencia;
+                                                if (is_array($promedio_finalll)) {
+                                                    echo reset($promedio_finalll);
+                                                } else {
+                                                    echo $promedio_finalll;
+                                                }
                                             }
-                                        } else {
-                                            if (is_array($promedios[$id_detalle])) {
-                                                echo reset($promedios[$id_detalle]);
-                                            } else {
-                                                echo $promedios[$id_detalle];
-                                            }
-                                        }
-                                        ?>
+                                            ?>
+                                        </label>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -109,6 +118,7 @@ require __DIR__ . '/../../layouts/header.php'; ?>
 
                     </table>
                 </div>
+                <center><a class="btn btn-success mb-3 col-6 col-md-2" href="<?= BASE_URL; ?>/academico/calificaciones/ver/<?= $id_programacion_ud; ?>">Guardar</a></center>
             </div>
         </div>
     </div>
@@ -127,6 +137,63 @@ require __DIR__ . '/../../layouts/header.php'; ?>
             background: #fff;
         }
     </style>
+    <script>
+        document.querySelectorAll('.nota-recuperacion').forEach(function(input) {
+            input.addEventListener('change', function() {
+                var val = this.value.trim();
+
+                // Validar que sea número y esté entre 0 y 20
+                if (isNaN(val) || val < 0 || val > 20) {
+                    this.classList.add('border-danger');
+                    this.classList.remove('border-success');
+                    alert('El valor debe ser un número entre 0 y 20');
+                    this.focus();
+                    return;
+                } else {
+                    this.classList.remove('border-danger');
+                    var id_detalle_mat = this.dataset.idRecuperacion;
+                    var valor = this.value;
+
+                    fetch('<?= BASE_URL ?>/academico/calificaciones/guardarRecuperacion', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded'
+                            },
+                            body: 'id_detalle_mat=' + encodeURIComponent(id_detalle_mat) +
+                                '&valor=' + encodeURIComponent(valor)
+                        })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.ok) {
+                                this.classList.add('border-success');
+                                let label_final = document.getElementById('promedio_finalll_'+id_detalle_mat);
+                                if (valor < 13) {
+                                    this.classList.remove('text-primary');
+                                    this.classList.add('text-danger');
+                                    label_final.classList.remove('text-primary');
+                                    label_final.classList.add('text-danger');
+                                    label_final.innerHTML = valor;
+                                } else {
+                                    this.classList.remove('text-danger');
+                                    this.classList.add('text-primary');
+                                    label_final.classList.remove('text-danger');
+                                    label_final.classList.add('text-primary');
+                                    label_final.innerHTML= valor;
+                                }
+                                setTimeout(() => this.classList.remove('border-success'), 1500);
+                            } else {
+                                this.classList.add('border-danger');
+                                alert(data.msg || 'Error al guardar');
+                            }
+                        })
+                        .catch(err => {
+                            this.classList.add('border-danger');
+                            alert('Error en la petición.');
+                        });
+                }
+            });
+        });
+    </script>
     <script>
         document.querySelectorAll('.mostrar-checkbox').forEach(function(el) {
             el.addEventListener('change', function() {

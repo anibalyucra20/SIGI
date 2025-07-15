@@ -128,7 +128,6 @@ if ($logueado):
               </div>
             </div>
           </div>
-
         </div>
       </header>
     <?php endif; ?>
