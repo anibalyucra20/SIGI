@@ -115,11 +115,17 @@ require __DIR__ . '/../../layouts/header.php';
                     $id_detalle = $est['id_detalle_matricula'];
                     $evals = $evaluacionesEstudiante[$id_detalle] ?? [];
                     $inhabilitado = $estudiantes_inhabilitados[$id_detalle] ?? false;
+                    $motivo = ' (Inasistencia)';
+                    if ($est['licencia'] != '') {
+                        $motivo = ' (Licencia)';
+                        $inhabilitado = $id_detalle;
+                        $nota_mostrar = '';
+                    }
                 ?>
                     <tr class="<?= $inhabilitado ? 'table-danger bg-danger' : '' ?>">
                         <td class="text-center"><?= ($idx + 1) ?></td>
                         <td class="text-center <?= $inhabilitado ? 'text-danger font-weight-bold' : '' ?>"><?= $est['dni']; ?></td>
-                        <td class="<?= $inhabilitado ? 'text-danger font-weight-bold' : '' ?>"><?= $est['apellidos_nombres']; ?> <?= $inhabilitado ? ' (Inasistencia)' : '' ?></td>
+                        <td class="<?= $inhabilitado ? 'text-danger font-weight-bold' : '' ?>"><?= $est['apellidos_nombres']; ?> <?= $inhabilitado ? $motivo : '' ?></td>
                         <?php foreach ($evals as $eval): ?>
                             <?php
                             $prom_eval = $promediosEvaluacion[$id_detalle][$eval['id']] ?? '';
@@ -203,17 +209,17 @@ require __DIR__ . '/../../layouts/header.php';
                         if (data.ok) {
                             this.classList.add('border-success');
                             setTimeout(() => this.classList.remove('border-success'), 1500);
-                             if (valor < 13) {
-                                    this.classList.remove('text-primary');
-                                    this.classList.add('text-danger');
-                                } else {
-                                    this.classList.remove('text-danger');
-                                    this.classList.add('text-primary');
-                                }
+                            if (valor < 13) {
+                                this.classList.remove('text-primary');
+                                this.classList.add('text-danger');
+                            } else {
+                                this.classList.remove('text-danger');
+                                this.classList.add('text-primary');
+                            }
                         } else {
                             this.classList.add('border-danger');
                             alert(data.msg || 'Error al guardar');
-                            
+
                         }
                     })
                     .catch(err => {

@@ -250,6 +250,7 @@ function num_letra($num)
             }
             if ($est['licencia'] != '') {
                 $obs = "Licencia";
+                $promedio_final = '';
             }
         ?>
             <tr>

@@ -9,7 +9,7 @@
     <link rel="icon" type="image/x-icon" href="<?= BASE_URL ?>/img/favicon.ico">
     <style>
         body {
-            background-color: #003366;
+            
             min-height: 100vh;
         }
 
@@ -29,7 +29,7 @@
     </style>
 </head>
 
-<body>
+<body style="background-color: <?= $datosSistema['color_correo'] ?>;">
     <div class="container d-flex align-items-center justify-content-center login-container">
         <div class="col-md-6 col-lg-4">
             <div class="card p-4">

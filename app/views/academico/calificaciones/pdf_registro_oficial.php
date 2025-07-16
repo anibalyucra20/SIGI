@@ -78,28 +78,39 @@
                 </tr>
                 <?php
                 $contador = 1;
-                foreach ($datos_asistencia['estudiantes'] as $est): ?>
+                foreach ($datos_asistencia['estudiantes'] as $est):
+                ?>
                     <tr>
-                        <td class="sticky-col left-col bg-white" style="font-size:7px;"><?= htmlspecialchars($contador) ?></td>
                         <?php
-                        $faltas = 0;
-                        foreach ($datos_asistencia['sesiones'] as $i => $ses):
-                            $id_detalle_matricula = $est['id_detalle_matricula'];
-                            $id_sesion = $ses['id'];
-                            $valor = $datos_asistencia['asistencias'][$id_detalle_matricula][$id_sesion] ?? '';
-                            if ($valor === 'F') $faltas++;
-                            $class_nota = ($valor === 'F') ? 'rojo' : 'azul';
+                        if ($est['licencia'] != '') {
                         ?>
-                            <td class="text-center <?= $class_nota; ?>" style="font-size:8px;"><?= $valor ?: '-' ?></td>
-                        <?php endforeach; ?>
+                            <td class="sticky-col left-col bg-white" style="font-size:7px;"><?= htmlspecialchars($contador) ?></td>
+                            <td colspan="<?= $cantida_general-2; ?>" style="text-center">Licencia</td>
                         <?php
-                        $porcFaltas = $total_semanas ? round($faltas * 100 / $total_semanas) : 0;
-                        $class = $porcFaltas >= $limiteInasistencia ? ' rojo' : ' azul';
+                        } else {
                         ?>
-                        <td class="text-center <?= $class ?>" style="font-size:7px;"><?= $faltas; ?></td>
-                        <td class="text-center <?= $class ?>" style="font-size:7px;"><?= $porcFaltas; ?></td>
+                            <td class="sticky-col left-col bg-white" style="font-size:7px;"><?= htmlspecialchars($contador) ?></td>
+                            <?php
+                            $faltas = 0;
+                            foreach ($datos_asistencia['sesiones'] as $i => $ses):
+                                $id_detalle_matricula = $est['id_detalle_matricula'];
+                                $id_sesion = $ses['id'];
+                                $valor = $datos_asistencia['asistencias'][$id_detalle_matricula][$id_sesion] ?? '';
+                                if ($valor === 'F') $faltas++;
+                                $class_nota = ($valor === 'F') ? 'rojo' : 'azul';
+                            ?>
+                                <td class="text-center <?= $class_nota; ?>" style="font-size:8px;"><?= $valor ?: '-' ?></td>
+                            <?php endforeach; ?>
+                            <?php
+                            $porcFaltas = $total_semanas ? round($faltas * 100 / $total_semanas) : 0;
+                            $class = $porcFaltas >= $limiteInasistencia ? ' rojo' : ' azul';
+                            ?>
+                            <td class="text-center <?= $class ?>" style="font-size:7px;"><?= $faltas; ?></td>
+                            <td class="text-center <?= $class ?>" style="font-size:7px;"><?= $porcFaltas; ?></td>
+                        <?php } ?>
                     </tr>
                 <?php
+
                     $contador++;
                 endforeach; ?>
                 <?php
@@ -348,6 +359,11 @@ ob_start();
                 foreach ($estudiantes as $idx => $est):
                     $id_detalle = $est['id_detalle_matricula'];
                     $inhabilitado = $estudiantes_inhabilitados[$id_detalle] ?? false;
+                    $nota_mostrar = (is_array($nota_inasistencia)) ? reset($nota_inasistencia) : '';
+                    if ($est['licencia'] != '') {
+                        $nota_mostrar = 'Licencia';
+                        $inhabilitado = $id_detalle;
+                    }
                 ?>
                     <tr>
                         <td class="text-center"><?= ($idx + 1) ?></td>
@@ -356,16 +372,21 @@ ob_start();
                         <?php
                         $cont_calif = 1;
                         foreach ($nros_calificacion as $nro):
-                            $nota = $notas[$id_detalle][$nro] ?? '';
-                            $clase = '';
-                            if ($nota !== '' && is_numeric($nota)) {
-                                $clase = ($nota < 13) ? "rojo" : "azul";
-                            }
+                            if ($inhabilitado):
+                                $nota = '';
+                            else:
+                                $nota = $notas[$id_detalle][$nro] ?? '';
+                                $clase = '';
+                                if ($nota !== '' && is_numeric($nota)) {
+                                    $clase = ($nota < 13) ? "rojo" : "azul";
+                                }
+                            endif;
                         ?>
                             <td class="text-center <?= $clase; ?>">
                                 <?= ($nota === '') ? '' : $nota; ?>
                             </td>
                         <?php
+
                             $cont_calif++;
                         endforeach; ?>
                         <?php
@@ -376,15 +397,14 @@ ob_start();
                         ?>
                         <?php
                         if ($inhabilitado) {
-
-                            if (is_array($nota_inasistencia)) { ?>
-                                <td class="rojo"><?php echo reset($nota_inasistencia); ?></td>
+                            if (is_numeric($nota_mostrar)) { ?>
+                                <td class="rojo"><?php echo $nota_mostrar; ?></td>
                                 <td></td>
-                                <td class="rojo"><?php echo reset($nota_inasistencia); ?></td>
+                                <td class="rojo"><?php echo $nota_mostrar; ?></td>
                             <?php } else { ?>
-                                <td class="rojo"><?php echo $nota_inasistencia; ?></td>
+                                <td><?php echo $nota_mostrar; ?></td>
                                 <td></td>
-                                <td class="rojo"><?php echo $nota_inasistencia; ?></td>
+                                <td><?php echo $nota_mostrar; ?></td>
                             <?php }
                         } else {
                             $clase_pf = ($promedios[$id_detalle] < 13) ? "rojo" : "azul";

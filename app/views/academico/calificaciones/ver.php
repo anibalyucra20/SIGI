@@ -61,11 +61,16 @@ require __DIR__ . '/../../layouts/header.php'; ?>
                             <?php foreach ($estudiantes as $idx => $est):
                                 $id_detalle = $est['id_detalle_matricula'];
                                 $inhabilitado = $estudiantes_inhabilitados[$id_detalle] ?? false;
+                                $motivo = ' (Inasistencia)';
+                                if ($est['licencia'] != '') {
+                                    $motivo = ' (Licencia)';
+                                    $inhabilitado = $id_detalle;
+                                }
                             ?>
                                 <tr class="<?= $inhabilitado ? 'table-danger bg-danger' : '' ?>">
                                     <td class="text-center"><?= ($idx + 1) ?></td>
                                     <td class="text-center <?= $inhabilitado ? 'text-danger font-weight-bold' : '' ?>"><?= $est['dni']; ?></td>
-                                    <td class="<?= $inhabilitado ? 'text-danger font-weight-bold' : '' ?>"><?= $est['apellidos_nombres']; ?><?= $inhabilitado ? ' (Inasistencia)' : '' ?></td>
+                                    <td class="<?= $inhabilitado ? 'text-danger font-weight-bold' : '' ?>"><?= $est['apellidos_nombres']; ?><?= $inhabilitado ? $motivo : '' ?></td>
                                     <?php foreach ($nros_calificacion as $nro):
                                         $nota = $notas[$id_detalle][$nro] ?? '';
                                         $clase = '';
@@ -81,7 +86,7 @@ require __DIR__ . '/../../layouts/header.php'; ?>
                                         <?php
                                         $recup = $recuperaciones[$id_detalle] ?? '';
                                         $promedio_final = $promedios[$id_detalle];
-                                        if (in_array($promedio_final, [10, 11, 12]) || $recup != ''): ?>
+                                        if (in_array($promedio_final, [10, 11, 12]) && !$inhabilitado): ?>
                                             <input type="number" class="form-control form-control-sm text-center nota-recuperacion <?= ($recup < 13) ? 'text-danger' : 'text-primary' ?>" data-id-recuperacion="<?= $id_detalle ?>" value="<?= $recup; ?>" style="max-width:50px;display:inline-block;">
                                         <?php endif; ?>
                                     </td>
@@ -97,16 +102,19 @@ require __DIR__ . '/../../layouts/header.php'; ?>
                                             <!-- Mostrar nota de inasistencia si el estudiante está inhabilitado -->
                                             <?php
                                             if ($inhabilitado) {
-                                                if (is_array($nota_inasistencia)) {
-                                                    echo reset($nota_inasistencia);
+                                                if (is_array($nota_inasistencia) && $est['licencia'] != '') {
+                                                    echo $nota_mostrar;
                                                 } else {
-                                                    echo $nota_inasistencia;
+                                                    $nota_mostrar = reset($nota_inasistencia);
+                                                    echo $nota_mostrar;
                                                 }
                                             } else {
                                                 if (is_array($promedio_finalll)) {
-                                                    echo reset($promedio_finalll);
+                                                    $nota_mostrar = reset($promedio_finalll);
+                                                    echo $nota_mostrar;
                                                 } else {
-                                                    echo $promedio_finalll;
+                                                    $nota_mostrar = $promedio_finalll;
+                                                    echo $nota_mostrar;
                                                 }
                                             }
                                             ?>
@@ -166,7 +174,7 @@ require __DIR__ . '/../../layouts/header.php'; ?>
                         .then(data => {
                             if (data.ok) {
                                 this.classList.add('border-success');
-                                let label_final = document.getElementById('promedio_finalll_'+id_detalle_mat);
+                                let label_final = document.getElementById('promedio_finalll_' + id_detalle_mat);
                                 if (valor < 13) {
                                     this.classList.remove('text-primary');
                                     this.classList.add('text-danger');
@@ -178,7 +186,7 @@ require __DIR__ . '/../../layouts/header.php'; ?>
                                     this.classList.add('text-primary');
                                     label_final.classList.remove('text-danger');
                                     label_final.classList.add('text-primary');
-                                    label_final.innerHTML= valor;
+                                    label_final.innerHTML = valor;
                                 }
                                 setTimeout(() => this.classList.remove('border-success'), 1500);
                             } else {

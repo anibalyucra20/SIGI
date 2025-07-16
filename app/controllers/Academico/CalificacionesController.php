@@ -50,8 +50,6 @@ class CalificacionesController extends Controller
             ]);
             return;
         }
-
-
         $datos = $this->model->getDatosEvaluacion($id_programacion_ud, $nro_calificacion);
         $estudiantes = $datos['estudiantes'];
         $estudiantes_inhabilitados = [];

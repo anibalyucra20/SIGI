@@ -2,15 +2,27 @@
 
 namespace App\Controllers\Auth;
 
+require_once __DIR__ . '/../../../app/models/Sigi/DatosSistema.php';
+
 use Core\Controller;
+use App\Models\Sigi\DatosSistema;
 use PDO;
 
 class LoginController extends Controller
 {
+    protected $objDatosSistema;
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->objDatosSistema = new DatosSistema();
+    }
     /* Formulario */
     public function index()
     {
+        $datosSistema = $this->objDatosSistema->buscar();
         $this->view('auth/login', [
+            'datosSistema' => $datosSistema,
             'pageTitle' => 'Iniciar Sesión',
             'module'    => 'auth'
         ]);
@@ -24,7 +36,7 @@ class LoginController extends Controller
         $pass = $_POST['password'] ?? '';
 
         $db = (new \Core\Model())->getDB();
-        
+
         $sql = "SELECT * FROM sigi_usuarios WHERE dni = :dni AND estado = 1 LIMIT 1";
         $stmt = $db->prepare($sql);
         $stmt->execute([':dni' => $dni]);
