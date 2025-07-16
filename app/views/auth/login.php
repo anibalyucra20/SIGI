@@ -1,95 +1,65 @@
-<?php require __DIR__ . '/../layouts/header.php'; ?>
-<style>
-    body {
-        margin: 0;
-        padding: 0;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 100vh;
-        font-family: 'Arial', sans-serif;
-        background: linear-gradient(135deg, #6e45e2, #88d3ce);
-        color: #fff;
-    }
+<!DOCTYPE html>
+<html lang="es">
 
-    .login-container {
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        padding: 40px 30px;
-        border-radius: 15px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-        text-align: center;
-        width: 500px;
-    }
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Login - SIGI</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="icon" type="image/x-icon" href="<?= BASE_URL ?>/img/favicon.ico">
+    <style>
+        body {
+            background-color: #003366;
+            min-height: 100vh;
+        }
 
-    .login-container h1 {
-        font-size: 2rem;
-        margin-bottom: 20px;
-        color: #fff;
-    }
+        .login-container {
+            min-height: 100vh;
+        }
 
-    .login-container input {
-        width: 100%;
-        padding: 10px;
-        margin: 10px 0;
-        border: none;
-        border-radius: 5px;
-        outline: none;
-        font-size: 1rem;
-    }
+        .card {
+            border-radius: 12px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+        }
 
-    .login-container input[type="email"],
-    .login-container input[type="password"] {
-        background: rgba(255, 255, 255, 0.8);
-        color: #333;
-    }
+        .logo {
+            width: 80px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
 
-    .login-container input::placeholder {
-        color: #888;
-    }
+<body>
+    <div class="container d-flex align-items-center justify-content-center login-container">
+        <div class="col-md-6 col-lg-4">
+            <div class="card p-4">
+                <div class="text-center">
+                    <img src="<?= BASE_URL ?>/img/logo.png" alt="Logo SIGI" class="logo">
+                    <h4 class="mb-2">SIGI</h4>
+                    <p class="text-muted mb-4">Sistema de Gestión Institucional</p>
+                </div>
+                <?php if (isset($_GET['error'])): ?>
+                    <div class="alert alert-danger">Credenciales incorrectas</div>
+                <?php endif; ?>
+                <form action="<?= BASE_URL ?>/login/acceder" method="post">
+                    <div class="form-group">
+                        <label for="dni">Usuario</label>
+                        <input type="text" name="dni" id="dni" class="form-control" placeholder="Ingrese su usuario" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Contraseña</label>
+                        <input type="password" name="password" id="password" class="form-control" placeholder="Ingrese su contraseña" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Ingresar</button>
+                </form>
+                <p class="mt-3 text-center">
+                    <a href="#">¿Olvidaste tu contraseña?</a>
+                </p>
+            </div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
 
-    .login-container button {
-        width: 100%;
-        padding: 10px;
-        margin-top: 20px;
-        background: #6e45e2;
-        border: none;
-        border-radius: 5px;
-        color: #fff;
-        font-size: 1rem;
-        cursor: pointer;
-        transition: background 0.3s ease;
-    }
-
-    .login-container button:hover {
-        background: #88d3ce;
-    }
-
-    .login-container a {
-        display: block;
-        margin-top: 15px;
-        color: #fff;
-        text-decoration: none;
-        font-size: 0.9rem;
-    }
-
-    .login-container a:hover {
-        text-decoration: underline;
-    }
-</style>
-<div class="login-container">
-    <h1>Iniciar Sesión</h1>
-    <img src="https://sispa.iestphuanta.edu.pe/img/logo.png" alt="" width="100%">
-    <h3>SIGI</h3>
-    <h5>Sistema Integrado de Gestión Institucional</h6>
-    <?php if (isset($_GET['error'])): ?>
-            <div class="alert alert-danger">Credenciales incorrectas</div>
-        <?php endif; ?>
-    <form action="<?= BASE_URL ?>/login/acceder" method="post">
-      <input type="text" name="dni" id="dni" placeholder="DNI" required>
-      <input type="password" name="password" id="password" placeholder="Contraseña" required>
-      <button type="submit">Ingresar</button>
-    </form>
-    <a href="#">¿Olvidaste tu contraseña?</a>
-  </div>
-<?php require __DIR__ . '/../layouts/footer.php'; ?>
+</html>

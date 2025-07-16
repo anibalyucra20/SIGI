@@ -14,7 +14,7 @@ class DatosInstitucionales extends Model
     // Obtener todos los docentes (roles distintos de ESTUDIANTE y EXTERNO)
     public function buscar()
     {
-        $sql = "SELECT * FROM sigi_datos_institucionales WHERE id = 1 ";
+        $sql = "SELECT * FROM sigi_datos_institucionales WHERE id = 1";
         $stmt = self::$db->prepare($sql);
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
@@ -28,6 +28,7 @@ class DatosInstitucionales extends Model
                          cod_modular = :cod_modular,
                          ruc = :ruc,
                          nombre_institucion = :nombre_institucion,
+                         dre = :dre,
                          departamento = :departamento,
                          provincia = :provincia,
                          distrito = :distrito,

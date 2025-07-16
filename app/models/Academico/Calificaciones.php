@@ -113,7 +113,7 @@ class Calificaciones extends Model
         $nros_calificacion = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
         // 3. Estudiantes matriculados
-        $stmt = self::$db->prepare("SELECT u.id, u.dni, u.apellidos_nombres, dm.id as id_detalle_matricula
+        $stmt = self::$db->prepare("SELECT u.id, u.dni, u.apellidos_nombres, dm.id as id_detalle_matricula, m.licencia as licencia
             FROM acad_detalle_matricula dm
             INNER JOIN acad_matricula m ON m.id = dm.id_matricula
             INNER JOIN acad_estudiante_programa ep ON ep.id = m.id_estudiante

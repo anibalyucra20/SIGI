@@ -32,6 +32,7 @@ if ($logueado):
   <link href="<?= BASE_URL ?>/assets/css/bootstrap.min.css" rel="stylesheet" />
   <link href="<?= BASE_URL ?>/assets/css/icons.min.css" rel="stylesheet" />
   <link href="<?= BASE_URL ?>/assets/css/theme.min.css" rel="stylesheet" type="text/css" />
+  <link rel="icon" type="image/x-icon" href="<?= BASE_URL ?>/img/favicon.ico">
 </head>
 
 <body data-sidebar="light">
@@ -42,7 +43,7 @@ if ($logueado):
         <div class="navbar-header">
           <div class="navbar-brand-box d-flex align-items-left">
             <a href="<?= BASE_URL ?>" class="logo">
-              <i class="mdi mdi-album"></i>
+              <i class="mdi"><img src="<?= BASE_URL ?>/img/logo.png" alt="" width="40px" height="30px"></i>
               <span>SIGI</span>
             </a>
             <button type="button" class="btn btn-sm mr-2 font-size-16 d-lg-none header-item waves-effect waves-light"
@@ -107,7 +108,7 @@ if ($logueado):
               <button type="button" class="btn header-item waves-effect waves-light"
                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <img class="rounded-circle header-profile-user"
-                  src="<?= BASE_URL ?>/assets/images/users/avatar-3.jpg"
+                  src="<?= BASE_URL ?>/img/user.png"
                   alt="Header Avatar">
                 <span class="d-none d-sm-inline-block ml-1"><?= $_SESSION['sigi_user_name'] ?? 'Usuario' ?></span>
                 <i class="mdi mdi-chevron-down d-none d-sm-inline-block"></i>

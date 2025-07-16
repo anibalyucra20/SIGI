@@ -40,19 +40,21 @@
                 <input type="text" name="nombre_institucion" class="form-control" maxlength="200" required
                     value="<?= htmlspecialchars($institucion['nombre_institucion'] ?? '') ?>" disabled>
             </div>
-
+            <div class="mb-3">
+                <label class="form-label">Dre a la que pertenece *</label>
+                <input type="text" name="dre" class="form-control" maxlength="50" required
+                    value="<?= htmlspecialchars($institucion['dre'] ?? '') ?>" disabled>
+            </div>
             <div class="mb-3">
                 <label class="form-label">Departamento *</label>
                 <input type="text" name="departamento" class="form-control" maxlength="50" required
                     value="<?= htmlspecialchars($institucion['departamento'] ?? '') ?>" disabled>
             </div>
-
             <div class="mb-3">
                 <label class="form-label">Provincia *</label>
                 <input type="text" name="provincia" class="form-control" maxlength="50" required
                     value="<?= htmlspecialchars($institucion['provincia'] ?? '') ?>" disabled>
             </div>
-
             <div class="mb-3">
                 <label class="form-label">Distrito *</label>
                 <input type="text" name="distrito" class="form-control" maxlength="50" required

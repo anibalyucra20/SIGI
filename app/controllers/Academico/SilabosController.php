@@ -6,6 +6,8 @@ use Core\Controller;
 
 require_once __DIR__ . '/../../../app/models/Academico/Silabos.php';
 require_once __DIR__ . '/../../../app/models/Academico/ProgramacionUnidadDidactica.php';
+require_once __DIR__ . '/../../../app/models/Sigi/DatosInstitucionales.php';
+require_once __DIR__ . '/../../../app/models/Sigi/DatosSistema.php';
 require_once __DIR__ . '/../../../app/models/Sigi/PeriodoAcademico.php';
 require_once __DIR__ . '/../../../app/models/Sigi/Competencias.php';
 require_once __DIR__ . '/../../../app/models/Sigi/Capacidades.php';
@@ -14,6 +16,8 @@ require_once __DIR__ . '/../../../app/utils/MYPDF.php';
 
 use App\Models\Academico\Silabos;
 use App\Models\Academico\ProgramacionUnidadDidactica;
+use App\Models\Sigi\DatosInstitucionales;
+use App\Models\Sigi\DatosSistema;
 use App\Models\Sigi\PeriodoAcademico;
 use App\Models\Sigi\Competencias;
 use App\Models\Sigi\Capacidades;
@@ -24,6 +28,8 @@ class SilabosController extends Controller
 {
     protected $model;
     protected $objProgramacionUD;
+    protected $objDatosIes;
+    protected $objDatosSistema;
     protected $objPeriodoAcademico;
     protected $objCompetencia;
     protected $objCapacidad;
@@ -34,6 +40,8 @@ class SilabosController extends Controller
         parent::__construct();
         $this->model = new Silabos();
         $this->objProgramacionUD = new ProgramacionUnidadDidactica();
+        $this->objDatosIes = new DatosInstitucionales();
+        $this->objDatosSistema = new DatosSistema();
         $this->objPeriodoAcademico = new PeriodoAcademico();
         $this->objCompetencia = new Competencias();
         $this->objCapacidad = new Capacidades();
@@ -192,13 +200,15 @@ class SilabosController extends Controller
         $errores = [];
 
         if ($silabo) {
+            $datosInstitucionales = $this->objDatosIes->buscar();
+            $datosSistema = $this->objDatosSistema->buscar();
             $programacion = $this->objProgramacionUD->find($id_programacion);
             $periodo = $this->objPeriodoAcademico->getPeriodoVigente($programacion['id_periodo_academico']);
 
             $esDocenteAsignado = ($programacion['id_docente'] == ($_SESSION['sigi_user_id'] ?? -1));
             $esAdminAcademico = $this->esAdminAcademico();
             $permitido = (($esDocenteAsignado || $esAdminAcademico) && ($periodo && $periodo['vigente']));
-            // DATOS GENERALES
+            // DATOS GENERALES DE SILABO
             $datosGenerales = $this->model->getDatosGenerales($id_programacion);
             // SECCION III: COMPETENCIAS DEL MODULO
             $competenciasUnidadDidactica = $this->objCompetencia->getCompetenciasDeUnidadDidactica($programacion['id_unidad_didactica']);
@@ -224,10 +234,10 @@ class SilabosController extends Controller
         $pdf = new MYPDF();
         $pdf->SetMargins(12, 30, 12); // margen superior suficiente para header
         $pdf->SetAutoPageBreak(true, 32); // margen inferior suficiente para footer
-        $pdf->SetTitle('Sílabo');
+        $pdf->SetTitle('Sílabo ' . $datosGenerales['unidad']);
         $pdf->AddPage("P");
         $pdf->writeHTML($html, true, false, true, false, '');
-        $pdf->Output('Silabo_' . $datosGenerales['unidad'] . '_' . $id_programacion . '.pdf', 'I'); // 'I' para inline
+        $pdf->Output('Silabo_' . $datosGenerales['unidad'] . '.pdf', 'I'); // 'I' para inline
         exit;
     }
 }

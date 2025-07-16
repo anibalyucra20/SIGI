@@ -14,7 +14,7 @@
     <div class="col-md-4 col-lg-3 mb-4">
       <a href="<?= BASE_URL ?>/<?= strtolower($s['codigo']) ?>" class="text-decoration-none">
         <div class="card shadow-sm h-100 text-center py-4">
-          <i class="mdi mdi-apps display-4 text-primary mb-3"></i>
+          <i class="<?= htmlspecialchars($s['icono']) ?> display-4 active mb-3" style="color: <?= $datos_sistema['color_correo']; ?>;"></i>
           <h5 class="card-title"><?= htmlspecialchars($s['nombre']) ?></h5>
         </div>
       </a>

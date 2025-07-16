@@ -44,6 +44,7 @@ class DatosInstitucionalesController extends Controller
             'cod_modular'        => $_POST['cod_modular'],
             'ruc'                => $_POST['ruc'],
             'nombre_institucion' => $_POST['nombre_institucion'],
+            'dre'                => $_POST['dre'],
             'departamento'       => $_POST['departamento'],
             'provincia'          => $_POST['provincia'],
             'distrito'           => $_POST['distrito'],
@@ -56,7 +57,7 @@ class DatosInstitucionalesController extends Controller
 
         // Puedes agregar validaciones extra aquí si deseas
         // Validación rápida de ejemplo
-        foreach (['cod_modular', 'ruc', 'nombre_institucion', 'departamento', 'provincia', 'distrito', 'direccion', 'telefono', 'correo', 'nro_resolucion'] as $campo) {
+        foreach (['cod_modular', 'ruc', 'nombre_institucion', 'dre', 'departamento', 'provincia', 'distrito', 'direccion', 'telefono', 'correo', 'nro_resolucion'] as $campo) {
             if (empty($data[$campo])) {
                 $_SESSION['flash_error'] = "Todos los campos son obligatorios.";
                 header('Location: ' . BASE_URL . '/sigi/datosInstitucionales');

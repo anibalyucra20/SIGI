@@ -7,6 +7,7 @@ use Core\Controller;
 require_once __DIR__ . '/../../../app/models/Academico/Calificaciones.php';
 require_once __DIR__ . '/../../../app/models/Academico/Asistencia.php';
 require_once __DIR__ . '/../../../app/models/Academico/Silabos.php';
+require_once __DIR__ . '/../../../app/models/Sigi/DatosInstitucionales.php';
 require_once __DIR__ . '/../../../app/models/Sigi/DatosSistema.php';
 require_once __DIR__ . '/../../../app/models/Sigi/IndicadorLogroCapacidad.php';
 
@@ -15,6 +16,7 @@ require_once __DIR__ . '/../../../vendor/autoload.php';
 use App\Models\Academico\Calificaciones;
 use App\Models\Academico\Asistencia;
 use App\Models\Academico\Silabos;
+use App\Models\Sigi\DatosInstitucionales;
 use App\Models\Sigi\DatosSistema;
 use App\Models\Sigi\IndicadorLogroCapacidad;
 use TCPDF; // 
@@ -22,6 +24,7 @@ use TCPDF; //
 class CalificacionesController extends Controller
 {
     protected $model;
+    protected $objDatosIes;
     protected $objDatosSistema;
     protected $objAsistencia;
     protected $objIndLogroCapacidad;
@@ -31,6 +34,7 @@ class CalificacionesController extends Controller
     {
         parent::__construct();
         $this->model = new Calificaciones();
+        $this->objDatosIes = new DatosInstitucionales();
         $this->objDatosSistema = new DatosSistema();
         $this->objAsistencia = new Asistencia();
         $this->objIndLogroCapacidad = new IndicadorLogroCapacidad();
@@ -194,16 +198,7 @@ class CalificacionesController extends Controller
             return;
         }
         // INFORMACION PARA ASISTENCIAS
-        // Datos generales
         $datos_asistencia = $this->objAsistencia->getDatosAsistencia($id_programacion_ud);
-
-        /*$this->view('academico/asistencia/index', [
-            'nombreUnidadDidactica' => $datos_asistencia['nombreUnidadDidactica'],
-            'periodo' => $datos_asistencia['periodo'],
-            'sesiones_asistencia' => $datos_asistencia['sesiones'],
-            'estudiantes_asistencia' => $datos_asistencia['estudiantes'],
-            'asistencias' => $datos_asistencia['asistencias'],
-        ]);*/
 
         // INFORMACION PARA CALIFICACIONES
         $datos = $this->model->getDatosCalificaciones($id_programacion_ud);
@@ -220,7 +215,7 @@ class CalificacionesController extends Controller
 
         $id_unidad_didactica = $datos['idUnidadDidactica'];
         $ind_logro_capacidad = $this->objIndLogroCapacidad->getIndicadoresLogroCapacidad($id_unidad_didactica);
-        foreach ($estudiantes as $est){
+        foreach ($estudiantes as $est) {
             $id_detalle = $est['id_detalle_matricula'];
             $inhabilitado = $this->model->inhabilitadoPorInasistencia($id_detalle);
             $estudiantes_inhabilitados[$id_detalle] = $inhabilitado;
@@ -228,7 +223,8 @@ class CalificacionesController extends Controller
         $datosGenerales = $this->objSilabo->getDatosGenerales($id_programacion_ud);
 
         $pdf = new TCPDF('L', 'mm', 'A4', true, 'UTF-8', false);
-        $pdf->SetTitle('Registro Oficial - '.$datosGenerales['unidad']);
+        $pdf->SetTitle('Registro Oficial - ' . $datosGenerales['unidad']);
+        $pdf->setPrintHeader(false);
         $pdf->SetMargins(8, 15, 8);
         $pdf->SetAutoPageBreak(true, 5);
         $pdf->AddPage();
@@ -238,7 +234,57 @@ class CalificacionesController extends Controller
         include __DIR__ . '/../../views/academico/calificaciones/pdf_registro_oficial.php';
         $html = ob_get_clean();
         $pdf->writeHTML($html, true, false, true, false, '');
-        
-        $pdf->Output('registro oficial - '.$datosGenerales['unidad'].'.pdf', 'I');
+
+        $pdf->Output('registro oficial - ' . $datosGenerales['unidad'] . '.pdf', 'I');
+    }
+
+
+    //  =========================================== IMPRESION DE ACTA FINAL ==============================================
+    public function actaFinal($id_programacion_ud)
+    {
+        // Obtener todos los datos igual que para la vista de edición
+        $permitido = $this->model->puedeVerCalificaciones($id_programacion_ud);
+
+        if (!$permitido) {
+            $this->view('academico/calificaciones/ver', [
+                'permitido' => false
+            ]);
+            return;
+        }
+        // INFORMACION PARA CALIFICACIONES
+        $datos = $this->model->getDatosCalificaciones($id_programacion_ud);
+        $mostrar_calificaciones = $this->model->getMostrarCalificaciones($id_programacion_ud, $datos['nros_calificacion']);
+        $mostrar_promedio_todos = $this->model->todosMostrarPromedio($id_programacion_ud);
+
+        $estudiantes = $datos['estudiantes'];
+        $estudiantes_inhabilitados = [];
+        $nota_inasistencia = $this->objDatosSistema->getNotaSiInasistencia();
+        $datosSistema = $this->objDatosSistema->buscar();
+        $nros_calificacion = $datos['nros_calificacion'];
+        $recuperaciones = $datos['recuperaciones'];
+        $promedios = $datos['promedios'];
+
+        $id_unidad_didactica = $datos['idUnidadDidactica'];
+        foreach ($estudiantes as $est) {
+            $id_detalle = $est['id_detalle_matricula'];
+            $inhabilitado = $this->model->inhabilitadoPorInasistencia($id_detalle);
+            $estudiantes_inhabilitados[$id_detalle] = $inhabilitado;
+        }
+        $datosGenerales = $this->objSilabo->getDatosGenerales($id_programacion_ud);
+
+        $pdf = new TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
+        $pdf->SetTitle('Acta Final - ' . $datosGenerales['unidad']);
+        $pdf->setPrintHeader(false);
+        $pdf->SetMargins(8, 15, 8);
+        $pdf->SetAutoPageBreak(true, 5);
+        $pdf->AddPage();
+
+        // --- GENERA EL HTML ---
+        ob_start();
+        include __DIR__ . '/../../views/academico/calificaciones/pdf_acta_final.php';
+        $html = ob_get_clean();
+        $pdf->writeHTML($html, true, false, true, false, '');
+
+        $pdf->Output('Acta Final - ' . $datosGenerales['unidad'] . '.pdf', 'I');
     }
 }
