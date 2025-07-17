@@ -11,6 +11,7 @@
     <?php endif; ?>
     <div class="card p-2">
         <h4>Nuevo Estudiante</h4>
+        
         <form action="<?= BASE_URL ?>/academico/estudiantes/guardar" method="post" class="card p-4 shadow-sm rounded-3" autocomplete="off">
             <?php include __DIR__ . '/form_fields_nuevo.php'; ?>
             <div class="mt-3 text-end">

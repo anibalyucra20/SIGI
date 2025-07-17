@@ -9,12 +9,20 @@ require_once __DIR__ . '/../../../app/models/Sigi/Sedes.php';
 require_once __DIR__ . '/../../../app/models/Sigi/Programa.php';
 require_once __DIR__ . '/../../../app/models/Sigi/Plan.php';
 require_once __DIR__ . '/../../../app/models/Sigi/PeriodoAcademico.php';
+require_once __DIR__ . '/../../../vendor/autoload.php';
 
 use App\Models\Academico\Estudiantes;
 use App\Models\Sigi\Sedes;
 use App\Models\Sigi\Programa;
 use App\Models\Sigi\Plan;
 use App\Models\Sigi\PeriodoAcademico;
+
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
+
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use App\Models\Sigi\EstudianteImport;
 
 class EstudiantesController extends Controller
 {
@@ -174,5 +182,238 @@ class EstudiantesController extends Controller
         $_SESSION['flash_success'] = "Estudiante guardado correctamente.";
         header('Location: ' . BASE_URL . '/academico/estudiantes');
         exit;
+    }
+
+
+    // ================================= DESCARGA DE PLANTILLA PARA CARGA MASIVA ================================================
+    public function descargarPlantillaCargaMasiva()
+    {
+        $id_sede = $_SESSION['sigi_sede_actual'] ?? 0;
+        // datos necesarios
+        $programas = $this->objPrograma->getAllBySede($id_sede);
+        $planes_estudio = $this->objPlan->getPlanes();
+        // 1. Crea el spreadsheet y las hojas
+        $spreadsheet = new Spreadsheet();
+        $mainSheet = $spreadsheet->getActiveSheet();
+        $mainSheet->setTitle('Estudiantes');
+
+        // 2. Escribe encabezados
+        $mainSheet->fromArray([
+            'DNI',
+            'Apellidos Nombres',
+            'Género',
+            'Fecha Nac.',
+            'Dirección',
+            'Correo',
+            'Teléfono',
+            'Discapacidad',
+            'Programa de Estudios',
+            'Plan de Estudios'
+        ], null, 'A1');
+        $arr_pe = [['ID', 'Nombre']];
+        foreach ($programas as $pe) {
+            $ar_pe = [$pe['id'], $pe['nombre']];
+            array_push($arr_pe, $ar_pe);
+        };
+
+        $arr_planes = [['Nombre']];
+        foreach ($planes_estudio as $plan) {
+            $ar_plan = [$plan['nombre']];
+            array_push($arr_planes, $ar_plan);
+        }
+
+
+        //var_dump($arr_pe);
+        // 3. Agrega hojas de referencia
+        $programasSheet = $spreadsheet->createSheet();
+        $programasSheet->setTitle('Programas');
+        $programasSheet->fromArray($arr_pe);
+        $programasSheet->getProtection()->setSheet(true);
+        $programasSheet->setSheetState(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet::SHEETSTATE_HIDDEN);
+
+        $planSheet = $spreadsheet->createSheet();
+        $planSheet->setTitle('Planes');
+        $planSheet->fromArray($arr_planes);
+        $planSheet->getProtection()->setSheet(true);
+        $planSheet->setSheetState(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet::SHEETSTATE_HIDDEN);
+
+        // 4. Listas para género y discapacidad directo en arrays
+        $mainSheet->setCellValue('C2', ''); // Género
+        $mainSheet->setCellValue('H2', ''); // Discapacidad
+
+        // 5. Agrega validación de datos (listas desplegables) en columnas seleccionadas
+        for ($row = 2; $row <= 41; $row++) { // 100 filas para ejemplo
+            // Género
+            $validation = $mainSheet->getCell("C$row")->getDataValidation();
+            $validation->setType(DataValidation::TYPE_LIST)
+                ->setErrorStyle(DataValidation::STYLE_STOP)
+                ->setAllowBlank(true)
+                ->setShowInputMessage(true)
+                ->setShowErrorMessage(true)
+                ->setShowDropDown(true)
+                ->setFormula1('"M,F"');
+
+            // Discapacidad
+            $validation = $mainSheet->getCell("H$row")->getDataValidation();
+            $validation->setType(DataValidation::TYPE_LIST)
+                ->setErrorStyle(DataValidation::STYLE_STOP)
+                ->setAllowBlank(true)
+                ->setShowInputMessage(true)
+                ->setShowErrorMessage(true)
+                ->setShowDropDown(true)
+                ->setFormula1('"SI,NO"');
+
+            // Programa Estudio
+            $validation = $mainSheet->getCell("I$row")->getDataValidation();
+            $validation->setType(DataValidation::TYPE_LIST)
+                ->setErrorStyle(DataValidation::STYLE_STOP)
+                ->setAllowBlank(true)
+                ->setShowInputMessage(true)
+                ->setShowErrorMessage(true)
+                ->setShowDropDown(true)
+                ->setFormula1("=Programas!B2:B100");
+
+            // Planes de estudio
+            $validation = $mainSheet->getCell("J$row")->getDataValidation();
+            $validation->setType(DataValidation::TYPE_LIST)
+                ->setErrorStyle(DataValidation::STYLE_STOP)
+                ->setAllowBlank(true)
+                ->setShowInputMessage(true)
+                ->setShowErrorMessage(true)
+                ->setShowDropDown(true)
+                ->setFormula1("=Planes!A2:A100");
+        }
+        $nombre_plantilla = "PlantillaCargaMasivaEstudiantes" . date("Ymd-H:i:s");
+        // 6. Descarga el archivo
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $nombre_plantilla . '.xlsx"');
+        header('Cache-Control: max-age=0');
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save('php://output');
+        exit;
+    }
+
+    // =========================================== CARGA MASIVA DE ESTUDIANTES ===================================
+
+    public function CargaMasivaEstudiantes()
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['archivo_excel'])) {
+            $archivoTmp = $_FILES['archivo_excel']['tmp_name'];
+            $extension  = strtolower(pathinfo($_FILES['archivo_excel']['name'], PATHINFO_EXTENSION));
+            if (!in_array($extension, ['xlsx', 'xls'])) {
+                $_SESSION['flash_error'] = "Solo se permite archivos Excel (.xlsx, .xls)";
+                header('Location: ' . BASE_URL . '/academico/estudiantes');
+                exit;
+            }
+
+            $spreadsheet = IOFactory::load($archivoTmp);
+            $sheet = $spreadsheet->getSheetByName('Estudiantes');
+            if (!$sheet) {
+                $_SESSION['flash_error'] = "Hoja 'Estudiantes' no encontrada en el archivo.";
+                header('Location: ' . BASE_URL . '/academico/estudiantes');
+                exit;
+            }
+
+            $rows = $sheet->toArray(null, true, true, true); // Array asociativo por columnas: A, B, C...
+            $errores = [];
+            $datosAInsertar = [];
+            foreach ($rows as $i => $row) {
+                if ($i === 1) continue; // Saltar encabezados
+                $dni                 = trim($row['A']);
+                $apellidos_nombres   = trim($row['B']);
+                $genero              = strtoupper(trim($row['C']));
+                $fecha_nac           = trim($row['D']);
+                $direccion           = trim($row['E']);
+                $correo              = trim($row['F']);
+                $telefono            = trim($row['G']);
+                $discapacidad        = strtoupper(trim($row['H']));
+                $programa_estudios   = trim($row['I']);
+                $plan_estudio        = trim($row['J']);
+
+                $datos_validos = 0;
+                if ($dni != '' && $apellidos_nombres != '' && $genero != '') {
+                    $datos_validos++;
+
+                    // Validaciones
+                    if (empty($dni) || !preg_match('/^\d{8,12}$/', $dni)) {
+                        $errores[] = "Fila $i: DNI inválido.";
+                    }
+                    if (empty($apellidos_nombres) || strlen($apellidos_nombres) < 10) {
+                        $errores[] = "Fila $i: Nombre/apellido inválido.";
+                    }
+                    if (!in_array($genero, ['M', 'F'])) {
+                        $errores[] = "Fila $i: Género debe ser 'M' o 'F'.";
+                    }
+                    if (empty($fecha_nac) || !strtotime($fecha_nac)) {
+                        $errores[] = "Fila $i: Fecha nacimiento inválida.";
+                    }
+                    if (empty($correo) || !filter_var($correo, FILTER_VALIDATE_EMAIL)) {
+                        $errores[] = "Fila $i: Correo inválido.";
+                    }
+                    if (!in_array($discapacidad, ['SI', 'NO', ''])) {
+                        $errores[] = "Fila $i: Discapacidad debe ser SI o NO.";
+                    }
+                    if (empty($programa_estudios)) {
+                        $errores[] = "Fila $i: ID programa inválido.";
+                    }
+
+                    $datosPe = $this->objPrograma->getProgramaPorNombre($programa_estudios);
+                    $id_programa_estudios = $datosPe['id'];
+                    $id_periodo_registro = $_SESSION['sigi_periodo_actual_id'];
+                    $id_sede = $_SESSION['sigi_sede_actual'];
+                    $datos_plan = $this->objPlan->getPlanByProgramaAndPlanName($id_programa_estudios, $plan_estudio);
+                    $id_plan_estudio = $datos_plan['id'];
+                    if (!$id_plan_estudio) $errores[] = "Fila $i: Plan de Estudios inválido.";
+                    $id_usuario = $this->model->existeDni($dni);
+
+                    // Si hay errores, saltar inserción
+                    if (!empty($errores)) continue;
+
+                    // Password aleatorio y token
+                    $password = bin2hex(random_bytes(5));
+                    $password_secure = password_hash($password, PASSWORD_DEFAULT);
+                    $token    = '';
+
+                    $datosAInsertar[] = [
+                        'id'                   => ($id_usuario['id'] > 0) ? $id_usuario['id'] : null,
+                        'dni'                  => $dni,
+                        'apellidos_nombres'    => $apellidos_nombres,
+                        'genero'               => $genero,
+                        'fecha_nacimiento'     => $fecha_nac,
+                        'direccion'            => $direccion,
+                        'correo'               => $correo,
+                        'telefono'             => $telefono,
+                        'id_periodo_registro'  => $id_periodo_registro,
+                        'id_programa_estudios' => $id_programa_estudios,
+                        'discapacidad'         => $discapacidad,
+                        'id_rol'               => 7,
+                        'id_sede'              => $id_sede,
+                        'estado'               => 1,
+                        'password'             => $password,
+                        'passwords'             => $password_secure,
+                        'reset_password'       => 0,
+                        'token_password'       => $token,
+                        'id_plan_estudio'      => $id_plan_estudio
+                    ];
+                }
+            }
+            var_dump($datosAInsertar);
+
+            // Mostrar errores (puedes mostrar en vista, aquí solo ejemplo)
+            /*if ($errores) {
+                $_SESSION['flash_error'] = implode('<br>', $errores);
+                header('Location: ' . BASE_URL . '/academico/estudiantes');
+                exit;
+            }*/
+
+            /*// Insertar estudiantes
+            foreach ($datosAInsertar as $estudiante) {
+                $this->model->guardar($estudiante);
+            }
+            $_SESSION['flash_success'] = "Importación completada correctamente.";
+            header('Location: ' . BASE_URL . '/academico/estudiantes');
+            exit;*/
+        }
     }
 }

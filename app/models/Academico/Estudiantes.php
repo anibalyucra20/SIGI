@@ -111,7 +111,7 @@ class Estudiantes extends Model
     // Validaciones duplicados
     public function existeDni($dni, $id_ignorar = null)
     {
-        $sql = "SELECT COUNT(*) FROM sigi_usuarios WHERE dni = ?";
+        $sql = "SELECT id FROM sigi_usuarios WHERE dni = ?";
         $params = [$dni];
         if ($id_ignorar) {
             $sql .= " AND id != ?";
@@ -119,7 +119,7 @@ class Estudiantes extends Model
         }
         $stmt = self::$db->prepare($sql);
         $stmt->execute($params);
-        return $stmt->fetchColumn() > 0;
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
     public function existeEstudianteEnPlanPeriodo($id_usuario, $id_plan_estudio, $id_periodo, $id_ignorar = null)
     {

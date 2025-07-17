@@ -38,6 +38,12 @@ class Programa extends Model
         $stmt->execute([$id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
+    public function getProgramaPorNombre($nombre)
+    {
+        $stmt = self::$db->prepare("SELECT * FROM sigi_programa_estudios WHERE nombre = ?");
+        $stmt->execute([$nombre]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
     public function getAllBySede($id_sede)
     {
         $sql = "SELECT p.* 

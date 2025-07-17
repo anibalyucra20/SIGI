@@ -72,10 +72,22 @@ class Plan extends Model
         $stmt = self::$db->prepare($sql);
         return $stmt->execute($params);
     }
+    public function getPlanes()
+    {
+        $stmt = self::$db->prepare("SELECT DISTINCT nombre FROM sigi_planes_estudio ORDER BY nombre");
+        $stmt->execute();
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
     public function getPlanesByPrograma($id_programa)
     {
         $stmt = self::$db->prepare("SELECT id, nombre FROM sigi_planes_estudio WHERE id_programa_estudios = ? ORDER BY nombre");
         $stmt->execute([$id_programa]);
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+    public function getPlanByProgramaAndPlanName($id_programa, $nombre)
+    {
+        $stmt = self::$db->prepare("SELECT id FROM sigi_planes_estudio WHERE id_programa_estudios = ? AND nombre = ? ORDER BY nombre");
+        $stmt->execute([$id_programa, $nombre]);
+        return $stmt->fetch(\PDO::FETCH_ASSOC);
     }
 }

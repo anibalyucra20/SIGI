@@ -39,7 +39,7 @@
                         <img src="<?= BASE_URL ?>/img/favicon.ico" alt="Favicon" style="height:32px;">
                     </div>
                 <?php endif; ?>
-                <input type="file" name="favicon_file" class="form-control d-none" maxlength="100" required
+                <input type="file" name="favicon_file" class="form-control d-none" maxlength="100" 
                     value="<?= htmlspecialchars($sistema['favicon'] ?? '') ?>" readonly accept="image/x-icon">
                 <input type="hidden" name="favicon" value="<?= htmlspecialchars($sistema['favicon'] ?? '') ?>">
             </div>
@@ -54,7 +54,7 @@
                         <img src="<?= BASE_URL ?>/img/logo_completo.png" alt="logo" style="height:62px;">
                     </div>
                 <?php endif; ?>
-                <input type="file" name="logo_file" class="form-control d-none" maxlength="100" required
+                <input type="file" name="logo_file" class="form-control d-none" maxlength="100" 
                     value="<?= htmlspecialchars($sistema['logo'] ?? '') ?>" readonly accept="image/png,image/jpeg,image/svg+xml">
                 <input type="hidden" name="logo" value="<?= htmlspecialchars($sistema['logo'] ?? '') ?>">
             </div>

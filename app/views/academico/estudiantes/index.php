@@ -13,6 +13,30 @@
         <h3 class="mb-2">Estudiantes</h3>
         <div class="mb-2">
             <a href="<?= BASE_URL ?>/academico/estudiantes/nuevo" class="btn btn-success">+ Nuevo Estudiante</a>
+            <button type="button" class="btn btn-info waves-effect waves-light" data-toggle="modal" data-target="#modal-carga-masiva">Carga Masiva</button>
+        </div>
+        <div class="modal fade" id="modal-carga-masiva" tabindex="-1" role="dialog" aria-labelledby="modal-carga-masiva" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modal-carga-masiva">Carga Masiva de Estudiantes</h5>
+                        <button type="button" class="close waves-effect waves-light" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <a href="<?= BASE_URL ?>/academico/estudiantes/descargarPlantillaCargaMasiva" class="btn btn-success col-6">Descargar Plantilla Excel</a> <br><br>
+                        <form action="<?= BASE_URL ?>/academico/estudiantes/CargaMasivaEstudiantes" method="post" enctype="multipart/form-data">
+                            <input type="file" name="archivo_excel" class="form-control" required accept=".xlsx,.xls"><br><br>
+                            <button type="submit" class="btn btn-primary waves-effect waves-light">Cargar Plantilla</button>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary waves-effect waves-light" data-dismiss="modal">Cancelar</button>
+
+                    </div>
+                </div>
+            </div>
         </div>
         <h5 class="mb-2">Filtros:</h5>
         <div class="row mb-3">
