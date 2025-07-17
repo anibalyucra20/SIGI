@@ -20,7 +20,7 @@ if ($logueado):
   // Definir el id de admin en una variable por claridad
   $rolAdmin = 1;
   $rolActual = $_SESSION['sigi_rol_actual'] ?? null;
-  endif;
+endif;
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -32,7 +32,14 @@ if ($logueado):
   <link href="<?= BASE_URL ?>/assets/css/bootstrap.min.css" rel="stylesheet" />
   <link href="<?= BASE_URL ?>/assets/css/icons.min.css" rel="stylesheet" />
   <link href="<?= BASE_URL ?>/assets/css/theme.min.css" rel="stylesheet" type="text/css" />
-  <link rel="icon" type="image/x-icon" href="<?= BASE_URL ?>/img/favicon.ico">
+  <?php
+  if ($_SESSION['favicon'] != '') {
+    $ruta_favicon = BASE_URL . '/images/' . $_SESSION['favicon'];
+  } else {
+    $ruta_favicon = BASE_URL . '/img/favicon.ico';
+  }
+  ?>
+  <link rel="icon" type="image/x-icon" href="<?= $ruta_favicon; ?>">
 </head>
 
 <body data-sidebar="light">
@@ -42,9 +49,16 @@ if ($logueado):
       <header id="page-topbar">
         <div class="navbar-header">
           <div class="navbar-brand-box d-flex align-items-left">
-            <a href="<?= BASE_URL ?>" class="logo">
-              <i class="mdi"><img src="<?= BASE_URL ?>/img/logo.png" alt="" width="40px" height="30px"></i>
-              <span>SIGI</span>
+            <a href="<?= BASE_URL . '/' . $_SESSION['modulo_vista']; ?>" class="logo">
+              <?php
+              if ($_SESSION['logo'] != '') {
+                $ruta_logo = BASE_URL . '/images/' . $_SESSION['logo'];
+              } else {
+                $ruta_logo = BASE_URL . '/img/logo_completo.png';
+              }
+              ?>
+              <i class="mdi"><img src="<?= $ruta_logo ?>" alt="" width="100px" height="30px"></i>
+              <span> SIGI</span>
             </a>
             <button type="button" class="btn btn-sm mr-2 font-size-16 d-lg-none header-item waves-effect waves-light"
               data-toggle="collapse" data-target="#topnav-menu-content">

@@ -19,7 +19,13 @@ use App\Models\Academico\Silabos;
 use App\Models\Sigi\DatosInstitucionales;
 use App\Models\Sigi\DatosSistema;
 use App\Models\Sigi\IndicadorLogroCapacidad;
-use TCPDF; // 
+
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use TCPDF;
 
 class CalificacionesController extends Controller
 {
@@ -284,5 +290,156 @@ class CalificacionesController extends Controller
         $pdf->writeHTML($html, true, false, true, false, '');
 
         $pdf->Output('Acta Final - ' . $datosGenerales['unidad'] . '.pdf', 'I');
+    }
+
+
+    //  =========================================== IMPRESION DE ACTA DE RECUPERACION ==============================================
+    public function actaRecuperacion($id_programacion_ud)
+    {
+        // Obtener todos los datos igual que para la vista de edición
+        $permitido = $this->model->puedeVerCalificaciones($id_programacion_ud);
+
+        if (!$permitido) {
+            $this->view('academico/calificaciones/ver', [
+                'permitido' => false
+            ]);
+            return;
+        }
+        // INFORMACION PARA CALIFICACIONES
+        $datos = $this->model->getDatosCalificaciones($id_programacion_ud);
+        $mostrar_calificaciones = $this->model->getMostrarCalificaciones($id_programacion_ud, $datos['nros_calificacion']);
+        $mostrar_promedio_todos = $this->model->todosMostrarPromedio($id_programacion_ud);
+
+        $estudiantes = $datos['estudiantes'];
+        $estudiantes_inhabilitados = [];
+        $nota_inasistencia = $this->objDatosSistema->getNotaSiInasistencia();
+        $datosSistema = $this->objDatosSistema->buscar();
+        $nros_calificacion = $datos['nros_calificacion'];
+        $recuperaciones = $datos['recuperaciones'];
+        $promedios = $datos['promedios'];
+
+        $id_unidad_didactica = $datos['idUnidadDidactica'];
+        foreach ($estudiantes as $est) {
+            $id_detalle = $est['id_detalle_matricula'];
+            $inhabilitado = $this->model->inhabilitadoPorInasistencia($id_detalle);
+            $estudiantes_inhabilitados[$id_detalle] = $inhabilitado;
+        }
+        $datosGenerales = $this->objSilabo->getDatosGenerales($id_programacion_ud);
+
+        $pdf = new TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
+        $pdf->SetTitle('Acta Final - ' . $datosGenerales['unidad']);
+        $pdf->setPrintHeader(false);
+        $pdf->SetMargins(8, 15, 8);
+        $pdf->SetAutoPageBreak(true, 5);
+        $pdf->AddPage();
+
+        // --- GENERA EL HTML ---
+        ob_start();
+        include __DIR__ . '/../../views/academico/calificaciones/pdf_acta_recuperacion.php';
+        $html = ob_get_clean();
+        $pdf->writeHTML($html, true, false, true, false, '');
+
+        $pdf->Output('Acta Final - ' . $datosGenerales['unidad'] . '.pdf', 'I');
+    }
+
+
+
+
+    //  =========================================== REPORTE PARA SISTEMA REGISTRA ==============================================
+    public function reporteRegistra($id_programacion_ud)
+    {
+        // Obtener todos los datos igual que para la vista de edición
+        $permitido = $this->model->puedeVerCalificaciones($id_programacion_ud);
+
+        if (!$permitido) {
+            $this->view('academico/calificaciones/ver', [
+                'permitido' => false
+            ]);
+            return;
+        }
+        // INFORMACION PARA CALIFICACIONES
+        $datos = $this->model->getDatosCalificaciones($id_programacion_ud);
+        $mostrar_calificaciones = $this->model->getMostrarCalificaciones($id_programacion_ud, $datos['nros_calificacion']);
+        $mostrar_promedio_todos = $this->model->todosMostrarPromedio($id_programacion_ud);
+
+        $estudiantes = $datos['estudiantes'];
+        $estudiantes_inhabilitados = [];
+        $nota_inasistencia = $this->objDatosSistema->getNotaSiInasistencia();
+        $datosSistema = $this->objDatosSistema->buscar();
+        $nros_calificacion = $datos['nros_calificacion'];
+        $recuperaciones = $datos['recuperaciones'];
+        $promedios = $datos['promedios'];
+
+        $id_unidad_didactica = $datos['idUnidadDidactica'];
+        foreach ($estudiantes as $est) {
+            $id_detalle = $est['id_detalle_matricula'];
+            $inhabilitado = $this->model->inhabilitadoPorInasistencia($id_detalle);
+            $estudiantes_inhabilitados[$id_detalle] = $inhabilitado;
+        }
+        $datosGenerales = $this->objSilabo->getDatosGenerales($id_programacion_ud);
+        $nombre_archivo = "registra_" . $datosGenerales['unidad'] . "_" . $datosGenerales['periodo_academico'] . "_" . date('Ymd_His');
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Plantilla'); // Cambia el nombre de la hoja
+        $sheet->getStyle('A1:D1')->applyFromArray([
+            'font' => [
+                'name' => 'Calibri',
+                'size' => 11,
+                'bold' => true,
+            ],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'EEEEEE'], // '#eee'
+            ],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => Border::BORDER_THIN,
+                ],
+            ],
+        ]);
+
+        $sheet->setCellValue('A1', 'NRO');
+        $sheet->setCellValue('B1', 'CÓDIGO ALUMNO');
+        $sheet->setCellValue('C1', 'ALUMNO');
+        $sheet->setCellValue('D1', 'NOTA');
+
+        $fila = 2;
+        foreach ($estudiantes as $i => $est) {
+            $id_detalle = $est['id_detalle_matricula'];
+            $recup = $recuperaciones[$id_detalle] ?? '';
+            $inhabilitado = $estudiantes_inhabilitados[$id_detalle] ?? false;
+            if ($recup != '') {
+                $promedio_final = $recup;
+            } else {
+                $promedio_final = $promedios[$id_detalle];
+            }
+            if ($inhabilitado) {
+                if (is_array($nota_inasistencia) && $est['licencia'] != '') {
+                     $promedio_final = '';
+                } else {
+                    $promedio_final = reset($nota_inasistencia);
+                }
+            }
+
+            $sheet->setCellValue("A$fila", $i + 1);
+            $sheet->setCellValue("B$fila", $est['dni']);
+            $sheet->setCellValue("C$fila", $est['apellidos_nombres']);
+            $sheet->setCellValue("D$fila", $promedio_final);
+            $fila++;
+        }
+        foreach (range('A', 'D') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $nombre_archivo . '.xlsx"');
+        header('Cache-Control: max-age=0');
+        $writer = new Xlsx($spreadsheet);
+        $writer->save('php://output');
+        exit;
     }
 }

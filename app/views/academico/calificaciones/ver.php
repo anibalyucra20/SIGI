@@ -12,8 +12,8 @@ require __DIR__ . '/../../layouts/header.php'; ?>
             <div class="col-4 col-md-2 mb-3">
                 <a class="btn btn-info btn-sm btn-block mb-2" target="_blank" href="<?= BASE_URL ?>/academico/calificaciones/registroOficial/<?= $id_programacion_ud ?>">Imprimir Registro Oficial</a>
                 <a class="btn btn-success btn-sm btn-block mb-2" target="_blank" href="<?= BASE_URL ?>/academico/calificaciones/actaFinal/<?= $id_programacion_ud ?>">Imprimir Acta Final</a>
-                <a class="btn btn-primary btn-sm btn-block mb-2 text-white">Imprimir Acta Recuperacion</a>
-                <a class="btn btn-warning btn-sm btn-block mb-2 text-white">Reporte Registra</a>
+                <a class="btn btn-primary btn-sm btn-block mb-2 text-white" target="_blank" href="<?= BASE_URL ?>/academico/calificaciones/actaRecuperacion/<?= $id_programacion_ud ?>">Imprimir Acta Recuperacion</a>
+                <a class="btn btn-warning btn-sm btn-block mb-2 text-white" target="_blank" href="<?= BASE_URL ?>/academico/calificaciones/reporteRegistra/<?= $id_programacion_ud ?>">Reporte Registra</a>
                 <a class="btn btn-danger btn-sm btn-block" href="<?= BASE_URL; ?>/academico/unidadesDidacticas">Regresar</a>
             </div>
             <div class="col-12 col-md-12">

@@ -14,7 +14,8 @@ class Controller
         $current = $_GET['url'] ?? '';
 
         if (!function_exists('str_starts_with')) {
-            function str_starts_with($haystack, $needle) {
+            function str_starts_with($haystack, $needle)
+            {
                 return substr($haystack, 0, strlen($needle)) === $needle;
             }
         }
@@ -39,6 +40,13 @@ class Controller
             $stmt = $db->prepare($sql);
             $stmt->execute([$id_usuario]);
             $_SESSION['sigi_permisos_usuario'] = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            //obtener informacion de logos para cargar en vista
+            $sql2 = "SELECT favicon, logo FROM sigi_datos_sistema WHERE id=1";
+            $datos_logos = $db->prepare($sql2);
+            $datos_logos->execute();
+            $datos_logos = $datos_logos->fetch(\PDO::FETCH_ASSOC);
+            $_SESSION['favicon'] = $datos_logos['favicon'];
+            $_SESSION['logo'] = $datos_logos['logo'];
         }
     }
     public function modelo($modelo)

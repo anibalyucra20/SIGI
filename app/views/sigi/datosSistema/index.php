@@ -20,7 +20,7 @@
     <?php endif; ?>
     <div class="container mt-4">
         <h3 class="mb-4">Datos del Sistema</h3>
-        <form id="form-datos-sistema" action="<?= BASE_URL ?>/sigi/datosSistema/guardar" method="post" class="card p-4 shadow-sm rounded-3" autocomplete="off">
+        <form id="form-datos-sistema" action="<?= BASE_URL ?>/sigi/datosSistema/guardar" method="post" enctype="multipart/form-data" class="card p-4 shadow-sm rounded-3" autocomplete="off" >
             <input type="hidden" name="id" value="<?= htmlspecialchars($sistema['id'] ?? '') ?>">
 
             <div class="mb-3">
@@ -30,13 +30,33 @@
             </div>
             <div class="mb-3">
                 <label class="form-label">Favicon *</label>
-                <input type="text" name="favicon" class="form-control" maxlength="100" required
-                    value="<?= htmlspecialchars($sistema['favicon'] ?? '') ?>" readonly>
+                <?php if ($sistema['favicon'] != ''): ?>
+                    <div>
+                        <img src="<?= BASE_URL ?>/images/<?= htmlspecialchars($sistema['favicon']) ?>" alt="Favicon" style="height:32px;">
+                    </div>
+                <?php else: ?>
+                    <div>
+                        <img src="<?= BASE_URL ?>/img/favicon.ico" alt="Favicon" style="height:32px;">
+                    </div>
+                <?php endif; ?>
+                <input type="file" name="favicon_file" class="form-control d-none" maxlength="100" required
+                    value="<?= htmlspecialchars($sistema['favicon'] ?? '') ?>" readonly accept="image/x-icon">
+                <input type="hidden" name="favicon" value="<?= htmlspecialchars($sistema['favicon'] ?? '') ?>">
             </div>
             <div class="mb-3">
                 <label class="form-label">Logo *</label>
-                <input type="text" name="logo" class="form-control" maxlength="100" required
-                    value="<?= htmlspecialchars($sistema['logo'] ?? '') ?>" readonly>
+                <?php if ($sistema['logo'] != ''): ?>
+                    <div>
+                        <img src="<?= BASE_URL ?>/images/<?= htmlspecialchars($sistema['logo']) ?>" alt="logo" style="height:62px;">
+                    </div>
+                <?php else: ?>
+                    <div>
+                        <img src="<?= BASE_URL ?>/img/logo_completo.png" alt="logo" style="height:62px;">
+                    </div>
+                <?php endif; ?>
+                <input type="file" name="logo_file" class="form-control d-none" maxlength="100" required
+                    value="<?= htmlspecialchars($sistema['logo'] ?? '') ?>" readonly accept="image/png,image/jpeg,image/svg+xml">
+                <input type="hidden" name="logo" value="<?= htmlspecialchars($sistema['logo'] ?? '') ?>">
             </div>
             <div class="mb-3">
                 <label class="form-label">Nombre Completo *</label>
@@ -88,7 +108,7 @@
                 <input type="number" name="nota_inasistencia" class="form-control" min="0" max="20" required
                     value="<?= htmlspecialchars($sistema['nota_inasistencia'] ?? '') ?>" readonly>
             </div>
-            
+
             <div class="mb-3">
                 <label class="form-label">Token Sistema *</label>
                 <textarea name="token_sistema" class="form-control" maxlength="1000" required readonly><?= htmlspecialchars($sistema['token_sistema'] ?? '') ?></textarea>
@@ -122,6 +142,11 @@
                             input.setAttribute('readonly', true);
                         }
                     }
+                });
+                // Mostrar file inputs si editable, ocultar si no
+                document.querySelectorAll('input[type="file"]').forEach(input => {
+                    if (editable) input.classList.remove('d-none');
+                    else input.classList.add('d-none');
                 });
                 btnGuardar.classList.toggle('d-none', !editable);
                 btnCancelar.classList.toggle('d-none', !editable);

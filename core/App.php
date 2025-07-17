@@ -26,7 +26,9 @@ class App
             exit;
         }
         if (!empty($segments[0])) {
-
+            // para poder hacer el logo dinamico segun el modulo donde se encuentre
+            \Core\Auth::start();
+            $_SESSION['modulo_vista'] = $segments[0];
             /* ➊ excepción para login / logout */
             if (in_array(strtolower($segments[0]), ['login', 'logout'])) {
                 $this->module     = 'Auth';                // módulo Auth
@@ -85,8 +87,6 @@ class App
         });
         /* ---------- 6. Ejecutar ---------- */
         return call_user_func_array([$this->controller, $this->method], $this->params);
-
-        
     }
 
     /* ------------------------------------ */

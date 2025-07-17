@@ -6,10 +6,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Login - SIGI</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link rel="icon" type="image/x-icon" href="<?= BASE_URL ?>/img/favicon.ico">
+    <?php
+    if ($datosSistema['favicon'] != '') {
+        $ruta_favicon = BASE_URL . '/images/' . $datosSistema['favicon'];
+    } else {
+        $ruta_favicon = BASE_URL . '/img/favicon.ico';
+    }
+    ?>
+    <link rel="icon" type="image/x-icon" href="<?= $ruta_favicon ?>">
     <style>
         body {
-            
+
             min-height: 100vh;
         }
 
@@ -23,18 +30,29 @@
         }
 
         .logo {
-            width: 80px;
+            width: 200px;
             margin-bottom: 10px;
         }
     </style>
 </head>
+<?php
+//echo password_hash('',PASSWORD_DEFAULT);
+
+?>
 
 <body style="background-color: <?= $datosSistema['color_correo'] ?>;">
     <div class="container d-flex align-items-center justify-content-center login-container">
         <div class="col-md-6 col-lg-4">
             <div class="card p-4">
                 <div class="text-center">
-                    <img src="<?= BASE_URL ?>/img/logo.png" alt="Logo SIGI" class="logo">
+                    <?php
+                    if ($datosSistema['logo'] != '') {
+                        $ruta_logo = BASE_URL . '/images/' . $datosSistema['logo'];
+                    } else {
+                        $ruta_logo = BASE_URL . '/img/logo_completo.png';
+                    }
+                    ?>
+                    <img src="<?= $ruta_logo ?>" alt="Logo SIGI" class="logo">
                     <h4 class="mb-2">SIGI</h4>
                     <p class="text-muted mb-4">Sistema de Gestión Institucional</p>
                 </div>
