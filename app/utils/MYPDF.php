@@ -21,14 +21,20 @@ class MYPDF extends \TCPDF
     public function Header()
     {
         $datosInstitucionales = $this->objDatosIes->buscar();
+        $datosSistema = $this->objDatosSistema->buscar();
 
         // Logo izquierdo
         $image_file = __DIR__ . '/../../public/img/escudo.png';
         $this->Image($image_file, 15, 10, 14, 15, 'PNG', '', 'T', false, 300, '', false, false, 0, false, false, false);
 
         // Logo derecho
-        $image_file2 = __DIR__ . '/../../public/img/logo_completo.png';
-        $this->Image($image_file2, 160, 8, 35, 15, 'PNG', '', 'T', false, 300, '', false, false, 0, false, false, false);
+        if ($datosSistema['logo'] != '') {
+            $image_file2 = __DIR__ . '/../../public/images/'.$datosSistema['logo'];
+        }else {
+            $image_file2 = __DIR__ . '/../../public/img/logo_completo.png';
+        }
+        
+        $this->Image($image_file2, 160, 10, 35, 15, 'PNG', '', 'T', false, 300, '', false, false, 0, false, false, false);
 
         // Rectángulos y textos (ajusta X/Y/tamaño/colores según tu diseño)
         $this->SetFont('helvetica', 'B', 12);

@@ -85,7 +85,7 @@
                         if ($est['licencia'] != '') {
                         ?>
                             <td class="sticky-col left-col bg-white" style="font-size:7px;"><?= htmlspecialchars($contador) ?></td>
-                            <td colspan="<?= $cantida_general-2; ?>" style="text-center">Licencia</td>
+                            <td colspan="<?= $cantida_general - 2; ?>" style="text-center">Licencia</td>
                         <?php
                         } else {
                         ?>
@@ -266,8 +266,12 @@
 $html = ob_get_clean();
 $pdf->writeHTML($html, true, false, true, false, '');
 $logoMineduPath = (__DIR__ . '/../../../../public/img/logo_minedu.jpeg');
-$logoPath = (__DIR__ . '/../../../../public/img/logo_completo.png');
-$pdf->Image($logoMineduPath, 200, 15, 30); // (x, y, width en mm)
+if ($datosSistema['logo'] != '') {
+    $logoPath = __DIR__ . '/../../../../public/images/' . $datosSistema['logo'];
+} else {
+    $logoPath = __DIR__ . '/../../../../public/img/logo_completo.png';
+}
+$pdf->Image($logoMineduPath, 200, 15, 30, 8); // (x, y, width en mm)
 $pdf->Image($logoPath, 255, 15, 30, 10); // (x, y, width en mm)
 $pdf->AddPage(); // Segunda página
 

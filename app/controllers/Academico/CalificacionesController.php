@@ -216,7 +216,7 @@ class CalificacionesController extends Controller
         $notas = $datos['notas'];
         $recuperaciones = $datos['recuperaciones'];
         $promedios = $datos['promedios'];
-
+        $datosSistema = $this->objDatosSistema->buscar();
         $id_unidad_didactica = $datos['idUnidadDidactica'];
         $ind_logro_capacidad = $this->objIndLogroCapacidad->getIndicadoresLogroCapacidad($id_unidad_didactica);
         foreach ($estudiantes as $est) {
@@ -419,7 +419,7 @@ class CalificacionesController extends Controller
             }
             if ($inhabilitado) {
                 if (is_array($nota_inasistencia) && $est['licencia'] != '') {
-                     $promedio_final = '';
+                    $promedio_final = '';
                 } else {
                     $promedio_final = reset($nota_inasistencia);
                 }

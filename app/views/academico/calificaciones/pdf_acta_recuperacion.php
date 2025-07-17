@@ -213,8 +213,12 @@
 $html = ob_get_clean();
 $pdf->writeHTML($html, true, false, true, false, '');
 $logoMineduPath = (__DIR__ . '/../../../../public/img/logo_minedu.jpeg');
-$logoPath = (__DIR__ . '/../../../../public/img/logo_completo.png');
-$pdf->Image($logoMineduPath, 15, 15, 30); // (x, y, width en mm)
+if ($datosSistema['logo'] != '') {
+    $logoPath = __DIR__ . '/../../../../public/images/' . $datosSistema['logo'];
+} else {
+    $logoPath = __DIR__ . '/../../../../public/img/logo_completo.png';
+}
+$pdf->Image($logoMineduPath, 15, 15, 30, 8); // (x, y, width en mm)
 $pdf->Image($logoPath, 165, 15, 30, 10); // (x, y, width en mm)
 
 ?>
