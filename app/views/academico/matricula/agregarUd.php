@@ -1,13 +1,4 @@
 <?php require __DIR__ . '/../../layouts/header.php'; ?>
-<?php if (!empty($_SESSION['flash_error'])): ?>
-    <div class="alert alert-danger alert-dismissible">
-        <?= $_SESSION['flash_error'] ?>
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
-    <?php unset($_SESSION['flash_error']); ?>
-<?php endif; ?>
 <div class="card p-4 shadow-sm rounded-3">
     <h4 class="mb-3 mt-2 text-center">Agregar Unidad Didáctica <br> <small>Matricula de <?= htmlspecialchars($estudiante['apellidos_nombres']) ?></small></h4>
     <form action="<?= BASE_URL ?>/academico/matricula/guardarUnidadDidactica/<?= $matricula['id'] ?>" method="post" autocomplete="off">

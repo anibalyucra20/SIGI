@@ -1,22 +1,4 @@
 <?php require __DIR__ . '/../../layouts/header.php'; ?>
-<?php if (!empty($_SESSION['flash_success'])): ?>
-    <div class="alert alert-success alert-dismissible">
-        <?= $_SESSION['flash_success'] ?>
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
-    <?php unset($_SESSION['flash_success']); ?>
-<?php endif; ?>
-<?php if (!empty($_SESSION['flash_error'])): ?>
-    <div class="alert alert-danger alert-dismissible">
-        <?= $_SESSION['flash_error'] ?>
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
-    <?php unset($_SESSION['flash_error']); ?>
-<?php endif; ?>
 <?php if (\Core\Auth::esAdminAcademico()): ?>
     <div class="card p-2">
         <h3 class="mb-2">Estudiantes</h3>

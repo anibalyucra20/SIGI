@@ -1,24 +1,6 @@
 <?php require __DIR__ . '/../../layouts/header.php'; ?>
 <!-- page content -->
 <div class="card p-2">
-     <?php if (!empty($errores)): ?>
-        <div class="alert alert-danger">
-            <ul>
-                <?php foreach ($errores as $e): ?>
-                    <li><?= htmlspecialchars($e) ?></li>
-                <?php endforeach; ?>
-            </ul>
-        </div>
-    <?php endif; ?>
-    <?php if (!empty($_SESSION['flash_success'])): ?>
-        <div class="alert alert-success alert-dismissible">
-            <?= $_SESSION['flash_success'] ?>
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-            </button>
-        </div>
-        <?php unset($_SESSION['flash_success']); ?>
-    <?php endif; ?>
     <div class="col-md-12 col-sm-12 col-xs-12">
         <div class="x_panel">
             <div class="">

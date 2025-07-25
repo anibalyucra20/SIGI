@@ -3,15 +3,6 @@
     <div class="card p-4 shadow-sm rounded-3 mt-3">
         <a class="btn btn-danger btn-sm btn-block col-sm-1 col-4 mb-1" href="<?= BASE_URL; ?>/academico/sesiones/ver/<?= $id_programacion; ?>">Regresar</a>
         <h4>Editar Sesión de Aprendizaje</h4>
-        <?php if (!empty($errores)): ?>
-            <div class="alert alert-danger">
-                <ul>
-                    <?php foreach ($errores as $e): ?>
-                        <li><?= htmlspecialchars($e) ?></li>
-                    <?php endforeach; ?>
-                </ul>
-            </div>
-        <?php endif; ?>
         <form action="<?= BASE_URL ?>/academico/sesiones/guardarEdicionSesion/<?= $sesion['id'] ?>" method="post" autocomplete="off">
             <h6 class="mb-2">I. INFORMACIÓN GENERAL</h6>
             <table class="table table table-striped table-bordered align-middle">

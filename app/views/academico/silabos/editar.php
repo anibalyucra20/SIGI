@@ -1,23 +1,5 @@
 <?php require __DIR__ . '/../../layouts/header.php'; ?>
 <?php if ((\Core\Auth::esDocenteAcademico() || \Core\Auth::esAdminAcademico()) && $permitido): ?>
-    <?php if (!empty($errores)): ?>
-        <div class="alert alert-danger">
-            <ul>
-                <?php foreach ($errores as $e): ?>
-                    <li><?= htmlspecialchars($e) ?></li>
-                <?php endforeach; ?>
-            </ul>
-        </div>
-    <?php endif; ?>
-    <?php if (!empty($_SESSION['flash_success'])): ?>
-        <div class="alert alert-success alert-dismissible">
-            <?= $_SESSION['flash_success'] ?>
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-            </button>
-        </div>
-        <?php unset($_SESSION['flash_success']); ?>
-    <?php endif; ?>
     <form action="<?= BASE_URL ?>/academico/silabos/guardarEdicion" method="post" class="card p-4 shadow-sm rounded-3" autocomplete="off">
         <input type="hidden" name="id_silabo" value="<?= htmlspecialchars($silabo['id']) ?>">
         <a class="btn btn-danger btn-sm btn-block col-sm-1 col-4 mb-1" href="<?= BASE_URL; ?>/academico/unidadesDidacticas">Regresar</a>

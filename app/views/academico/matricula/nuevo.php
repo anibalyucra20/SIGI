@@ -2,18 +2,7 @@
 <?php if (\Core\Auth::esAdminAcademico()): ?>
     <div class="card p-4 shadow-sm rounded-3 mt-3">
         <h4>Nueva Matrícula</h4>
-        <?php if (!empty($errores)): ?>
-            <div class="alert alert-danger">
-                <ul>
-                    <?php foreach ($errores as $e): ?>
-                        <li><?= htmlspecialchars($e) ?></li>
-                    <?php endforeach; ?>
-                </ul>
-            </div>
-        <?php endif; ?>
-
         <form action="<?= BASE_URL ?>/academico/matricula/guardar" method="post" id="form-matricula" autocomplete="off">
-
             <!-- BUSCADOR DE ESTUDIANTE POR DNI -->
             <div class="row mb-3">
                 <div class="col-md-4">
@@ -27,9 +16,7 @@
                     <label class="form-label">Apellidos y Nombres</label>
                     <input type="text" id="apellidos-nombres" class="form-control" disabled>
                 </div>
-
             </div>
-
             <!-- SELECCIÓN DE PROGRAMA Y PLAN DE ESTUDIOS -->
             <div class="row mb-3">
                 <div class="col-md-4">

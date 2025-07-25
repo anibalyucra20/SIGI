@@ -1,22 +1,5 @@
 <?php require __DIR__ . '/../../layouts/header.php'; ?>
 <div class="card p-2">
-<?php if (!empty($_SESSION['flash_error'])): ?>
-    <div class="alert alert-danger alert-dismissible">
-        <?= $_SESSION['flash_error'] ?>
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
-    <?php unset($_SESSION['flash_error']); ?>
-<?php endif; ?><?php if (!empty($_SESSION['flash_success'])): ?>
-    <div class="alert alert-success alert-dismissible">
-        <?= $_SESSION['flash_success'] ?>
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
-    <?php unset($_SESSION['flash_success']); ?>
-<?php endif; ?>
     <h4 class="mb-3 mt-2 text-center">Detalle de Matrícula - <?= htmlspecialchars($estudiante['apellidos_nombres']) ?></h4>
 
     <div class="mb-3">
