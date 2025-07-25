@@ -252,6 +252,9 @@ function num_letra($num)
                 $obs = "Licencia";
                 $promedio_final = '';
             }
+            if ($promedio_final == '') {
+                $promedio_final = reset($nota_inasistencia);
+            }
         ?>
             <tr>
                 <td style="text-align:center; width:5%;"><?= ($idx + 1) ?></td>

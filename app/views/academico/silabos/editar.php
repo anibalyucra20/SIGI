@@ -9,11 +9,19 @@
             </ul>
         </div>
     <?php endif; ?>
-                    
+    <?php if (!empty($_SESSION['flash_success'])): ?>
+        <div class="alert alert-success alert-dismissible">
+            <?= $_SESSION['flash_success'] ?>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <?php unset($_SESSION['flash_success']); ?>
+    <?php endif; ?>
     <form action="<?= BASE_URL ?>/academico/silabos/guardarEdicion" method="post" class="card p-4 shadow-sm rounded-3" autocomplete="off">
         <input type="hidden" name="id_silabo" value="<?= htmlspecialchars($silabo['id']) ?>">
         <a class="btn btn-danger btn-sm btn-block col-sm-1 col-4 mb-1" href="<?= BASE_URL; ?>/academico/unidadesDidacticas">Regresar</a>
-        <a href="<?= BASE_URL ?>/academico/silabos/pdf/<?= htmlspecialchars($silabo['id']) ?>" class="btn btn-sm btn-outline-secondary col-md-1" title="Imprimir" target="_blank"><i class="fa fa-print"></i> Imprimir</a> 
+        <a href="<?= BASE_URL ?>/academico/silabos/pdf/<?= htmlspecialchars($silabo['id']) ?>" class="btn btn-sm btn-outline-secondary col-md-1" title="Imprimir" target="_blank"><i class="fa fa-print"></i> Imprimir</a>
         <!-- I. DATOS GENERALES -->
         <h5 class="mb-3 mt-2">I. DATOS GENERALES</h5>
         <table class="table table-bordered mb-3">
@@ -63,6 +71,10 @@
                     <td><?= htmlspecialchars($datosGenerales['turno']) ?></td>
                 </tr>
                 <tr>
+                    <td width="30%"><b>Horario:</b></td>
+                    <td><textarea name="horario" required style="width:50%; resize: none; height:auto;" rows="3"><?= htmlspecialchars($silabo['horario']) ?></textarea></td>
+                </tr>
+                <tr>
                     <td width="30%"><b>Docente:</b></td>
                     <td><?= htmlspecialchars($datosGenerales['docente']) ?></td>
                 </tr>
@@ -70,7 +82,7 @@
                     <td width="30%"><b>Correo Institucional:</b></td>
                     <td><?= htmlspecialchars($datosGenerales['correo_docente']) ?></td>
                 </tr>
-                
+
             </tbody>
         </table>
 

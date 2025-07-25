@@ -64,19 +64,13 @@ class SilabosController extends Controller
 
             // DATOS GENERALES
             $datosGenerales = $this->model->getDatosGenerales($id_programacion);
-
             // SECCION III: COMPETENCIAS DEL MODULO
             $competenciasUnidadDidactica = $this->objCompetencia->getCompetenciasDeUnidadDidactica($programacion['id_unidad_didactica']);
-
             // SECCION IV: CAPACIDADES DE LA UD
             $capacidades = $this->objCapacidad->getCapacidadesUnidadDidactica($programacion['id_unidad_didactica']);
-
             // SECCION V: COMPETENCIAS TRANSVERSALES DEL MODULO
             $competenciasTransversales = $this->objCompetencia->getCompetenciasTransversalesByUD($programacion['id_unidad_didactica']);
-
             $indicadoresLogroCapacidad = $this->objIndicadorLogroCapacidad->getIndicadoresLogroCapacidad($programacion['id_unidad_didactica']);
-
-
             // SECCION VI: SESIONES DE APRENDIZAJE
             //$sesiones = $this->model->getSesionesSilabo($silabo['id']);
             $sesiones = $this->model->getSesionesSilaboDetallado($silabo['id']); // método especial, ver abajo
@@ -123,6 +117,7 @@ class SilabosController extends Controller
 
         // Validar campos requeridos
         $data = [
+            'horario' => trim($_POST['horario'] ?? ''),
             'sumilla' => trim($_POST['sumilla'] ?? ''),
             'metodologia' => trim($_POST['metodologia'] ?? ''),
             'recursos_didacticos' => trim($_POST['recursos_didacticos'] ?? ''),
@@ -179,8 +174,8 @@ class SilabosController extends Controller
             }
         }
         $_SESSION['flash_success'] = "Sílabo actualizado correctamente.";
-        $this->editar($id_programacion);
-        //header('Location: ' . BASE_URL . '/academico/unidadesDidacticas');
+        //$this->editar($id_programacion);
+        header('Location: ' . BASE_URL . '/academico/silabos/editar/'.$id_programacion);
         exit;
     }
 

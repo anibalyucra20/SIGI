@@ -109,7 +109,7 @@ class SesionesController extends Controller
             exit;
         }
 
-        // Validaciones (puedes expandir)
+        // Validaciones ()
         $errores = [];
         $fecha_desarrollo = $_POST['fecha_desarrollo'] ?? '';
         //$id_ind_logro_aprendizaje = $_POST['id_ind_logro_aprendizaje'] ?? '';
@@ -214,9 +214,11 @@ class SesionesController extends Controller
         $sesion = $this->model->getSesionParaEditar($id_sesion);
         $id_programacion = $sesion['id_programacion'];
         $datosUnidad = $this->model->getDatosUnidad($id_programacion, $sesion['id_ind_logro_aprendizaje']);
+        //var_dump($datosUnidad);
         $momentos = $this->model->getMomentosSesion($sesion['id']);
         $activEval = $this->model->getActividadesEvaluacion($sesion['id']);
 
+        //var_dump($id_sesion);
 
         // Armamos el HTML igual que en tu vista pero SIN headers/footers de Bootstrap
         ob_start();

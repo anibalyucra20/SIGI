@@ -339,4 +339,11 @@ class Docente extends Model
         $stmt->execute([$id_docente, $id_sede]);
         return $stmt->fetchColumn() > 0;
     }
+
+    public function getDirectorPorPeriodo($id_periodo)
+    {
+        $stmt = self::$db->prepare("SELECT u.id as id_director, u.apellidos_nombres as director FROM sigi_usuarios u LEFT JOIN sigi_periodo_academico pa ON pa.director = u.id WHERE pa.id = ?");
+        $stmt->execute([$id_periodo]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);;
+    }
 }

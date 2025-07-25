@@ -1,15 +1,6 @@
 <?php require __DIR__ . '/../../layouts/header.php'; ?>
 <?php if (\Core\Auth::esAdminSigi()): ?>
 <div class="container mt-4">
-<?php if (!empty($errores)): ?>
-            <div class="alert alert-danger">
-                <ul>
-                    <?php foreach ($errores as $e): ?>
-                        <li><?= htmlspecialchars($e) ?></li>
-                    <?php endforeach; ?>
-                </ul>
-            </div>
-        <?php endif; ?>
     <h4>Nuevo Semestre</h4>
     <form action="<?= BASE_URL ?>/sigi/semestre/guardar" method="post" class="card p-4 shadow-sm rounded-3" autocomplete="off">
         <?php

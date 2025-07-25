@@ -43,6 +43,15 @@ class UnidadDidacticaController extends Controller
             'pageTitle' => 'Unidades Didácticas'
         ]);
     }
+    public function migracion()
+    {
+        $programas = $this->objPrograma->getTodosProgramas();
+        $this->view('sigi/unidadDidactica/migracion', [
+            'programas' => $programas,
+            'module'    => 'sigi',
+            'pageTitle' => 'Unidades Didácticas'
+        ]);
+    }
 
     public function data()
     {

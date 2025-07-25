@@ -1,23 +1,5 @@
 <?php require __DIR__ . '/../../layouts/header.php'; ?>
 <?php if (\Core\Auth::esAdminSigi()): ?>
-    <?php if (!empty($_SESSION['flash_success'])): ?>
-        <div class="alert alert-success alert-dismissible">
-            <?= $_SESSION['flash_success'] ?>
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-            </button>
-        </div>
-        <?php unset($_SESSION['flash_success']); ?>
-    <?php endif; ?>
-    <?php if (!empty($_SESSION['flash_error'])): ?>
-        <div class="alert alert-danger alert-dismissible">
-            <?= $_SESSION['flash_error'] ?>
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-            </button>
-        </div>
-        <?php unset($_SESSION['flash_error']); ?>
-    <?php endif; ?>
     <div class="container mt-4">
         <h3 class="mb-4">Datos Institucionales</h3>
         <form action="<?= BASE_URL ?>/sigi/datosInstitucionales/guardar" method="post" class="card p-4 shadow-sm rounded-3" autocomplete="off" id="form-institucion">

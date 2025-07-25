@@ -54,25 +54,25 @@ class Sesiones extends Model
         return self::$db->lastInsertId();
     }
 
-     // 11. Registra actividad de evaluación de sesión de aprendizaje
-     public function registrarActividadEvaluacionSesion($data)
-     {
-         $sql = "INSERT INTO acad_actividad_evaluacion_sesion_aprendizaje
+    // 11. Registra actividad de evaluación de sesión de aprendizaje
+    public function registrarActividadEvaluacionSesion($data)
+    {
+        $sql = "INSERT INTO acad_actividad_evaluacion_sesion_aprendizaje
              (id_sesion_aprendizaje, indicador_logro_sesion, tecnica, instrumentos, peso, momento)
              VALUES (?, ?, ?, ?, ?, ?)";
-         $stmt = self::$db->prepare($sql);
-         $stmt->execute([
-             $data['id_sesion_aprendizaje'],
-             $data['indicador_logro_sesion'],
-             $data['tecnica'],
-             $data['instrumentos'],
-             $data['peso'],
-             $data['momento']
-         ]);
-         return self::$db->lastInsertId();
-     }
+        $stmt = self::$db->prepare($sql);
+        $stmt->execute([
+            $data['id_sesion_aprendizaje'],
+            $data['indicador_logro_sesion'],
+            $data['tecnica'],
+            $data['instrumentos'],
+            $data['peso'],
+            $data['momento']
+        ]);
+        return self::$db->lastInsertId();
+    }
 
-    
+
     public function getDatosUnidad($id_programacion, $id_ind_logro_aprendizaje = null)
     {
         // Trae datos principales
@@ -159,35 +159,53 @@ class Sesiones extends Model
         return ['data' => $data, 'total' => $total];
     }
 
-    
+
 
 
     // Trae los datos de la sesión para edición
     public function getSesionParaEditar($id_sesion)
     {
-        $stmt = self::$db->prepare("
-        SELECT 
-            sa.id, 
-            sa.id_prog_actividad_silabo, 
-            pas.semana, 
-            pas.id_ind_logro_aprendizaje,
-            sa.denominacion, 
-            sa.fecha_desarrollo, 
-            sa.tipo_actividad,
-            sa.logro_sesion, 
-            sa.bibliografia_obligatoria_docente,
-            s.id_prog_unidad_didactica AS id_programacion,
-            ud.id AS id_unidad_didactica
-        FROM acad_sesion_aprendizaje sa
-        INNER JOIN acad_programacion_actividades_silabo pas ON sa.id_prog_actividad_silabo = pas.id
-        INNER JOIN acad_silabos s ON pas.id_silabo = s.id
-        INNER JOIN sigi_unidad_didactica ud ON s.id_prog_unidad_didactica = ud.id
-        WHERE sa.id = ?
-        LIMIT 1
-    ");
-        $stmt->execute([$id_sesion]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        try {
+            $sql = "
+            SELECT 
+    sa.id,
+    sa.id_prog_actividad_silabo,
+    pas.semana,
+    pas.id_ind_logro_aprendizaje,
+    sa.denominacion,
+    sa.fecha_desarrollo,
+    sa.tipo_actividad,
+    sa.logro_sesion,
+    sa.bibliografia_obligatoria_docente,
+    s.id_prog_unidad_didactica as id_programacion,         -- id de la programación de unidad
+    pu.id_unidad_didactica,             -- FK real a la unidad
+    ud.nombre   AS nombre_unidad        -- datos de la unidad
+FROM acad_sesion_aprendizaje sa
+INNER JOIN acad_programacion_actividades_silabo pas 
+    ON sa.id_prog_actividad_silabo = pas.id
+INNER JOIN acad_silabos s 
+    ON pas.id_silabo = s.id
+INNER JOIN acad_programacion_unidad_didactica pu
+    ON s.id_prog_unidad_didactica = pu.id
+INNER JOIN sigi_unidad_didactica ud
+    ON pu.id_unidad_didactica = ud.id
+WHERE sa.id = ?
+LIMIT 1;
+
+        ";
+            $stmt = self::$db->prepare($sql);
+            $stmt->execute([$id_sesion]);
+            $row = $stmt->fetch();
+            if (!$row) {
+                error_log("getSesionParaEditar: no encontró registro para id_sesion=$id_sesion");
+            }
+            return $row;
+        } catch (\PDOException $e) {
+            error_log("Error getSesionParaEditar: " . $e->getMessage());
+            return false;
+        }
     }
+
 
 
     // Trae los 3 momentos para la sesión
@@ -372,5 +390,4 @@ class Sesiones extends Model
             throw $e;
         }
     }
-    
 }

@@ -121,10 +121,10 @@ class Estudiantes extends Model
         $stmt->execute($params);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
-    public function existeEstudianteEnPlanPeriodo($id_usuario, $id_plan_estudio, $id_periodo, $id_ignorar = null)
+    public function existeEstudianteEnPlan($id_usuario, $id_plan_estudio, $id_ignorar = null)
     {
-        $sql = "SELECT COUNT(*) FROM acad_estudiante_programa WHERE id_usuario = ? AND id_plan_estudio = ? AND id_periodo = ?";
-        $params = [$id_usuario, $id_plan_estudio, $id_periodo];
+        $sql = "SELECT COUNT(*) FROM acad_estudiante_programa WHERE id_usuario = ? AND id_plan_estudio = ?";
+        $params = [$id_usuario, $id_plan_estudio];
         if ($id_ignorar) {
             $sql .= " AND id != ?";
             $params[] = $id_ignorar;
@@ -179,18 +179,17 @@ class Estudiantes extends Model
             $stmt = self::$db->prepare($sql);
             $stmt->execute($params);
 
-            // UPDATE acad_estudiante_programa
-            $sql2 = "UPDATE acad_estudiante_programa 
-                     SET id_plan_estudio = :id_plan_estudio, id_periodo = :id_periodo
-                     WHERE id_usuario = :id";
-            $params2 = [
-                ':id_plan_estudio' => $data['id_plan_estudio'],
-                ':id_periodo' => $data['id_periodo'],
-                ':id' => $data['id']
-            ];
-            $stmt2 = self::$db->prepare($sql2);
-            $stmt2->execute($params2);
-
+            if (!$this->existeEstudianteEnPlan(
+                $data['id'],
+                $data['id_plan_estudio']
+            )) {
+                //en caso que no exista registramos al estudsiante en el plan de estudios
+                // INSERT acad_estudiante_programa
+                $sql2 = "INSERT INTO acad_estudiante_programa (id_usuario, id_plan_estudio, id_periodo)
+                     VALUES (?, ?, ?)";
+                $stmt2 = self::$db->prepare($sql2);
+                $stmt2->execute([$data['id'], $data['id_plan_estudio'], $data['id_periodo']]);
+            }
             return $data['id'];
         } else {
             // INSERT usuario
@@ -209,23 +208,28 @@ class Estudiantes extends Model
                 ':id_periodo_registro' => $data['id_periodo'],
                 ':id_programa_estudios' => $data['id_programa_estudios'],
                 ':discapacidad' => $data['discapacidad'],
-                ':id_rol' => 7, // Ajusta si tu rol de ESTUDIANTE es otro id
+                ':id_rol' => $data['id_rol'],
                 ':id_sede' => $data['id_sede'],
                 ':estado' => $data['estado'],
-                ':password' => '', // vacío
-                ':reset_password' => 0,
-                ':token_password' => '' // vacío
+                ':password' => $data['password'],
+                ':reset_password' => $data['reset_password'],
+                ':token_password' => $data['token_password']
             ];
             $stmt = self::$db->prepare($sql);
             $stmt->execute($params);
             $id_usuario = self::$db->lastInsertId();
 
-            // INSERT acad_estudiante_programa
-            $sql2 = "INSERT INTO acad_estudiante_programa (id_usuario, id_plan_estudio, id_periodo)
+            if (!$this->existeEstudianteEnPlan(
+                $data['id'],
+                $data['id_plan_estudio']
+            )) {
+                //en caso que no exista registramos al estudsiante en el plan de estudios
+                // INSERT acad_estudiante_programa
+                $sql2 = "INSERT INTO acad_estudiante_programa (id_usuario, id_plan_estudio, id_periodo)
                      VALUES (?, ?, ?)";
-            $stmt2 = self::$db->prepare($sql2);
-            $stmt2->execute([$id_usuario, $data['id_plan_estudio'], $data['id_periodo']]);
-
+                $stmt2 = self::$db->prepare($sql2);
+                $stmt2->execute([$id_usuario, $data['id_plan_estudio'], $data['id_periodo']]);
+            }
             return $id_usuario;
         }
     }

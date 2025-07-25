@@ -1,15 +1,5 @@
 <?php require __DIR__ . '/../../layouts/header.php'; ?>
 <?php if (\Core\Auth::esAdminSigi()): ?>
-    <div class="card p-2">
-        <?php if (!empty($errores)): ?>
-            <div class="alert alert-danger">
-                <ul>
-                    <?php foreach ($errores as $e): ?>
-                        <li><?= htmlspecialchars($e) ?></li>
-                    <?php endforeach; ?>
-                </ul>
-            </div>
-        <?php endif; ?>
         <div class="card p-2">
             <h4>Nuevo Módulo Formativo</h4>
             <form action="<?= BASE_URL ?>/sigi/moduloFormativo/guardar" method="post" class="card p-4 shadow-sm rounded-3" autocomplete="off">

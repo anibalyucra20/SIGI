@@ -114,8 +114,7 @@
                     $contador++;
                 endforeach; ?>
                 <?php
-                $filas_faltantes_asistencia = 40 - count($datos_asistencia['estudiantes']);
-                for ($fila = $contador; $fila <= $filas_faltantes_asistencia; $fila++): ?>
+                for ($fila = $contador; $fila <= 40; $fila++): ?>
                     <tr>
                         <td style="font-size:7px;"><?= $fila ?></td>
                         <?php for ($col = 1; $col <= $total_semanas; $col++): ?>
@@ -149,7 +148,7 @@
                 <?php for ($i = $contador_ind_logro_capacidad; $i <= 12; $i++): ?>
                     <tr>
                         <td><?= $i; ?></td>
-                        <td style="height:50px; text-align:left;">
+                        <td style="height:30px; text-align:left;">
                         </td>
                     </tr>
                 <?php endfor; ?>

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models\Academico;
 
 use Core\Model;
@@ -79,6 +80,171 @@ class UnidadesDidacticas extends Model
 
         return ['data' => $data, 'total' => $total];
     }
+    public function actualizardatosInformeFinal($id_programacion_ud, $data)
+    {
+        // Actualiza acad_programacion_unidad_didactica
+        $stmt = self::$db->prepare("UPDATE acad_programacion_unidad_didactica
+        SET supervisado = :supervisado,
+            reg_evaluacion = :reg_evaluacion,
+            reg_auxiliar = :reg_auxiliar,
+            prog_curricular = :prog_curricular,
+            otros = :otros,
+            logros_obtenidos= :logros_obtenidos,
+            dificultades = :dificultades,
+            sugerencias = :sugerencias
+        WHERE id = :id");
+        $stmt->execute([
+            ':supervisado' => $data['supervisado'],
+            ':reg_evaluacion' => $data['reg_evaluacion'],
+            ':reg_auxiliar' => $data['reg_auxiliar'],
+            ':prog_curricular' => $data['prog_curricular'],
+            ':otros' => $data['otros'],
+            ':logros_obtenidos' => $data['logros_obtenidos'],
+            ':dificultades' => $data['dificultades'],
+            ':sugerencias' => $data['sugerencias'],
+            ':id' => $id_programacion_ud
+        ]);
+    }
 
-   
+    public function getPorcentajeAvanceCurricular($id_programacion)
+    {
+        $sql = "SELECT 
+                COUNT(*) AS total,
+                SUM(CASE WHEN TRIM(sa.logro_sesion) != '' THEN 1 ELSE 0 END) AS desarrolladas
+            FROM acad_sesion_aprendizaje sa
+            INNER JOIN acad_programacion_actividades_silabo pas ON sa.id_prog_actividad_silabo = pas.id
+            INNER JOIN acad_silabos s ON pas.id_silabo = s.id
+            WHERE s.id_prog_unidad_didactica = ?";
+        $stmt = self::$db->prepare($sql);
+        $stmt->execute([$id_programacion]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($row && $row['total'] > 0) {
+            return round(($row['desarrolladas'] / $row['total']) * 100, 2);
+        }
+        return 0;
+    }
+
+    public function getUltimaClaseDesarrollada($id_programacion)
+    {
+        $sql = "SELECT 
+                sa.denominacion AS denominacion, 
+                sa.logro_sesion, 
+                pas.semana, 
+                pas.fecha
+            FROM acad_sesion_aprendizaje sa
+            INNER JOIN acad_programacion_actividades_silabo pas ON sa.id_prog_actividad_silabo = pas.id
+            INNER JOIN acad_silabos s ON pas.id_silabo = s.id
+            WHERE s.id_prog_unidad_didactica = ? 
+              AND TRIM(sa.logro_sesion) != ''
+            ORDER BY pas.semana DESC, pas.fecha DESC
+            LIMIT 1";
+        $stmt = self::$db->prepare($sql);
+        $stmt->execute([$id_programacion]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($row) {
+            return 'Semana ' . $row['semana'] . ' - ' . $row['denominacion'];
+        }
+        return 'No registrada';
+    }
+
+    public function getSesionesNoDesarrolladas($id_programacion)
+    {
+        $sql = "SELECT 
+                pas.semana, 
+                pas.fecha 
+            FROM acad_sesion_aprendizaje sa
+            INNER JOIN acad_programacion_actividades_silabo pas ON sa.id_prog_actividad_silabo = pas.id
+            INNER JOIN acad_silabos s ON pas.id_silabo = s.id
+            WHERE s.id_prog_unidad_didactica = ? 
+              AND TRIM(sa.logro_sesion) = ''
+            ORDER BY pas.semana ASC";
+        $stmt = self::$db->prepare($sql);
+        $stmt->execute([$id_programacion]);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        if ($rows) {
+            return implode(', ', array_map(function ($r) {
+                return 'Semana ' . $r['semana'];
+            }, $rows));
+        }
+        return 'Ninguna';
+    }
+
+    public function getResumenEstadisticoFinal($id_programacion, $objCalificacion)
+    {
+        $stmt = self::$db->prepare("
+        SELECT 
+            dm.id AS id_detalle_matricula,
+            u.apellidos_nombres AS apellidos_nombres,
+            u.genero AS genero,
+            dm.id_programacion_ud,
+            m.licencia
+        FROM acad_detalle_matricula dm
+        INNER JOIN acad_matricula m ON dm.id_matricula = m.id
+        INNER JOIN acad_estudiante_programa aep ON m.id_estudiante = aep.id
+        INNER JOIN sigi_usuarios u ON aep.id_usuario = u.id
+        WHERE dm.id_programacion_ud = ?
+    ");
+        $stmt->execute([$id_programacion]);
+        $estudiantes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Configura aquí los valores que usas como nro_calificacion
+        $nros_calificacion = [1, 2, 3]; // ejemplo: tres evaluaciones
+
+        $resumen = [
+            'total_hombres' => 0,
+            'total_mujeres' => 0,
+            'total_todos' => 0,
+            'retirados_h' => 0,
+            'retirados_m' => 0,
+            'retirados_t' => 0,
+            'aprobados_h' => 0,
+            'aprobados_m' => 0,
+            'aprobados_t' => 0,
+            'desaprobados_h' => 0,
+            'desaprobados_m' => 0,
+            'desaprobados_t' => 0,
+        ];
+        //var_dump($estudiantes);
+        foreach ($estudiantes as $e) {
+            $genero = $e['genero']; // M o F
+            $resumen['total_todos']++;
+
+            if ($genero == 'M') $resumen['total_hombres']++;
+            if ($genero == 'F') $resumen['total_mujeres']++;
+
+            // Verifica si está retirado (licencia no vacía)
+            if (trim($e['licencia']) !== '') {
+                $resumen['retirados_t']++;
+                if ($genero == 'M') $resumen['retirados_h']++;
+                if ($genero == 'F') $resumen['retirados_m']++;
+                continue; // no calcular nota
+            }
+            $promedio_final = $objCalificacion->promedioFinalEstudiante($e['id_detalle_matricula'], $nros_calificacion);
+            if ($promedio_final >= 13) {
+                $resumen['aprobados_t']++;
+                if ($genero == 'M') $resumen['aprobados_h']++;
+                if ($genero == 'F') $resumen['aprobados_m']++;
+            } else {
+                $resumen['desaprobados_t']++;
+                if ($genero == 'M') $resumen['desaprobados_h']++;
+                if ($genero == 'F') $resumen['desaprobados_m']++;
+            }
+        }
+
+        // Cálculos de porcentajes
+        $tt = $resumen['total_todos'];
+        foreach (['h', 'm', 't'] as $sx) {
+            $resumen["porc_hombres"]     = $tt ? round($resumen['total_hombres'] * 100 / $tt, 1) : 0;
+            $resumen["porc_mujeres"]     = $tt ? round($resumen['total_mujeres'] * 100 / $tt, 1) : 0;
+
+            $resumen["retirados_p$sx"]   = $tt ? round($resumen["retirados_$sx"] * 100 / $tt, 1) : 0;
+            $resumen["aprobados_p$sx"]   = $tt ? round($resumen["aprobados_$sx"] * 100 / $tt, 1) : 0;
+            $resumen["desaprobados_p$sx"] = $tt ? round($resumen["desaprobados_$sx"] * 100 / $tt, 1) : 0;
+        }
+
+        return $resumen;
+    }
 }

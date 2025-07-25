@@ -58,13 +58,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         acciones += `<a href="<?= BASE_URL ?>/academico/sesiones/ver/${row.id}" class="btn btn-sm btn-outline-secondary mb-1">Sesiones</a> `;
                         acciones += `<a href="<?= BASE_URL ?>/academico/calificaciones/ver/${row.id}" class="btn btn-sm btn-outline-success mb-1">Calificaciones</a> `;
                         acciones += `<a href="<?= BASE_URL ?>/academico/asistencia/ver/${row.id}" class="btn btn-sm btn-outline-warning mb-1">Asistencia</a> `;
-                        acciones += `<a href="<?= BASE_URL ?>/academico/informeFinal/${row.id}" class="btn btn-sm btn-outline-dark mb-1">Informe Final</a> `;
+                        acciones += `<a href="<?= BASE_URL ?>/academico/unidadesDidacticas/informeFinal/${row.id}" class="btn btn-sm btn-outline-dark mb-1">Informe Final</a> `;
                     } else {
                         acciones += `<a href="<?= BASE_URL ?>/academico/silabos/editar/${row.id}" class="btn btn-sm btn-outline-primary mb-1">Ver Sílabo</a> `;
                         acciones += `<a href="<?= BASE_URL ?>/academico/sesiones/ver/${row.id}" class="btn btn-sm btn-outline-secondary mb-1">Ver Sesiones</a> `;
                         acciones += `<a href="<?= BASE_URL ?>/academico/calificaciones/ver/${row.id}" class="btn btn-sm btn-outline-success mb-1">Ver Calificaciones</a> `;
                         acciones += `<a href="<?= BASE_URL ?>/academico/asistencia/ver/${row.id}" class="btn btn-sm btn-outline-warning mb-1">Ver Asistencia</a> `;
-                        acciones += `<a href="<?= BASE_URL ?>/academico/informeFinal/ver/${row.id}" class="btn btn-sm btn-outline-dark mb-1">Ver Informe Final</a> `;
+                        acciones += `<a href="<?= BASE_URL ?>/academico/unidadesDidacticas/informeFinal/${row.id}" class="btn btn-sm btn-outline-dark mb-1">Ver Informe Final</a> `;
                     }
                     acciones += `<a href="<?= BASE_URL ?>/academico/unidadesDidacticas/imprimirCaratula/${row.id}" target="_blank" class="btn btn-sm btn-outline-info mb-1">Imprimir Carátula</a> `;
                     return acciones;

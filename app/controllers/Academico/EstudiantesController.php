@@ -22,7 +22,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
-use App\Models\Sigi\EstudianteImport;
+
 
 class EstudiantesController extends Controller
 {
@@ -125,6 +125,9 @@ class EstudiantesController extends Controller
         $id_sede = $_SESSION['sigi_sede_actual'] ?? 0;
         $errores = [];
         $isNuevo = empty($_POST['id']);
+
+        $password = bin2hex(random_bytes(5));
+        $password_secure = password_hash($password, PASSWORD_DEFAULT);
         $data = [
             'id'                  => $_POST['id'] ?? null,
             'dni'                 => trim($_POST['dni']),
@@ -138,6 +141,10 @@ class EstudiantesController extends Controller
             'id_programa_estudios' => $_POST['id_programa_estudios'],
             'id_plan_estudio'     => $_POST['id_plan_estudio'],
             'estado'              => $_POST['estado'] ?? 1,
+            'id_rol'              => 7, // Ajusta si tu rol de ESTUDIANTE es otro id
+            'password'             => $password_secure,
+            'reset_password'       => 0,
+            'token_password'       => '',
             // Sede y periodo
             'id_sede'             => $isNuevo ? ($_SESSION['sigi_sede_actual'] ?? 0) : $_POST['id_sede'],
             'id_periodo'          => $isNuevo ? ($_SESSION['sigi_periodo_actual_id'] ?? 0) : $_POST['id_periodo'],
@@ -147,10 +154,9 @@ class EstudiantesController extends Controller
         if ($this->model->existeDni($data['dni'], $data['id'])) {
             $errores[] = "Ya existe un estudiante registrado con este DNI.";
         }
-        if (!$isNuevo && $this->model->existeEstudianteEnPlanPeriodo(
+        if (!$isNuevo && $this->model->existeEstudianteEnPlan(
             $data['id'],
             $data['id_plan_estudio'],
-            $data['id_periodo'],
             $_POST['id_acad_est_prog'] ?? $estudiante['id_acad_est_prog'] ?? null
         )) {
             $errores[] = "Este estudiante ya está registrado en este plan de estudios y periodo.";
@@ -384,7 +390,7 @@ class EstudiantesController extends Controller
                         'direccion'            => $direccion,
                         'correo'               => $correo,
                         'telefono'             => $telefono,
-                        'id_periodo_registro'  => $id_periodo_registro,
+                        'id_periodo'           => $id_periodo_registro,
                         'id_programa_estudios' => $id_programa_estudios,
                         'discapacidad'         => $discapacidad,
                         'id_rol'               => 7,
@@ -398,22 +404,21 @@ class EstudiantesController extends Controller
                     ];
                 }
             }
-            var_dump($datosAInsertar);
-
             // Mostrar errores (puedes mostrar en vista, aquí solo ejemplo)
-            /*if ($errores) {
+            if ($errores) {
                 $_SESSION['flash_error'] = implode('<br>', $errores);
                 header('Location: ' . BASE_URL . '/academico/estudiantes');
                 exit;
-            }*/
+            }
 
-            /*// Insertar estudiantes
+            // Insertar estudiantes
             foreach ($datosAInsertar as $estudiante) {
                 $this->model->guardar($estudiante);
             }
+            $_SESSION['flash_error'] = implode('<br>', $errores);
             $_SESSION['flash_success'] = "Importación completada correctamente.";
             header('Location: ' . BASE_URL . '/academico/estudiantes');
-            exit;*/
+            exit;
         }
     }
 }

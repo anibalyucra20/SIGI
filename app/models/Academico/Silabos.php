@@ -54,6 +54,7 @@ class Silabos extends Model
     public function actualizarSilabo($id, $data)
     {
         $sql = "UPDATE acad_silabos SET 
+            horario = :horario,
             sumilla = :sumilla,
             metodologia = :metodologia,
             recursos_didacticos = :recursos_didacticos,
@@ -80,10 +81,19 @@ class Silabos extends Model
             ((ud.creditos_teorico * 1) + (ud.creditos_practico * 2)) * 16 AS horas_totales,
             ((ud.creditos_teorico * 1) + (ud.creditos_practico * 2)) AS horas_semanales,
             pa.nombre AS periodo_lectivo,
+            pa.id AS id_periodo_lectivo,
             pud.seccion AS seccion,
             DATE_FORMAT(pa.fecha_inicio, '%d/%m/%Y') AS fecha_inicio,
             DATE_FORMAT(pa.fecha_fin, '%d/%m/%Y') AS fecha_fin,
             pud.turno,
+            pud.supervisado AS supervisado,
+            pud.reg_evaluacion AS reg_evaluacion,
+            pud.reg_auxiliar AS reg_auxiliar,
+            pud.prog_curricular AS prog_curricular,
+            pud.otros AS otros,
+            pud.logros_obtenidos AS logros_obtenidos,
+            pud.dificultades AS dificultades,
+            pud.sugerencias AS sugerencias,
             u.apellidos_nombres AS docente,
             u.correo AS correo_docente
             FROM acad_programacion_unidad_didactica pud
