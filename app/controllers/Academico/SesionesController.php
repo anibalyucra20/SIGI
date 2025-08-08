@@ -6,37 +6,46 @@ use Core\Controller;
 
 require_once __DIR__ . '/../../../app/models/Academico/ProgramacionUnidadDidactica.php';
 require_once __DIR__ . '/../../../app/models/Academico/Sesiones.php';
+require_once __DIR__ . '/../../../app/models/Sigi/PeriodoAcademico.php';
 require_once __DIR__ . '/../../../app/utils/MYPDF.php';
 
 use App\Models\Academico\ProgramacionUnidadDidactica;
 use App\Models\Academico\Sesiones;
+use App\Models\Sigi\PeriodoAcademico;
 use MYPDF;
 
 class SesionesController extends Controller
 {
     protected $model;
     protected $objProgracionUD;
+    protected $objPeriodoAcademico;
 
     public function __construct()
     {
         parent::__construct();
         $this->model = new Sesiones();
         $this->objProgracionUD = new ProgramacionUnidadDidactica();
+        $this->objPeriodoAcademico = new PeriodoAcademico();
     }
 
     public function ver($id_programacion)
     {
         $datosUnidad = $this->model->getDatosUnidad($id_programacion);
+        $programacion = $this->objProgracionUD->find($id_programacion);
 
+        $periodo = $this->objPeriodoAcademico->getPeriodoVigente($programacion['id_periodo_academico']);
         // Permisos
-        $esAdminAcademico = (isset($_SESSION['sigi_rol_actual']) && $_SESSION['sigi_rol_actual'] == 1);
+        $esAdminAcademico = (\Core\Auth::esAdminAcademico());
         $esDocenteEncargado = (isset($_SESSION['sigi_user_id']) && $datosUnidad && $_SESSION['sigi_user_id'] == $this->objProgracionUD->getIdDocente($id_programacion));
         $permitido = $esAdminAcademico || $esDocenteEncargado;
+
+        $periodo_vigente = ($periodo && $periodo['vigente']);
 
         $this->view('academico/sesiones/index', [
             'datosUnidad' => $datosUnidad,
             'id_programacion' => $id_programacion,
             'permitido' => $permitido,
+            'periodo_vigente' => $periodo_vigente,
             'module' => 'academico',
             'pageTitle' => 'Sesiones de Aprendizaje'
         ]);
@@ -45,21 +54,27 @@ class SesionesController extends Controller
 
     public function data($id_programacion)
     {
-        header('Content-Type: application/json; charset=utf-8');
-        $draw = $_GET['draw'] ?? 1;
-        $start = $_GET['start'] ?? 0;
-        $length = $_GET['length'] ?? 10;
-        $orderCol = $_GET['order'][0]['column'] ?? 1;
-        $orderDir = $_GET['order'][0]['dir'] ?? 'asc';
+        // Permisos
+        $esAdminAcademico = (\Core\Auth::esAdminAcademico());
+        $esDocenteEncargado = (isset($_SESSION['sigi_user_id']) && $_SESSION['sigi_user_id'] == $this->objProgracionUD->getIdDocente($id_programacion));
+        $permitido = $esAdminAcademico || $esDocenteEncargado;
+        if ($permitido):
+            header('Content-Type: application/json; charset=utf-8');
+            $draw = $_GET['draw'] ?? 1;
+            $start = $_GET['start'] ?? 0;
+            $length = $_GET['length'] ?? 10;
+            $orderCol = $_GET['order'][0]['column'] ?? 1;
+            $orderDir = $_GET['order'][0]['dir'] ?? 'asc';
 
-        $result = $this->model->getSesionesPaginadas($id_programacion, $length, $start, $orderCol, $orderDir);
+            $result = $this->model->getSesionesPaginadas($id_programacion, $length, $start, $orderCol, $orderDir);
 
-        echo json_encode([
-            'draw' => (int)$draw,
-            'recordsTotal' => (int)$result['total'],
-            'recordsFiltered' => (int)$result['total'],
-            'data' => $result['data']
-        ], JSON_UNESCAPED_UNICODE);
+            echo json_encode([
+                'draw' => (int)$draw,
+                'recordsTotal' => (int)$result['total'],
+                'recordsFiltered' => (int)$result['total'],
+                'data' => $result['data']
+            ], JSON_UNESCAPED_UNICODE);
+        endif;
         exit;
     }
 
@@ -71,11 +86,14 @@ class SesionesController extends Controller
 
         // Aquí pasas el id_ind_logro_aprendizaje de la sesión para obtener código/desc.
         $datosUnidad = $this->model->getDatosUnidad($id_programacion, $sesion['id_ind_logro_aprendizaje']);
+        $programacion = $this->objProgracionUD->find($id_programacion);
 
         // Permisos
-        $esAdminAcademico = (isset($_SESSION['sigi_rol_actual']) && $_SESSION['sigi_rol_actual'] == 1);
+        $periodo = $this->objPeriodoAcademico->getPeriodoVigente($programacion['id_periodo_academico']);
+        $esAdminAcademico = (\Core\Auth::esAdminAcademico());
         $esDocenteEncargado = (isset($_SESSION['sigi_user_id']) && $datosUnidad && $_SESSION['sigi_user_id'] == $this->objProgracionUD->getIdDocente($id_programacion));
         $permitido = $esAdminAcademico || $esDocenteEncargado;
+        $periodo_vigente = ($periodo && $periodo['vigente']);
 
         $momentos = $this->model->getMomentosSesion($sesion['id']);
         $activEval = $this->model->getActividadesEvaluacion($sesion['id']);
@@ -85,6 +103,7 @@ class SesionesController extends Controller
             'id_programacion' => $id_programacion,
             'datosUnidad' => $datosUnidad,
             'permitido' => $permitido,
+            'periodo_vigente' => $periodo_vigente,
             'momentos' => $momentos,
             'activEval' => $activEval,
             'errores' => [],
@@ -100,7 +119,7 @@ class SesionesController extends Controller
         $id_programacion = $sesion['id_programacion'];
         $datosUnidad = $this->model->getDatosUnidad($id_programacion, $sesion['id_ind_logro_aprendizaje']);
 
-        $esAdminAcademico = (isset($_SESSION['sigi_rol_actual']) && $_SESSION['sigi_rol_actual'] == 1);
+        $esAdminAcademico = (\Core\Auth::esAdminAcademico());
         $esDocenteEncargado = (isset($_SESSION['sigi_user_id']) && $datosUnidad && $_SESSION['sigi_user_id'] == $this->objProgracionUD->getIdDocente($id_programacion));
         $permitido = $esAdminAcademico || $esDocenteEncargado;
         if (!$permitido) {
@@ -166,7 +185,7 @@ class SesionesController extends Controller
         $id_programacion = $sesion['id_programacion'];
         $datosUnidad = $this->model->getDatosUnidad($id_programacion);
 
-        $esAdminAcademico = (isset($_SESSION['sigi_rol_actual']) && $_SESSION['sigi_rol_actual'] == 1);
+        $esAdminAcademico = (\Core\Auth::esAdminAcademico());
         $esDocenteEncargado = (isset($_SESSION['sigi_user_id']) && $datosUnidad && $_SESSION['sigi_user_id'] == $this->objProgracionUD->getIdDocente($id_programacion));
         if (!($esAdminAcademico || $esDocenteEncargado)) {
             $_SESSION['flash_error'] = "No tiene permisos para duplicar esta sesión.";
@@ -189,7 +208,7 @@ class SesionesController extends Controller
         $id_programacion = $sesion['id_programacion'];
         $datosUnidad = $this->model->getDatosUnidad($id_programacion);
 
-        $esAdminAcademico = (isset($_SESSION['sigi_rol_actual']) && $_SESSION['sigi_rol_actual'] == 1);
+        $esAdminAcademico = (\Core\Auth::esAdminAcademico());
         $esDocenteEncargado = (isset($_SESSION['sigi_user_id']) && $datosUnidad && $_SESSION['sigi_user_id'] == $this->objProgracionUD->getIdDocente($id_programacion));
         if (!($esAdminAcademico || $esDocenteEncargado)) {
             $_SESSION['flash_error'] = "No tiene permisos para eliminar esta sesión.";
@@ -213,11 +232,17 @@ class SesionesController extends Controller
         // Recupera todos los datos igual que en imprimir()
         $sesion = $this->model->getSesionParaEditar($id_sesion);
         $id_programacion = $sesion['id_programacion'];
+        $programacion = $this->objProgracionUD->find($id_programacion);
         $datosUnidad = $this->model->getDatosUnidad($id_programacion, $sesion['id_ind_logro_aprendizaje']);
         //var_dump($datosUnidad);
         $momentos = $this->model->getMomentosSesion($sesion['id']);
         $activEval = $this->model->getActividadesEvaluacion($sesion['id']);
 
+        $periodo = $this->objPeriodoAcademico->getPeriodoVigente($programacion['id_periodo_academico']);
+        $esAdminAcademico = (\Core\Auth::esAdminAcademico());
+        $esDocenteEncargado = (isset($_SESSION['sigi_user_id']) && $datosUnidad && $_SESSION['sigi_user_id'] == $this->objProgracionUD->getIdDocente($id_programacion));
+        $permitido = $esAdminAcademico || $esDocenteEncargado;
+        $periodo_vigente = ($periodo && $periodo['vigente']);
         //var_dump($id_sesion);
 
         // Armamos el HTML igual que en tu vista pero SIN headers/footers de Bootstrap

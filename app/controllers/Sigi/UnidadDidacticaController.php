@@ -101,17 +101,19 @@ class UnidadDidacticaController extends Controller
 
     public function guardar()
     {
-        $data = [
-            'id'        => $_POST['id'] ?? null,
-            'nombre'    => trim($_POST['nombre']),
-            'id_semestre' => $_POST['id_semestre'],
-            'creditos_teorico'  => $_POST['creditos_teorico'],
-            'creditos_practico'     => $_POST['creditos_practico'],
-            'tipo'      => $_POST['tipo'],
-            'orden'     => $_POST['orden'],
-        ];
-        $this->model->guardar($data);
-        $_SESSION['flash_success'] = "Unidad didáctica guardada correctamente.";
+        if (\Core\Auth::esAdminSigi()):
+            $data = [
+                'id'        => $_POST['id'] ?? null,
+                'nombre'    => trim($_POST['nombre']),
+                'id_semestre' => $_POST['id_semestre'],
+                'creditos_teorico'  => $_POST['creditos_teorico'],
+                'creditos_practico'     => $_POST['creditos_practico'],
+                'tipo'      => $_POST['tipo'],
+                'orden'     => $_POST['orden'],
+            ];
+            $this->model->guardar($data);
+            $_SESSION['flash_success'] = "Unidad didáctica guardada correctamente.";
+        endif;
         header('Location: ' . BASE_URL . '/sigi/unidadDidactica');
         exit;
     }

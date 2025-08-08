@@ -19,9 +19,11 @@ class LogsController extends Controller
 
     public function index()
     {
-        $usuarios = $this->model->getUsuarios();
-        $acciones = $this->model->getAcciones();
-        $tablas   = $this->model->getTablas();
+        if (\Core\Auth::esAdminSigi()):
+            $usuarios = $this->model->getUsuarios();
+            $acciones = $this->model->getAcciones();
+            $tablas   = $this->model->getTablas();
+        endif;
         $this->view('sigi/logs/index', [
             'usuarios' => $usuarios,
             'acciones' => $acciones,
@@ -29,34 +31,37 @@ class LogsController extends Controller
             'module'   => 'sigi',
             'pageTitle' => 'Auditoría del Sistema'
         ]);
+        exit;
     }
 
     public function data()
     {
-        header('Content-Type: application/json; charset=utf-8');
-        $draw      = $_GET['draw']  ?? 1;
-        $start     = $_GET['start'] ?? 0;
-        $length    = $_GET['length'] ?? 10;
-        $orderCol  = $_GET['order'][0]['column'] ?? 0;
-        $orderDir  = $_GET['order'][0]['dir']    ?? 'desc';
+        if (\Core\Auth::esAdminSigi()):
+            header('Content-Type: application/json; charset=utf-8');
+            $draw      = $_GET['draw']  ?? 1;
+            $start     = $_GET['start'] ?? 0;
+            $length    = $_GET['length'] ?? 10;
+            $orderCol  = $_GET['order'][0]['column'] ?? 0;
+            $orderDir  = $_GET['order'][0]['dir']    ?? 'desc';
 
-        $filters = [
-            'usuario'   => $_GET['filter_usuario'] ?? '',
-            'accion'    => $_GET['filter_accion']  ?? '',
-            'tabla'     => $_GET['filter_tabla']   ?? '',
-            'fecha_ini' => $_GET['filter_fecha_ini'] ?? '',
-            'fecha_fin' => $_GET['filter_fecha_fin'] ?? '',
-            'search'    => $_GET['search']['value'] ?? '',
-        ];
+            $filters = [
+                'usuario'   => $_GET['filter_usuario'] ?? '',
+                'accion'    => $_GET['filter_accion']  ?? '',
+                'tabla'     => $_GET['filter_tabla']   ?? '',
+                'fecha_ini' => $_GET['filter_fecha_ini'] ?? '',
+                'fecha_fin' => $_GET['filter_fecha_fin'] ?? '',
+                'search'    => $_GET['search']['value'] ?? '',
+            ];
 
-        $result = $this->model->getPaginated($filters, $length, $start, $orderCol, $orderDir);
+            $result = $this->model->getPaginated($filters, $length, $start, $orderCol, $orderDir);
 
-        echo json_encode([
-            'draw'            => (int)$draw,
-            'recordsTotal'    => (int)$result['total'],
-            'recordsFiltered' => (int)$result['total'],
-            'data'            => $result['data']
-        ], JSON_UNESCAPED_UNICODE);
+            echo json_encode([
+                'draw'            => (int)$draw,
+                'recordsTotal'    => (int)$result['total'],
+                'recordsFiltered' => (int)$result['total'],
+                'data'            => $result['data']
+            ], JSON_UNESCAPED_UNICODE);
+        endif;
         exit;
     }
 }

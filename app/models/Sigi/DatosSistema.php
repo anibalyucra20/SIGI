@@ -36,6 +36,7 @@ class DatosSistema extends Model
                     color_correo = :color_correo,
                     cant_semanas = :cant_semanas,
                     nota_inasistencia = :nota_inasistencia,
+                    duracion_sesion = :duracion_sesion,
                     token_sistema = :token_sistema
                 WHERE id = :id";
         $stmt = self::$db->prepare($sql);
@@ -53,6 +54,12 @@ class DatosSistema extends Model
     public function getNotaSiInasistencia()
     {
         $stmt = self::$db->query("SELECT nota_inasistencia FROM sigi_datos_sistema LIMIT 1");
+        $res = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $res; // Valor por defecto si no existe
+    }
+    public function getDuracionSession()
+    {
+        $stmt = self::$db->query("SELECT duracion_sesion FROM sigi_datos_sistema LIMIT 1");
         $res = $stmt->fetch(PDO::FETCH_ASSOC);
         return $res; // Valor por defecto si no existe
     }

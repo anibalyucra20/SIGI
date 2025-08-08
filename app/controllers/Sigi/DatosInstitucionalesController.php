@@ -24,55 +24,53 @@ class DatosInstitucionalesController extends Controller
     }
     public function index()
     {
-        if (!\Core\Auth::esAdminSigi()) {
-            // si no es administrador mostramos la vista vacia
-            $this->view('sigi/datosInstitucionales/index', []);
-            exit;
-        }
-        $institucion = $this->model->buscar();
+        if (\Core\Auth::esAdminSigi()):
+            $institucion = $this->model->buscar();
+        endif;
         $this->view('sigi/datosInstitucionales/index', [
             'institucion' => $institucion,
             'module' => 'sigi',
             'pageTitle' => 'Editar datos institucionales'
         ]);
+        exit;
     }
     // Guardar los datos (POST)
     public function guardar()
     {
-        $data = [
-            'id'                 => $_POST['id'] ?? null,
-            'cod_modular'        => $_POST['cod_modular'],
-            'ruc'                => $_POST['ruc'],
-            'nombre_institucion' => $_POST['nombre_institucion'],
-            'dre'                => $_POST['dre'],
-            'departamento'       => $_POST['departamento'],
-            'provincia'          => $_POST['provincia'],
-            'distrito'           => $_POST['distrito'],
-            'direccion'          => $_POST['direccion'],
-            'telefono'           => $_POST['telefono'],
-            'correo'             => $_POST['correo'],
-            'nro_resolucion'     => $_POST['nro_resolucion'],
-            'estado'             => $_POST['estado'],
-        ];
+        if (\Core\Auth::esAdminSigi()):
+            $data = [
+                'id'                 => $_POST['id'] ?? null,
+                'cod_modular'        => $_POST['cod_modular'],
+                'ruc'                => $_POST['ruc'],
+                'nombre_institucion' => $_POST['nombre_institucion'],
+                'dre'                => $_POST['dre'],
+                'departamento'       => $_POST['departamento'],
+                'provincia'          => $_POST['provincia'],
+                'distrito'           => $_POST['distrito'],
+                'direccion'          => $_POST['direccion'],
+                'telefono'           => $_POST['telefono'],
+                'correo'             => $_POST['correo'],
+                'nro_resolucion'     => $_POST['nro_resolucion'],
+                'estado'             => $_POST['estado'],
+            ];
 
-        // Puedes agregar validaciones extra aquí si deseas
-        // Validación rápida de ejemplo
-        foreach (['cod_modular', 'ruc', 'nombre_institucion', 'dre', 'departamento', 'provincia', 'distrito', 'direccion', 'telefono', 'correo', 'nro_resolucion'] as $campo) {
-            if (empty($data[$campo])) {
-                $_SESSION['flash_error'] = "Todos los campos son obligatorios.";
+            // Puedes agregar validaciones extra aquí si deseas
+            // Validación rápida de ejemplo
+            foreach (['cod_modular', 'ruc', 'nombre_institucion', 'dre', 'departamento', 'provincia', 'distrito', 'direccion', 'telefono', 'correo', 'nro_resolucion'] as $campo) {
+                if (empty($data[$campo])) {
+                    $_SESSION['flash_error'] = "Todos los campos son obligatorios.";
+                    header('Location: ' . BASE_URL . '/sigi/datosInstitucionales');
+                    exit;
+                }
+            }
+            if (!filter_var($data['correo'], FILTER_VALIDATE_EMAIL)) {
+                $_SESSION['flash_error'] = "Correo electrónico inválido.";
                 header('Location: ' . BASE_URL . '/sigi/datosInstitucionales');
                 exit;
             }
-        }
-        if (!filter_var($data['correo'], FILTER_VALIDATE_EMAIL)) {
-            $_SESSION['flash_error'] = "Correo electrónico inválido.";
-            header('Location: ' . BASE_URL . '/sigi/datosInstitucionales');
-            exit;
-        }
-
-        $this->model->guardar($data);
-
-        $_SESSION['flash_success'] = "Datos institucionales guardados correctamente.";
+            $this->model->guardar($data);
+            $_SESSION['flash_success'] = "Datos institucionales guardados correctamente.";
+        endif;
         header('Location: ' . BASE_URL . '/sigi/datosInstitucionales');
         exit;
     }

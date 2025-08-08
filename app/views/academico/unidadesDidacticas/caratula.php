@@ -1,3 +1,13 @@
+<?php
+if (!$permitido) {
+?>
+    <h1>No tienes permiso para imprimir la caratula</h1>
+<?php
+
+} else {
+    # code...
+
+?>
 <style>
     .titulo {
         font-size: 20px;
@@ -143,4 +153,8 @@ if ($datosSistema['logo'] != '') {
 $pdf->Image($logoMineduPath, 15, 15, 40, 10); // (x, y, width en mm)
 $pdf->Image($logoPath, 163, 15, 40, 12); // (x, y, width en mm)
 
+?>
+
+<?php
+}
 ?>

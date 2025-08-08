@@ -36,6 +36,6 @@
       </div>
     </div>
   <?php endif; ?>
-  </div>
-
-  <?php require __DIR__ . '/../layouts/footer.php'; ?>
+ 
+    </div>
+    <?php require __DIR__ . '/../layouts/footer.php'; ?>

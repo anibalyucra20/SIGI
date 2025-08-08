@@ -1,5 +1,5 @@
 <?php require __DIR__ . '/../../layouts/header.php'; ?>
-
+<?php if (\Core\Auth::esAdminAcademico()): ?>
 <div class="card p-3">
     <h4 class="mb-2">Licencias de estudios</h4>
 
@@ -248,4 +248,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+<?php else: ?>
+    <div class="alert alert-danger mt-4">
+        <b>Acceso denegado:</b> Solo el administrador académico puede registrar matrículas.
+    </div>
+<?php endif; ?>
 <?php require __DIR__ . '/../../layouts/footer.php'; ?>

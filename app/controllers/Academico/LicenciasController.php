@@ -30,51 +30,57 @@ class LicenciasController extends Controller
     // DataTables AJAX
     public function data()
     {
-        header('Content-Type: application/json; charset=utf-8');
-        $draw   = $_GET['draw']  ?? 1;
-        $start  = $_GET['start'] ?? 0;
-        $length = $_GET['length'] ?? 10;
+        if (\Core\Auth::esAdminAcademico()):
+            header('Content-Type: application/json; charset=utf-8');
+            $draw   = $_GET['draw']  ?? 1;
+            $start  = $_GET['start'] ?? 0;
+            $length = $_GET['length'] ?? 10;
 
-        $filters = [
-            'dni' => $_GET['dni'] ?? null,
-            'apellidos_nombres' => $_GET['apellidos_nombres'] ?? null,
-            'programa' => $_GET['programa'] ?? null,
-            'plan' => $_GET['plan'] ?? null,
-            'semestre' => $_GET['semestre'] ?? null,
-            'turno' => $_GET['turno'] ?? null,
-            'seccion' => $_GET['seccion'] ?? null,
-            'periodo' => $_SESSION['sigi_periodo_actual_id'],
-            'sede' => $_SESSION['sigi_sede_actual']
-        ];
+            $filters = [
+                'dni' => $_GET['dni'] ?? null,
+                'apellidos_nombres' => $_GET['apellidos_nombres'] ?? null,
+                'programa' => $_GET['programa'] ?? null,
+                'plan' => $_GET['plan'] ?? null,
+                'semestre' => $_GET['semestre'] ?? null,
+                'turno' => $_GET['turno'] ?? null,
+                'seccion' => $_GET['seccion'] ?? null,
+                'periodo' => $_SESSION['sigi_periodo_actual_id'],
+                'sede' => $_SESSION['sigi_sede_actual']
+            ];
 
-        $result = $this->model->getPaginated($filters, $length, $start);
+            $result = $this->model->getPaginated($filters, $length, $start);
 
-        echo json_encode([
-            'draw'            => (int)$draw,
-            'recordsTotal'    => (int)$result['total'],
-            'recordsFiltered' => (int)$result['total'],
-            'data'            => $result['data']
-        ], JSON_UNESCAPED_UNICODE);
+            echo json_encode([
+                'draw'            => (int)$draw,
+                'recordsTotal'    => (int)$result['total'],
+                'recordsFiltered' => (int)$result['total'],
+                'data'            => $result['data']
+            ], JSON_UNESCAPED_UNICODE);
+        endif;
         exit;
     }
 
     public function guardar()
     {
-        header('Content-Type: application/json; charset=utf-8');
-        $id_matricula = $_POST['id_matricula'] ?? 0;
-        $licencia = trim($_POST['licencia'] ?? '');
-        if (!$id_matricula || $licencia == '') {
-            echo json_encode(['success' => false, 'msg' => 'Datos incompletos']);
-            exit;
-        }
-        $ok = $this->model->guardarLicencia($id_matricula, $licencia);
-        echo json_encode(['success' => $ok]);
+        if (\Core\Auth::esAdminAcademico()):
+            header('Content-Type: application/json; charset=utf-8');
+            $id_matricula = $_POST['id_matricula'] ?? 0;
+            $licencia = trim($_POST['licencia'] ?? '');
+            if (!$id_matricula || $licencia == '') {
+                echo json_encode(['success' => false, 'msg' => 'Datos incompletos']);
+                exit;
+            }
+            $ok = $this->model->guardarLicencia($id_matricula, $licencia);
+            echo json_encode(['success' => $ok]);
+        endif;
         exit;
     }
 
     public function eliminar($id)
     {
-        $this->model->eliminarLicencia($id);
+        if (\Core\Auth::esAdminAcademico()):
+            $this->model->eliminarLicencia($id);
+        endif;
         header('Location: ' . BASE_URL . '/academico/licencias');
         exit;
     }

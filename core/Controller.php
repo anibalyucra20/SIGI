@@ -19,17 +19,19 @@ class Controller
                 return substr($haystack, 0, strlen($needle)) === $needle;
             }
         }
-        if (
-            !str_starts_with(static::class, 'App\Controllers\Auth')
-            && \Core\Auth::user() === null
-            && !in_array($current, $allowedNoAuth)
-        ) {
-            //echo "Bloqueado por middleware. Ruta actual: $current";
-            header('Location: ' . BASE_URL . '/login');
-            exit;
+        // Validar que esté logueado o tenga sesión válida
+        $isAuthRoute = str_starts_with(static::class, 'App\Controllers\Auth');
+        $isRutaPublica = in_array($current, $allowedNoAuth);
+        $isUserLogged = \Core\Auth::user() !== null;
+
+        if (!$isAuthRoute && !$isRutaPublica) {
+            if (!$isUserLogged || !\Core\Auth::validarSesion()) {
+                header('Location: ' . BASE_URL . '/login');
+                exit;
+            }
         }
         // Refresca permisos SOLO si está logueado y la ruta no es pública
-        if (\Core\Auth::user() !== null && !in_array($current, $allowedNoAuth) && isset($_SESSION['sigi_user_id'])) {
+        if ($isUserLogged && !$isRutaPublica && isset($_SESSION['sigi_user_id'])) {
             $id_usuario = $_SESSION['sigi_user_id'];
             $db = (new \Core\Model())->getDB();
             $sql = "SELECT psu.id_sistema, s.nombre as sistema, psu.id_rol, r.nombre as rol

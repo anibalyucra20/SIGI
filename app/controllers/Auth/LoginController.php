@@ -45,6 +45,17 @@ class LoginController extends Controller
 
 
         if ($user && password_verify($pass, $user['password'])) {
+            //guardamos el registro de session
+            $llave = bin2hex(random_bytes(5));
+            $token = password_hash($llave, PASSWORD_DEFAULT);
+
+            $sql = "INSERT INTO sigi_sesiones (id_usuario, fecha_hora_inicio, fecha_hora_fin, token, ip, estado) VALUES (?,  NOW(), NOW(), ?, ?, 1)";
+            $stmt = $db->prepare($sql);
+            $stmt->execute([$user['id'], $llave, $_SERVER['REMOTE_ADDR']]);
+
+            $user['id_session'] = $db->lastInsertId();
+            $user['token'] = $token;
+
             \Core\Auth::login($user);               // ← guarda sigi_user_id y sigi_user_name
 
             // --- CARGAR PERMISOS DEL USUARIO Y SETEAR MODULO/ROL ACTIVO ---

@@ -10,6 +10,10 @@ class Model
 
     public function __construct()
     {
+        // Solo si el model se instancia tras un dispatch MVC:
+        if (defined('MVC_DISPATCHED') && ! Auth::user()) {
+            throw new \Exception('Acceso no autorizado');
+        }
         if (self::$db === null) {
             $dsn = 'mysql:host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=utf8';
             // Crea tu conexión aquí solo si no existe
@@ -17,6 +21,16 @@ class Model
             self::$db->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
         }
         return self::$db;
+    }
+    /**
+     * Mágico: intercepta llamadas a métodos de instancia y vuelve a chequear autenticación.
+     */
+    public function __call($name, $arguments)
+    {
+        if (! Auth::user()) {
+            throw new \Exception('Acceso no autorizado. Debes iniciar sesión.');
+        }
+        return call_user_func_array([$this, $name], $arguments);
     }
 
     public static function getDB(): PDO

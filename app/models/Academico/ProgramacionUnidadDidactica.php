@@ -235,4 +235,250 @@ class ProgramacionUnidadDidactica extends Model
         // (Puedes añadir aquí otras reglas, como coordinadores, etc.)
         return false;
     }
+
+
+
+
+
+    // Info básica de la UD de una programación
+    public function getInfoBasicaUD(int $id_programacion): ?array
+    {
+        $sql = "SELECT 
+                    pud.id,
+                    pud.id_sede,
+                    ud.id AS id_ud,
+                    ud.nombre AS unidad_nombre,
+                    s.descripcion AS semestre_nombre,
+                    mf.nro_modulo,
+                    ple.nombre AS plan_nombre,
+                    pe.nombre AS programa_nombre
+                FROM acad_programacion_unidad_didactica pud
+                JOIN sigi_unidad_didactica ud ON ud.id = pud.id_unidad_didactica
+                JOIN sigi_semestre s ON s.id = ud.id_semestre
+                JOIN sigi_modulo_formativo mf ON mf.id = s.id_modulo_formativo
+                JOIN sigi_planes_estudio ple ON ple.id = mf.id_plan_estudio
+                JOIN sigi_programa_estudios pe ON pe.id = ple.id_programa_estudios
+                WHERE pud.id = ?";
+        $st = self::$db->prepare($sql);
+        $st->execute([$id_programacion]);
+        $row = $st->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
+    }
+
+    // Programaciones candidatas: misma sede actual y mismo nombre de la UD
+    public function getCandidatasMismoNombreYSede(int $id_prog_dest, int $id_sede_actual): array
+    {
+        // Obtener nombre de UD destino
+        $info = $this->getInfoBasicaUD($id_prog_dest);
+        if (!$info) return [];
+        $sql = "SELECT 
+                    pud.id,
+                    pa.nombre AS periodo,
+                    pa.fecha_inicio,
+                    u.apellidos_nombres AS docente,
+                    ple.nombre AS plan_nombre,
+                    pe.nombre AS programa_nombre,
+                    mf.nro_modulo,
+                    s.descripcion AS semestre_nombre,
+                    ud.nombre AS unidad_nombre,
+                    se.nombre AS sede_nombre,
+                    sil.id AS id_silabo,
+                    (SELECT COUNT(*) FROM acad_programacion_actividades_silabo pas WHERE pas.id_silabo = sil.id) AS actividades,
+                    (SELECT COUNT(*) 
+                       FROM acad_sesion_aprendizaje sa
+                       JOIN acad_programacion_actividades_silabo pas2 ON pas2.id = sa.id_prog_actividad_silabo
+                      WHERE pas2.id_silabo = sil.id) AS sesiones
+                FROM acad_programacion_unidad_didactica pud
+                JOIN sigi_unidad_didactica ud ON ud.id = pud.id_unidad_didactica
+                JOIN sigi_semestre s ON s.id = ud.id_semestre
+                JOIN sigi_modulo_formativo mf ON mf.id = s.id_modulo_formativo
+                JOIN sigi_planes_estudio ple ON ple.id = mf.id_plan_estudio
+                JOIN sigi_programa_estudios pe ON pe.id = ple.id_programa_estudios
+                JOIN sigi_periodo_academico pa ON pa.id = pud.id_periodo_academico
+                JOIN sigi_sedes se ON se.id = pud.id_sede
+                JOIN sigi_usuarios u ON u.id = pud.id_docente
+                LEFT JOIN acad_silabos sil ON sil.id_prog_unidad_didactica = pud.id
+                WHERE pud.id <> :dest
+                  AND pud.id_sede = :sede
+                  AND ud.nombre COLLATE utf8mb3_spanish2_ci = :ud_nombre
+                ORDER BY pa.fecha_inicio DESC, pa.id DESC";
+        $st = self::$db->prepare($sql);
+        $st->execute([
+            ':dest' => $id_prog_dest,
+            ':sede' => $id_sede_actual,
+            ':ud_nombre' => $info['unidad_nombre'],
+        ]);
+        return $st->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    private function candidatasOrderableColumns(): array
+    {
+        // Índices según la tabla que definimos en la vista:
+        // 0 Sel (no ordenable)
+        // 1 Periodo
+        // 2 Docente
+        // 3 Plan
+        // 4 Módulo
+        // 5 Semestre
+        // 6 UD
+        // 7 Sede
+        // 8 Sílabo (Sí/No) -> ordenamos por id_silabo IS NOT NULL
+        // 9 #Activ.
+        //10 #Ses.
+        return [
+            1 => 'pa.fecha_inicio',          // o pa.nombre
+            2 => 'u.apellidos_nombres',
+            3 => 'ple.nombre',
+            4 => 'mf.nro_modulo',
+            5 => 's.descripcion',
+            6 => 'ud.nombre',
+            7 => 'se.nombre',
+            8 => 'sil.id',                  // null/valor
+            9 => 'actividades',
+            10 => 'sesiones',
+        ];
+    }
+
+    public function getCandidatasPaged(int $id_prog_dest, int $id_sede_actual, array $filters, int $start, int $length, int $orderIdx, string $orderDir): array
+    {
+        $info = $this->getInfoBasicaUD($id_prog_dest);
+        if (!$info) {
+            return ['rows' => [], 'total' => 0, 'filtered' => 0];
+        }
+
+        $baseFrom = "
+            FROM acad_programacion_unidad_didactica pud
+            JOIN sigi_unidad_didactica ud ON ud.id = pud.id_unidad_didactica
+            JOIN sigi_semestre s ON s.id = ud.id_semestre
+            JOIN sigi_modulo_formativo mf ON mf.id = s.id_modulo_formativo
+            JOIN sigi_planes_estudio ple ON ple.id = mf.id_plan_estudio
+            JOIN sigi_programa_estudios pe ON pe.id = ple.id_programa_estudios
+            JOIN sigi_periodo_academico pa ON pa.id = pud.id_periodo_academico
+            JOIN sigi_sedes se ON se.id = pud.id_sede
+            JOIN sigi_usuarios u ON u.id = pud.id_docente
+            LEFT JOIN acad_silabos sil ON sil.id_prog_unidad_didactica = pud.id
+        ";
+
+        $where = " WHERE pud.id <> :dest AND pud.id_sede = :sede AND ud.nombre COLLATE utf8mb3_spanish2_ci = :ud_nombre ";
+
+        $params = [
+            ':dest' => $id_prog_dest,
+            ':sede' => $id_sede_actual,
+            ':ud_nombre' => $info['unidad_nombre'],
+        ];
+
+        if (!empty($filters['programa_id'])) {
+            $where .= " AND pe.id = :programa_id ";
+            $params[':programa_id'] = $filters['programa_id'];
+        }
+        if (!empty($filters['plan_id'])) {
+            $where .= " AND ple.id = :plan_id ";
+            $params[':plan_id'] = $filters['plan_id'];
+        }
+        if (!empty($filters['modulo_id'])) {
+            $where .= " AND mf.id = :modulo_id ";
+            $params[':modulo_id'] = $filters['modulo_id'];
+        }
+        if (!empty($filters['semestre_id'])) {
+            $where .= " AND s.id = :semestre_id ";
+            $params[':semestre_id'] = $filters['semestre_id'];
+        }
+
+        // Total (sin filtros)
+        $sqlTotal = "SELECT COUNT(*) " . $baseFrom . " WHERE pud.id <> :dest AND pud.id_sede = :sede AND ud.nombre COLLATE utf8mb3_spanish2_ci = :ud_nombre";
+        $stT = self::$db->prepare($sqlTotal);
+        $stT->execute([
+            ':dest' => $id_prog_dest,
+            ':sede' => $id_sede_actual,
+            ':ud_nombre' => $info['unidad_nombre'],
+        ]);
+        $total = (int)$stT->fetchColumn();
+
+        // Filtrado (con filtros)
+        $sqlFiltered = "SELECT COUNT(*) " . $baseFrom . $where;
+        $stF = self::$db->prepare($sqlFiltered);
+        $stF->execute($params);
+        $filtered = (int)$stF->fetchColumn();
+
+        // Orden seguro
+        $orderCols = $this->candidatasOrderableColumns();
+        $orderBy = $orderCols[$orderIdx] ?? 'pa.fecha_inicio';
+        $orderSql = " ORDER BY $orderBy $orderDir, pa.id DESC ";
+
+        // Data con agregados (#activ, #ses)
+        $sqlData = "
+            SELECT 
+                pud.id,
+                pa.nombre AS periodo,
+                pa.fecha_inicio,
+                u.apellidos_nombres AS docente,
+                ple.id AS plan_id, ple.nombre AS plan_nombre,
+                mf.id AS modulo_id, mf.nro_modulo,
+                s.id AS semestre_id, s.descripcion AS semestre_nombre,
+                ud.nombre AS unidad_nombre,
+                pe.nombre AS programa_nombre,
+                se.nombre AS sede_nombre,
+                sil.id AS id_silabo,
+                (SELECT COUNT(*) FROM acad_programacion_actividades_silabo pas WHERE pas.id_silabo = sil.id) AS actividades,
+                (SELECT COUNT(*) 
+                   FROM acad_sesion_aprendizaje sa
+                   JOIN acad_programacion_actividades_silabo pas2 ON pas2.id = sa.id_prog_actividad_silabo
+                  WHERE pas2.id_silabo = sil.id) AS sesiones
+            " . $baseFrom . $where . $orderSql . " LIMIT :start, :length";
+
+        $st = self::$db->prepare($sqlData);
+        foreach ($params as $k => $v) {
+            $st->bindValue($k, $v);
+        }
+        $st->bindValue(':start', $start, PDO::PARAM_INT);
+        $st->bindValue(':length', $length, PDO::PARAM_INT);
+        $st->execute();
+        $rows = $st->fetchAll(PDO::FETCH_ASSOC);
+
+        // Adaptar algunos campos para DataTables (checkbox/radio se arma en la vista)
+        foreach ($rows as &$r) {
+            $r['tiene_silabo'] = $r['id_silabo'] ? 1 : 0;
+        }
+
+        return ['rows' => $rows, 'total' => $total, 'filtered' => $filtered];
+    }
+
+    public function getCandidatasFilterOptions(int $id_prog_dest, int $id_sede_actual): array
+    {
+        $info = $this->getInfoBasicaUD($id_prog_dest);
+        if (!$info) return ['programas' => [], 'planes' => [], 'modulos' => [], 'semestres' => []];
+
+        $base = "
+            FROM acad_programacion_unidad_didactica pud
+            JOIN sigi_unidad_didactica ud ON ud.id = pud.id_unidad_didactica
+            JOIN sigi_semestre s ON s.id = ud.id_semestre
+            JOIN sigi_modulo_formativo mf ON mf.id = s.id_modulo_formativo
+            JOIN sigi_planes_estudio ple ON ple.id = mf.id_plan_estudio
+            JOIN sigi_programa_estudios pe ON pe.id = ple.id_programa_estudios
+        ";
+        $where = " WHERE pud.id <> :dest AND pud.id_sede = :sede AND ud.nombre COLLATE utf8mb3_spanish2_ci = :ud_nombre ";
+        $params = [':dest' => $id_prog_dest, ':sede' => $id_sede_actual, ':ud_nombre' => $info['unidad_nombre']];
+
+        // Programas
+        $q1 = self::$db->prepare("SELECT DISTINCT pe.id, pe.nombre $base $where ORDER BY pe.nombre");
+        $q1->execute($params);
+        $programas = $q1->fetchAll(PDO::FETCH_ASSOC);
+
+        // Planes
+        $q2 = self::$db->prepare("SELECT DISTINCT ple.id, ple.nombre $base $where ORDER BY ple.nombre");
+        $q2->execute($params);
+        $planes = $q2->fetchAll(PDO::FETCH_ASSOC);
+
+        // Módulos
+        $q3 = self::$db->prepare("SELECT DISTINCT mf.id, mf.nro_modulo $base $where ORDER BY mf.nro_modulo");
+        $q3->execute($params);
+        $modulos = $q3->fetchAll(PDO::FETCH_ASSOC);
+
+        // Semestres
+        $q4 = self::$db->prepare("SELECT DISTINCT s.id, s.descripcion $base $where ORDER BY s.descripcion");
+        $q4->execute($params);
+        $semestres = $q4->fetchAll(PDO::FETCH_ASSOC);
+
+        return compact('programas', 'planes', 'modulos', 'semestres');
+    }
 }

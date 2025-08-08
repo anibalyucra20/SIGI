@@ -170,6 +170,7 @@ class Matricula extends Model
         $stmt->execute([$id_detalle]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
+    
 
 
     public function getDetalleMatricula($id_matricula)

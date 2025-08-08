@@ -111,4 +111,18 @@ class Semestre extends Model
         $stmt->execute([$id_plan_estudio]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+    public function getSemestresPorPrograma($id_programa)
+    {
+        $sql = "SELECT s.id, s.descripcion
+                FROM sigi_semestre s
+                INNER JOIN sigi_modulo_formativo mf ON s.id_modulo_formativo = mf.id
+                INNER JOIN sigi_planes_estudio pl ON mf.id_plan_estudio = pl.id
+                INNER JOIN sigi_programa_estudios pe ON pl.id_programa_estudios = pe.id
+                WHERE pe.id = ?
+                ORDER BY s.id";
+
+        $stmt = self::$db->prepare($sql);
+        $stmt->execute([$id_programa]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }

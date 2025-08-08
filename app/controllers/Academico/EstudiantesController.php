@@ -55,30 +55,32 @@ class EstudiantesController extends Controller
 
     public function data()
     {
-        header('Content-Type: application/json; charset=utf-8');
-        $draw      = $_GET['draw']  ?? 1;
-        $start     = $_GET['start'] ?? 0;
-        $length    = $_GET['length'] ?? 10;
-        $orderCol  = $_GET['order'][0]['column'] ?? 2; // Apellidos por defecto
-        $orderDir  = $_GET['order'][0]['dir']    ?? 'asc';
+        if (\Core\Auth::esAdminAcademico()):
+            header('Content-Type: application/json; charset=utf-8');
+            $draw      = $_GET['draw']  ?? 1;
+            $start     = $_GET['start'] ?? 0;
+            $length    = $_GET['length'] ?? 10;
+            $orderCol  = $_GET['order'][0]['column'] ?? 2; // Apellidos por defecto
+            $orderDir  = $_GET['order'][0]['dir']    ?? 'asc';
 
-        $filters = [
-            'id_sede'    => $_SESSION['sigi_sede_actual'] ?? 0,
-            'id_periodo' => $_SESSION['sigi_periodo_actual_id'] ?? 0,
-            'id_programa' => $_GET['filter_programa'] ?? null,
-            'id_plan' => $_GET['filter_plan'] ?? null,
-            'dni' => $_GET['filter_dni'] ?? null,
-            'apellidos_nombres' => $_GET['filter_apellidos_nombres'] ?? null,
-        ];
+            $filters = [
+                'id_sede'    => $_SESSION['sigi_sede_actual'] ?? 0,
+                'id_periodo' => $_SESSION['sigi_periodo_actual_id'] ?? 0,
+                'id_programa' => $_GET['filter_programa'] ?? null,
+                'id_plan' => $_GET['filter_plan'] ?? null,
+                'dni' => $_GET['filter_dni'] ?? null,
+                'apellidos_nombres' => $_GET['filter_apellidos_nombres'] ?? null,
+            ];
 
-        $result = $this->model->getPaginated($filters, $length, $start, $orderCol, $orderDir);
+            $result = $this->model->getPaginated($filters, $length, $start, $orderCol, $orderDir);
 
-        echo json_encode([
-            'draw'            => (int)$draw,
-            'recordsTotal'    => (int)$result['total'],
-            'recordsFiltered' => (int)$result['total'],
-            'data'            => $result['data']
-        ], JSON_UNESCAPED_UNICODE);
+            echo json_encode([
+                'draw'            => (int)$draw,
+                'recordsTotal'    => (int)$result['total'],
+                'recordsFiltered' => (int)$result['total'],
+                'data'            => $result['data']
+            ], JSON_UNESCAPED_UNICODE);
+        endif;
         exit;
     }
 
@@ -122,70 +124,72 @@ class EstudiantesController extends Controller
 
     public function guardar()
     {
-        $id_sede = $_SESSION['sigi_sede_actual'] ?? 0;
-        $errores = [];
-        $isNuevo = empty($_POST['id']);
+        if (\Core\Auth::esAdminAcademico()):
+            $id_sede = $_SESSION['sigi_sede_actual'] ?? 0;
+            $errores = [];
+            $isNuevo = empty($_POST['id']);
 
-        $password = bin2hex(random_bytes(5));
-        $password_secure = password_hash($password, PASSWORD_DEFAULT);
-        $data = [
-            'id'                  => $_POST['id'] ?? null,
-            'dni'                 => trim($_POST['dni']),
-            'apellidos_nombres'   => trim($_POST['apellidos_nombres']),
-            'genero'              => $_POST['genero'],
-            'fecha_nacimiento'    => $_POST['fecha_nacimiento'],
-            'direccion'           => trim($_POST['direccion']),
-            'correo'              => trim($_POST['correo']),
-            'telefono'            => trim($_POST['telefono']),
-            'discapacidad'        => $_POST['discapacidad'],
-            'id_programa_estudios' => $_POST['id_programa_estudios'],
-            'id_plan_estudio'     => $_POST['id_plan_estudio'],
-            'estado'              => $_POST['estado'] ?? 1,
-            'id_rol'              => 7, // Ajusta si tu rol de ESTUDIANTE es otro id
-            'password'             => $password_secure,
-            'reset_password'       => 0,
-            'token_password'       => '',
-            // Sede y periodo
-            'id_sede'             => $isNuevo ? ($_SESSION['sigi_sede_actual'] ?? 0) : $_POST['id_sede'],
-            'id_periodo'          => $isNuevo ? ($_SESSION['sigi_periodo_actual_id'] ?? 0) : $_POST['id_periodo'],
-        ];
+            $password = bin2hex(random_bytes(5));
+            $password_secure = password_hash($password, PASSWORD_DEFAULT);
+            $data = [
+                'id'                  => $_POST['id'] ?? null,
+                'dni'                 => trim($_POST['dni']),
+                'apellidos_nombres'   => trim($_POST['apellidos_nombres']),
+                'genero'              => $_POST['genero'],
+                'fecha_nacimiento'    => $_POST['fecha_nacimiento'],
+                'direccion'           => trim($_POST['direccion']),
+                'correo'              => trim($_POST['correo']),
+                'telefono'            => trim($_POST['telefono']),
+                'discapacidad'        => $_POST['discapacidad'],
+                'id_programa_estudios' => $_POST['id_programa_estudios'],
+                'id_plan_estudio'     => $_POST['id_plan_estudio'],
+                'estado'              => $_POST['estado'] ?? 1,
+                'id_rol'              => 7, // Ajusta si tu rol de ESTUDIANTE es otro id
+                'password'             => $password_secure,
+                'reset_password'       => 0,
+                'token_password'       => '',
+                // Sede y periodo
+                'id_sede'             => $isNuevo ? ($_SESSION['sigi_sede_actual'] ?? 0) : $_POST['id_sede'],
+                'id_periodo'          => $isNuevo ? ($_SESSION['sigi_periodo_actual_id'] ?? 0) : $_POST['id_periodo'],
+            ];
 
-        // Validación de duplicados
-        if ($this->model->existeDni($data['dni'], $data['id'])) {
-            $errores[] = "Ya existe un estudiante registrado con este DNI.";
-        }
-        if (!$isNuevo && $this->model->existeEstudianteEnPlan(
-            $data['id'],
-            $data['id_plan_estudio'],
-            $_POST['id_acad_est_prog'] ?? $estudiante['id_acad_est_prog'] ?? null
-        )) {
-            $errores[] = "Este estudiante ya está registrado en este plan de estudios y periodo.";
-        }
-
-
-        if (!empty($errores)) {
-            $programas = $this->objPrograma->getAllBySede($id_sede);
-            $planes = $this->objPlan->getPlanesByPrograma($data['id_programa_estudios']);
-            $periodos = $this->objPeriodoAcademico->getPeriodos();
-            $sedes = $this->objSede->getSedes();
-            $vars = [
-                'errores' => $errores,
-                'programas' => $programas,
-                'planes' => $planes,
-            ] + $data;
-            if ($isNuevo) {
-                $this->view('academico/estudiantes/nuevo', $vars);
-            } else {
-                $vars['periodos'] = $periodos;
-                $vars['sedes'] = $sedes;
-                $this->view('academico/estudiantes/editar', $vars);
+            // Validación de duplicados
+            if ($this->model->existeDni($data['dni'], $data['id'])) {
+                $errores[] = "Ya existe un estudiante registrado con este DNI.";
             }
-            return;
-        }
+            if (!$isNuevo && $this->model->existeEstudianteEnPlan(
+                $data['id'],
+                $data['id_plan_estudio'],
+                $_POST['id_acad_est_prog'] ?? $estudiante['id_acad_est_prog'] ?? null
+            )) {
+                $errores[] = "Este estudiante ya está registrado en este plan de estudios y periodo.";
+            }
 
-        // Guardar normal si todo está OK
-        $this->model->guardar($data);
-        $_SESSION['flash_success'] = "Estudiante guardado correctamente.";
+
+            if (!empty($errores)) {
+                $programas = $this->objPrograma->getAllBySede($id_sede);
+                $planes = $this->objPlan->getPlanesByPrograma($data['id_programa_estudios']);
+                $periodos = $this->objPeriodoAcademico->getPeriodos();
+                $sedes = $this->objSede->getSedes();
+                $vars = [
+                    'errores' => $errores,
+                    'programas' => $programas,
+                    'planes' => $planes,
+                ] + $data;
+                if ($isNuevo) {
+                    $this->view('academico/estudiantes/nuevo', $vars);
+                } else {
+                    $vars['periodos'] = $periodos;
+                    $vars['sedes'] = $sedes;
+                    $this->view('academico/estudiantes/editar', $vars);
+                }
+                return;
+            }
+
+            // Guardar normal si todo está OK
+            $this->model->guardar($data);
+            $_SESSION['flash_success'] = "Estudiante guardado correctamente.";
+        endif;
         header('Location: ' . BASE_URL . '/academico/estudiantes');
         exit;
     }
@@ -304,121 +308,124 @@ class EstudiantesController extends Controller
 
     public function CargaMasivaEstudiantes()
     {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['archivo_excel'])) {
-            $archivoTmp = $_FILES['archivo_excel']['tmp_name'];
-            $extension  = strtolower(pathinfo($_FILES['archivo_excel']['name'], PATHINFO_EXTENSION));
-            if (!in_array($extension, ['xlsx', 'xls'])) {
-                $_SESSION['flash_error'] = "Solo se permite archivos Excel (.xlsx, .xls)";
-                header('Location: ' . BASE_URL . '/academico/estudiantes');
-                exit;
-            }
-
-            $spreadsheet = IOFactory::load($archivoTmp);
-            $sheet = $spreadsheet->getSheetByName('Estudiantes');
-            if (!$sheet) {
-                $_SESSION['flash_error'] = "Hoja 'Estudiantes' no encontrada en el archivo.";
-                header('Location: ' . BASE_URL . '/academico/estudiantes');
-                exit;
-            }
-
-            $rows = $sheet->toArray(null, true, true, true); // Array asociativo por columnas: A, B, C...
-            $errores = [];
-            $datosAInsertar = [];
-            foreach ($rows as $i => $row) {
-                if ($i === 1) continue; // Saltar encabezados
-                $dni                 = trim($row['A']);
-                $apellidos_nombres   = trim($row['B']);
-                $genero              = strtoupper(trim($row['C']));
-                $fecha_nac           = trim($row['D']);
-                $direccion           = trim($row['E']);
-                $correo              = trim($row['F']);
-                $telefono            = trim($row['G']);
-                $discapacidad        = strtoupper(trim($row['H']));
-                $programa_estudios   = trim($row['I']);
-                $plan_estudio        = trim($row['J']);
-
-                $datos_validos = 0;
-                if ($dni != '' && $apellidos_nombres != '' && $genero != '') {
-                    $datos_validos++;
-
-                    // Validaciones
-                    if (empty($dni) || !preg_match('/^\d{8,12}$/', $dni)) {
-                        $errores[] = "Fila $i: DNI inválido.";
-                    }
-                    if (empty($apellidos_nombres) || strlen($apellidos_nombres) < 10) {
-                        $errores[] = "Fila $i: Nombre/apellido inválido.";
-                    }
-                    if (!in_array($genero, ['M', 'F'])) {
-                        $errores[] = "Fila $i: Género debe ser 'M' o 'F'.";
-                    }
-                    if (empty($fecha_nac) || !strtotime($fecha_nac)) {
-                        $errores[] = "Fila $i: Fecha nacimiento inválida.";
-                    }
-                    if (empty($correo) || !filter_var($correo, FILTER_VALIDATE_EMAIL)) {
-                        $errores[] = "Fila $i: Correo inválido.";
-                    }
-                    if (!in_array($discapacidad, ['SI', 'NO', ''])) {
-                        $errores[] = "Fila $i: Discapacidad debe ser SI o NO.";
-                    }
-                    if (empty($programa_estudios)) {
-                        $errores[] = "Fila $i: ID programa inválido.";
-                    }
-
-                    $datosPe = $this->objPrograma->getProgramaPorNombre($programa_estudios);
-                    $id_programa_estudios = $datosPe['id'];
-                    $id_periodo_registro = $_SESSION['sigi_periodo_actual_id'];
-                    $id_sede = $_SESSION['sigi_sede_actual'];
-                    $datos_plan = $this->objPlan->getPlanByProgramaAndPlanName($id_programa_estudios, $plan_estudio);
-                    $id_plan_estudio = $datos_plan['id'];
-                    if (!$id_plan_estudio) $errores[] = "Fila $i: Plan de Estudios inválido.";
-                    $id_usuario = $this->model->existeDni($dni);
-
-                    // Si hay errores, saltar inserción
-                    if (!empty($errores)) continue;
-
-                    // Password aleatorio y token
-                    $password = bin2hex(random_bytes(5));
-                    $password_secure = password_hash($password, PASSWORD_DEFAULT);
-                    $token    = '';
-
-                    $datosAInsertar[] = [
-                        'id'                   => ($id_usuario['id'] > 0) ? $id_usuario['id'] : null,
-                        'dni'                  => $dni,
-                        'apellidos_nombres'    => $apellidos_nombres,
-                        'genero'               => $genero,
-                        'fecha_nacimiento'     => $fecha_nac,
-                        'direccion'            => $direccion,
-                        'correo'               => $correo,
-                        'telefono'             => $telefono,
-                        'id_periodo'           => $id_periodo_registro,
-                        'id_programa_estudios' => $id_programa_estudios,
-                        'discapacidad'         => $discapacidad,
-                        'id_rol'               => 7,
-                        'id_sede'              => $id_sede,
-                        'estado'               => 1,
-                        'password'             => $password,
-                        'passwords'             => $password_secure,
-                        'reset_password'       => 0,
-                        'token_password'       => $token,
-                        'id_plan_estudio'      => $id_plan_estudio
-                    ];
+        if (\Core\Auth::esAdminAcademico()):
+            if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['archivo_excel'])) {
+                $archivoTmp = $_FILES['archivo_excel']['tmp_name'];
+                $extension  = strtolower(pathinfo($_FILES['archivo_excel']['name'], PATHINFO_EXTENSION));
+                if (!in_array($extension, ['xlsx', 'xls'])) {
+                    $_SESSION['flash_error'] = "Solo se permite archivos Excel (.xlsx, .xls)";
+                    header('Location: ' . BASE_URL . '/academico/estudiantes');
+                    exit;
                 }
-            }
-            // Mostrar errores (puedes mostrar en vista, aquí solo ejemplo)
-            if ($errores) {
+
+                $spreadsheet = IOFactory::load($archivoTmp);
+                $sheet = $spreadsheet->getSheetByName('Estudiantes');
+                if (!$sheet) {
+                    $_SESSION['flash_error'] = "Hoja 'Estudiantes' no encontrada en el archivo.";
+                    header('Location: ' . BASE_URL . '/academico/estudiantes');
+                    exit;
+                }
+
+                $rows = $sheet->toArray(null, true, true, true); // Array asociativo por columnas: A, B, C...
+                $errores = [];
+                $datosAInsertar = [];
+                foreach ($rows as $i => $row) {
+                    if ($i === 1) continue; // Saltar encabezados
+                    $dni                 = trim($row['A']);
+                    $apellidos_nombres   = trim($row['B']);
+                    $genero              = strtoupper(trim($row['C']));
+                    $fecha_nac           = trim($row['D']);
+                    $direccion           = trim($row['E']);
+                    $correo              = trim($row['F']);
+                    $telefono            = trim($row['G']);
+                    $discapacidad        = strtoupper(trim($row['H']));
+                    $programa_estudios   = trim($row['I']);
+                    $plan_estudio        = trim($row['J']);
+
+                    $datos_validos = 0;
+                    if ($dni != '' && $apellidos_nombres != '' && $genero != '') {
+                        $datos_validos++;
+
+                        // Validaciones
+                        if (empty($dni) || !preg_match('/^\d{8,12}$/', $dni)) {
+                            $errores[] = "Fila $i: DNI inválido.";
+                        }
+                        if (empty($apellidos_nombres) || strlen($apellidos_nombres) < 10) {
+                            $errores[] = "Fila $i: Nombre/apellido inválido.";
+                        }
+                        if (!in_array($genero, ['M', 'F'])) {
+                            $errores[] = "Fila $i: Género debe ser 'M' o 'F'.";
+                        }
+                        if (empty($fecha_nac) || !strtotime($fecha_nac)) {
+                            $errores[] = "Fila $i: Fecha nacimiento inválida.";
+                        }
+                        if (empty($correo) || !filter_var($correo, FILTER_VALIDATE_EMAIL)) {
+                            $errores[] = "Fila $i: Correo inválido.";
+                        }
+                        if (!in_array($discapacidad, ['SI', 'NO', ''])) {
+                            $errores[] = "Fila $i: Discapacidad debe ser SI o NO.";
+                        }
+                        if (empty($programa_estudios)) {
+                            $errores[] = "Fila $i: ID programa inválido.";
+                        }
+
+                        $datosPe = $this->objPrograma->getProgramaPorNombre($programa_estudios);
+                        $id_programa_estudios = $datosPe['id'];
+                        $id_periodo_registro = $_SESSION['sigi_periodo_actual_id'];
+                        $id_sede = $_SESSION['sigi_sede_actual'];
+                        $datos_plan = $this->objPlan->getPlanByProgramaAndPlanName($id_programa_estudios, $plan_estudio);
+                        $id_plan_estudio = $datos_plan['id'];
+                        if (!$id_plan_estudio) $errores[] = "Fila $i: Plan de Estudios inválido.";
+                        $id_usuario = $this->model->existeDni($dni);
+
+                        // Si hay errores, saltar inserción
+                        if (!empty($errores)) continue;
+
+                        // Password aleatorio y token
+                        $password = bin2hex(random_bytes(5));
+                        $password_secure = password_hash($password, PASSWORD_DEFAULT);
+                        $token    = '';
+
+                        $datosAInsertar[] = [
+                            'id'                   => ($id_usuario['id'] > 0) ? $id_usuario['id'] : null,
+                            'dni'                  => $dni,
+                            'apellidos_nombres'    => $apellidos_nombres,
+                            'genero'               => $genero,
+                            'fecha_nacimiento'     => $fecha_nac,
+                            'direccion'            => $direccion,
+                            'correo'               => $correo,
+                            'telefono'             => $telefono,
+                            'id_periodo'           => $id_periodo_registro,
+                            'id_programa_estudios' => $id_programa_estudios,
+                            'discapacidad'         => $discapacidad,
+                            'id_rol'               => 7,
+                            'id_sede'              => $id_sede,
+                            'estado'               => 1,
+                            'password'             => $password,
+                            'passwords'             => $password_secure,
+                            'reset_password'       => 0,
+                            'token_password'       => $token,
+                            'id_plan_estudio'      => $id_plan_estudio
+                        ];
+                    }
+                }
+                // Mostrar errores (puedes mostrar en vista, aquí solo ejemplo)
+                if ($errores) {
+                    $_SESSION['flash_error'] = implode('<br>', $errores);
+                    header('Location: ' . BASE_URL . '/academico/estudiantes');
+                    exit;
+                }
+
+                // Insertar estudiantes
+                foreach ($datosAInsertar as $estudiante) {
+                    $this->model->guardar($estudiante);
+                }
                 $_SESSION['flash_error'] = implode('<br>', $errores);
+                $_SESSION['flash_success'] = "Importación completada correctamente.";
                 header('Location: ' . BASE_URL . '/academico/estudiantes');
                 exit;
             }
-
-            // Insertar estudiantes
-            foreach ($datosAInsertar as $estudiante) {
-                $this->model->guardar($estudiante);
-            }
-            $_SESSION['flash_error'] = implode('<br>', $errores);
-            $_SESSION['flash_success'] = "Importación completada correctamente.";
-            header('Location: ' . BASE_URL . '/academico/estudiantes');
-            exit;
-        }
+        endif;
+        exit;
     }
 }

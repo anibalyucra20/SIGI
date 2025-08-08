@@ -23,13 +23,16 @@
                         <a href="<?= BASE_URL ?>/sigi/periodoAcademico" class="dropdown-item">Periodos Académicos</a>
                     </div>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link <?= strpos($_SERVER['REQUEST_URI'], '/docentes') !== false ? 'active' : '' ?>"
-                        href="<?= BASE_URL ?>/sigi/docentes">
-                        <i class="mdi mdi-school"></i> Docentes
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle arrow-none" href="#" id="nav-docentes" role="button"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="mdi mdi-school"></i> Docentes <div class="arrow-down"></div>
                     </a>
+                    <div class="dropdown-menu" aria-labelledby="nav-docentes">
+                        <a href="<?= BASE_URL ?>/sigi/coordinadores" class="dropdown-item">Coordinadores</a>
+                        <a href="<?= BASE_URL ?>/sigi/docentes" class="dropdown-item">Docentes</a>
+                    </div>
                 </li>
-
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle arrow-none" href="#" id="nav-mantenimiento" role="button"
                         data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

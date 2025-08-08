@@ -46,24 +46,48 @@
                     </tr>
                     <tr>
                         <td><b>Sesión de Aprendizaje:</b></td>
-                        <td><input type="text" name="denominacion" class="form-control" maxlength="200" required value="<?= htmlspecialchars($sesion['denominacion']) ?>"></td>
+                        <td>
+                            <?php if ($periodo_vigente): ?>
+                                <input type="text" name="denominacion" class="form-control" maxlength="200" required value="<?= htmlspecialchars($sesion['denominacion']) ?>">
+                            <?php else: ?>
+                                <?= htmlspecialchars($sesion['denominacion']) ?>
+                            <?php endif; ?>
+                        </td>
                     </tr>
                     <tr>
                         <td><b>Fecha de desarrollo:</b></td>
-                        <td><input type="date" name="fecha_desarrollo" class="form-control col-4" required value="<?= htmlspecialchars($sesion['fecha_desarrollo']) ?>"></td>
+                        <td>
+                            <?php if ($periodo_vigente): ?>
+                                <input type="date" name="fecha_desarrollo" class="form-control col-4" required value="<?= htmlspecialchars($sesion['fecha_desarrollo']) ?>">
+                            <?php else: ?>
+                                <?= htmlspecialchars($sesion['fecha_desarrollo']) ?>
+                            <?php endif; ?>
+                        </td>
                     </tr>
                     <tr>
                         <td><b>Tipo de actividad:</b></td>
-                        <td><select name="tipo_actividad" class="form-control col-4" required>
-                                <option value="">Seleccione...</option>
-                                <option value="Teórico-Práctico" <?= $sesion['tipo_actividad'] == 'Teórico-Práctico' ? 'selected' : '' ?>>Teórico-Práctico</option>
-                                <option value="Práctico" <?= $sesion['tipo_actividad'] == 'Práctico' ? 'selected' : '' ?>>Práctico</option>
-                                <option value="Teórico" <?= $sesion['tipo_actividad'] == 'Teórico' ? 'selected' : '' ?>>Teórico</option>
-                            </select></td>
+                        <td>
+                            <?php if ($periodo_vigente): ?>
+                                <select name="tipo_actividad" class="form-control col-4" required>
+                                    <option value="">Seleccione...</option>
+                                    <option value="Teórico-Práctico" <?= $sesion['tipo_actividad'] == 'Teórico-Práctico' ? 'selected' : '' ?>>Teórico-Práctico</option>
+                                    <option value="Práctico" <?= $sesion['tipo_actividad'] == 'Práctico' ? 'selected' : '' ?>>Práctico</option>
+                                    <option value="Teórico" <?= $sesion['tipo_actividad'] == 'Teórico' ? 'selected' : '' ?>>Teórico</option>
+                                </select>
+                            <?php else: ?>
+                                <?= htmlspecialchars($sesion['tipo_actividad']) ?>
+                            <?php endif; ?>
+                        </td>
                     </tr>
                     <tr>
                         <td><b>Logro de la sesión:</b></td>
-                        <td><input type="text" name="logro_sesion" class="form-control" maxlength="1000" value="<?= htmlspecialchars($sesion['logro_sesion']) ?>"></td>
+                        <td>
+                            <?php if ($periodo_vigente): ?>
+                                <input type="text" name="logro_sesion" class="form-control" maxlength="1000" value="<?= htmlspecialchars($sesion['logro_sesion']) ?>">
+                            <?php else: ?>
+                                <?= htmlspecialchars($sesion['logro_sesion']) ?>
+                            <?php endif; ?>
+                        </td>
                     </tr>
                     <tr>
                         <td><b>Docente responsable:</b></td>
@@ -89,13 +113,25 @@
                             <tr>
                                 <td><?= htmlspecialchars($m['momento']) ?></td>
                                 <td>
-                                    <textarea name="actividad_<?= $m['id'] ?>" class="form-control" rows="5" style="width:100%; resize: none; height:auto;"><?= htmlspecialchars($m['actividad']) ?></textarea>
+                                    <?php if ($periodo_vigente): ?>
+                                        <textarea name="actividad_<?= $m['id'] ?>" class="form-control" rows="5" style="width:100%; resize: none; height:auto;"><?= htmlspecialchars($m['actividad']) ?></textarea>
+                                    <?php else: ?>
+                                        <?= htmlspecialchars($m['actividad']) ?>
+                                    <?php endif; ?>
                                 </td>
                                 <td>
-                                    <textarea name="recursos_<?= $m['id'] ?>" class="form-control" rows="5" style="width:100%; resize: none; height:auto;"><?= htmlspecialchars($m['recursos']) ?></textarea>
+                                    <?php if ($periodo_vigente): ?>
+                                        <textarea name="recursos_<?= $m['id'] ?>" class="form-control" rows="5" style="width:100%; resize: none; height:auto;"><?= htmlspecialchars($m['recursos']) ?></textarea>
+                                    <?php else: ?>
+                                        <?= htmlspecialchars($m['recursos']) ?>
+                                    <?php endif; ?>
                                 </td>
                                 <td>
-                                    <input type="number" min="1" max="999" name="tiempo_<?= $m['id'] ?>" class="form-control" value="<?= htmlspecialchars($m['tiempo']) ?>">
+                                    <?php if ($periodo_vigente): ?>
+                                        <input type="number" min="1" max="999" name="tiempo_<?= $m['id'] ?>" class="form-control" value="<?= htmlspecialchars($m['tiempo']) ?>">
+                                    <?php else: ?>
+                                        <?= htmlspecialchars($m['tiempo']) ?>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -119,13 +155,25 @@
                         <?php foreach ($activEval as $a): ?>
                             <tr>
                                 <td>
-                                    <textarea name="indicador_<?= $a['id'] ?>" class="form-control" rows="3" style="width:100%; resize: none; height:auto;"><?= htmlspecialchars($a['indicador_logro_sesion']) ?></textarea>
+                                    <?php if ($periodo_vigente): ?>
+                                        <textarea name="indicador_<?= $a['id'] ?>" class="form-control" rows="3" style="width:100%; resize: none; height:auto;"><?= htmlspecialchars($a['indicador_logro_sesion']) ?></textarea>
+                                    <?php else: ?>
+                                        <?= htmlspecialchars($a['indicador_logro_sesion']) ?>
+                                    <?php endif; ?>
                                 </td>
                                 <td>
-                                    <textarea name="tecnica_<?= $a['id'] ?>" class="form-control" rows="3" style="width:100%; resize: none; height:auto;"><?= htmlspecialchars($a['tecnica']) ?></textarea>
+                                    <?php if ($periodo_vigente): ?>
+                                        <textarea name="tecnica_<?= $a['id'] ?>" class="form-control" rows="3" style="width:100%; resize: none; height:auto;"><?= htmlspecialchars($a['tecnica']) ?></textarea>
+                                    <?php else: ?>
+                                        <?= htmlspecialchars($a['tecnica']) ?>
+                                    <?php endif; ?>
                                 </td>
                                 <td>
-                                    <textarea name="instrumentos_<?= $a['id'] ?>" class="form-control" rows="3" style="width:100%; resize: none; height:auto;"><?= htmlspecialchars($a['instrumentos']) ?></textarea>
+                                    <?php if ($periodo_vigente): ?>
+                                        <textarea name="instrumentos_<?= $a['id'] ?>" class="form-control" rows="3" style="width:100%; resize: none; height:auto;"><?= htmlspecialchars($a['instrumentos']) ?></textarea>
+                                    <?php else: ?>
+                                        <?= htmlspecialchars($a['instrumentos']) ?>
+                                    <?php endif; ?>
                                 </td>
                                 <td><?= htmlspecialchars($a['momento']) ?></td>
                             </tr>
@@ -137,11 +185,17 @@
             <hr>
             <h6 class="mb-2">IV. BIBLIOGRAFÍA (APA)</h6>
             <div class="mb-3">
-                <textarea name="bibliografia" class="form-control" rows="4" style="width:100%; resize: none; height:auto;"><?= htmlspecialchars($sesion['bibliografia_obligatoria_docente']) ?></textarea>
-            </div>
+                <?php if ($periodo_vigente): ?>
+                    <textarea name="bibliografia" class="form-control" rows="4" style="width:100%; resize: none; height:auto;"><?= htmlspecialchars($sesion['bibliografia_obligatoria_docente']) ?></textarea>
+                <?php else: ?>
+                    <?= htmlspecialchars($sesion['bibliografia_obligatoria_docente']) ?>
+                <?php endif; ?>
 
+            </div>
             <div class="mt-3 text-end">
-                <button type="submit" class="btn btn-success px-4">Guardar Cambios</button>
+                <?php if ($periodo_vigente): ?>
+                    <button type="submit" class="btn btn-success px-4">Guardar Cambios</button>
+                <?php endif; ?>
                 <a href="<?= BASE_URL ?>/academico/sesiones/ver/<?= $id_programacion ?>" class="btn btn-secondary">Cancelar</a>
             </div>
         </form>

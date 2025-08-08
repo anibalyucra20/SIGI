@@ -1,3 +1,11 @@
+<?php
+if (!$permitido) {
+?>
+    <h1>No tienes permiso para imprimir el silabo</h1>
+<?php
+
+} else {
+?>
 <style>
     body {
         font-size: 11px;
@@ -221,4 +229,9 @@ if ($datosSistema['logo'] != '') {
 $pdf->Image($logoMineduPath, 15, 15, 30, 8); // (x, y, width en mm)
 $pdf->Image($logoPath, 165, 15, 30, 10); // (x, y, width en mm)
 
+?>
+
+<?php
+
+}
 ?>

@@ -14,7 +14,12 @@ require __DIR__ . '/../../layouts/header.php'; ?>
                 <a class="btn btn-success btn-sm btn-block mb-2" target="_blank" href="<?= BASE_URL ?>/academico/calificaciones/actaFinal/<?= $id_programacion_ud ?>">Imprimir Acta Final</a>
                 <a class="btn btn-primary btn-sm btn-block mb-2 text-white" target="_blank" href="<?= BASE_URL ?>/academico/calificaciones/actaRecuperacion/<?= $id_programacion_ud ?>">Imprimir Acta Recuperacion</a>
                 <a class="btn btn-warning btn-sm btn-block mb-2 text-white" target="_blank" href="<?= BASE_URL ?>/academico/calificaciones/reporteRegistra/<?= $id_programacion_ud ?>">Reporte Registra</a>
-                <a class="btn btn-danger btn-sm btn-block" href="<?= BASE_URL; ?>/academico/unidadesDidacticas">Regresar</a>
+                <?php if (\Core\Auth::esDocenteAcademico()): ?>
+                    <a class="btn btn-danger btn-sm btn-block" href="<?= BASE_URL; ?>/academico/unidadesDidacticas">Regresar</a>
+                <?php endif; ?>
+                <?php if (\Core\Auth::esAdminAcademico()): ?>
+                    <a class="btn btn-danger btn-sm btn-block" href="<?= BASE_URL; ?>/academico/unidadesDidacticas/evaluar">Regresar</a>
+                <?php endif; ?>
             </div>
             <div class="col-12 col-md-12">
                 <div class="table-responsive">
@@ -32,10 +37,12 @@ require __DIR__ . '/../../layouts/header.php'; ?>
                                 <th rowspan="2" class="align-middle text-center" style="writing-mode:vertical-rl; background:#f5f7fa;">RECUPERACION</th>
                                 <th rowspan="2" class="align-middle text-center" style="writing-mode:vertical-rl; background:#f5f7fa;">PROMEDIO FINAL <br>
                                     <div style="writing-mode:initial;">
-                                        <input type="checkbox"
-                                            id="mostrar-promedio-todos"
-                                            <?= (isset($mostrar_promedio_todos) && $mostrar_promedio_todos) ? 'checked' : '' ?>>
-                                        <span style="font-size:12px;">Mostrar</span>
+                                        <?php if ($periodo_vigente['vigente']): ?>
+                                            <input type="checkbox"
+                                                id="mostrar-promedio-todos"
+                                                <?= (isset($mostrar_promedio_todos) && $mostrar_promedio_todos) ? 'checked' : '' ?>>
+                                            <span style="font-size:12px;">Mostrar</span>
+                                        <?php endif; ?>
                                     </div>
                                 </th>
                             </tr>
@@ -45,13 +52,15 @@ require __DIR__ . '/../../layouts/header.php'; ?>
                                     <th class="text-center" style="min-width:110px;">
                                         N° <?= $nro ?> <br>
                                         <a href="<?= BASE_URL ?>/academico/calificaciones/evaluar/<?= $id_programacion_ud ?>/<?= $nro ?>" class="btn btn-primary btn-sm ml-2">
-                                            <i class="fa fa-pen"></i> Evaluar
+                                            <i></i><?= ($periodo_vigente['vigente']) ? 'Evaluar' : 'Ver' ?>
                                         </a>
                                         <div>
-                                            <input type="checkbox"
-                                                class="mostrar-checkbox" data-nro="<?= $nro ?>"
-                                                <?= $mostrar ? 'checked' : '' ?>>
-                                            <span style="font-size:12px;">Mostrar</span>
+                                            <?php if ($periodo_vigente['vigente']): ?>
+                                                <input type="checkbox"
+                                                    class="mostrar-checkbox" data-nro="<?= $nro ?>"
+                                                    <?= $mostrar ? 'checked' : '' ?>>
+                                                <span style="font-size:12px;">Mostrar</span>
+                                            <?php endif; ?>
                                         </div>
                                     </th>
                                 <?php endforeach; ?>
@@ -87,7 +96,11 @@ require __DIR__ . '/../../layouts/header.php'; ?>
                                         $recup = $recuperaciones[$id_detalle] ?? '';
                                         $promedio_final = $promedios[$id_detalle];
                                         if (in_array($promedio_final, [10, 11, 12]) && !$inhabilitado): ?>
-                                            <input type="number" class="form-control form-control-sm text-center nota-recuperacion <?= ($recup < 13) ? 'text-danger' : 'text-primary' ?>" data-id-recuperacion="<?= $id_detalle ?>" value="<?= $recup; ?>" style="max-width:50px;display:inline-block;">
+                                            <?php if ($periodo_vigente['vigente']): ?>
+                                                <input type="number" class="form-control form-control-sm text-center nota-recuperacion <?= ($recup < 13) ? 'text-danger' : 'text-primary' ?>" data-id-recuperacion="<?= $id_detalle ?>" value="<?= $recup; ?>" style="max-width:50px;display:inline-block;">
+                                            <?php else: ?>
+                                                <?= $recup; ?>
+                                            <?php endif; ?>
                                         <?php endif; ?>
                                     </td>
                                     <?php
@@ -123,10 +136,11 @@ require __DIR__ . '/../../layouts/header.php'; ?>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
-
                     </table>
                 </div>
-                <center><a class="btn btn-success mb-3 col-6 col-md-2" href="<?= BASE_URL; ?>/academico/calificaciones/ver/<?= $id_programacion_ud; ?>">Guardar</a></center>
+                <?php if ($periodo_vigente['vigente']): ?>
+                    <center><a class="btn btn-success mb-3 col-6 col-md-2" href="<?= BASE_URL; ?>/academico/calificaciones/ver/<?= $id_programacion_ud; ?>">Guardar</a></center>
+                <?php endif; ?>
             </div>
         </div>
     </div>

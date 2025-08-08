@@ -1,4 +1,13 @@
+<?php
+if (!$permitido) {
+?>
+    <h1>No tienes permiso para imprimir la sesión de aprendizaje</h1>
+<?php
 
+} else {
+    # code...
+
+?>
 <style>
     body {
         font-family: DejaVu Sans, sans-serif;
@@ -176,3 +185,8 @@
         <td width="33%" align="center" style="border: 1px solid white;">______________________<br>Jefe Unidad Académica</td>
     </tr>
 </table>
+
+<?php
+
+}
+?>

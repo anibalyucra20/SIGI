@@ -4,20 +4,26 @@ namespace App\Controllers\Academico;
 
 use Core\Controller;
 
+require_once __DIR__ . '/../../../app/models/Academico/ProgramacionUnidadDidactica.php';
 require_once __DIR__ . '/../../../app/models/Academico/Calificaciones.php';
 require_once __DIR__ . '/../../../app/models/Academico/Asistencia.php';
 require_once __DIR__ . '/../../../app/models/Academico/Silabos.php';
+require_once __DIR__ . '/../../../app/models/Academico/Matricula.php';
 require_once __DIR__ . '/../../../app/models/Sigi/DatosInstitucionales.php';
+require_once __DIR__ . '/../../../app/models/Sigi/PeriodoAcademico.php';
 require_once __DIR__ . '/../../../app/models/Sigi/DatosSistema.php';
 require_once __DIR__ . '/../../../app/models/Sigi/IndicadorLogroCapacidad.php';
 
 require_once __DIR__ . '/../../../vendor/autoload.php';
 
 use App\Models\Academico\Calificaciones;
+use App\Models\Academico\ProgramacionUnidadDidactica;
 use App\Models\Academico\Asistencia;
 use App\Models\Academico\Silabos;
+use App\Models\Academico\Matricula;
 use App\Models\Sigi\DatosInstitucionales;
 use App\Models\Sigi\DatosSistema;
+use App\Models\Sigi\PeriodoAcademico;
 use App\Models\Sigi\IndicadorLogroCapacidad;
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -30,11 +36,14 @@ use TCPDF;
 class CalificacionesController extends Controller
 {
     protected $model;
+    protected $objProgramacionUD;
     protected $objDatosIes;
     protected $objDatosSistema;
     protected $objAsistencia;
+    protected $objPeriodoAcademico;
     protected $objIndLogroCapacidad;
     protected $objSilabo;
+    protected $objMatricula;
 
     public function __construct()
     {
@@ -43,8 +52,11 @@ class CalificacionesController extends Controller
         $this->objDatosIes = new DatosInstitucionales();
         $this->objDatosSistema = new DatosSistema();
         $this->objAsistencia = new Asistencia();
+        $this->objPeriodoAcademico = new PeriodoAcademico();
+        $this->objProgramacionUD = new ProgramacionUnidadDidactica();
         $this->objIndLogroCapacidad = new IndicadorLogroCapacidad();
         $this->objSilabo = new Silabos();
+        $this->objMatricula = new Matricula();
     }
     public function evaluar($id_programacion_ud, $nro_calificacion)
     {
@@ -56,6 +68,10 @@ class CalificacionesController extends Controller
             ]);
             return;
         }
+        /*consultar si perdiodo esta vigente*/
+        $programacion = $this->objProgramacionUD->find($id_programacion_ud);
+        $periodo_vigente = $this->objPeriodoAcademico->getPeriodoVigente($programacion['id_periodo_academico']);
+
         $datos = $this->model->getDatosEvaluacion($id_programacion_ud, $nro_calificacion);
         $estudiantes = $datos['estudiantes'];
         $estudiantes_inhabilitados = [];
@@ -70,6 +86,7 @@ class CalificacionesController extends Controller
 
         $this->view('academico/calificaciones/evaluar', array_merge([
             'id_programacion_ud' => $id_programacion_ud,
+            'periodo_vigente' => $periodo_vigente,
             'nro_calificacion' => $nro_calificacion,
             'estudiantes_inhabilitados' => $estudiantes_inhabilitados,
             'nota_inasistencia' => $nota_inasistencia,
@@ -81,8 +98,16 @@ class CalificacionesController extends Controller
     {
         $id_criterio = $_POST['id_criterio'] ?? 0;
         $valor = trim($_POST['valor'] ?? '');
-        $ok = $this->model->guardarCriterioEvaluacion($id_criterio, $valor);
-        echo json_encode(['ok' => $ok]);
+
+        $id_programacion_ud = $this->model->obtenerProgPorIdCriterio($id_criterio)['id_programacion_ud'];
+        $permitido = $this->model->puedeVerCalificaciones($id_programacion_ud);
+        /*consultar si perdiodo esta vigente*/
+        $programacion = $this->objProgramacionUD->find($id_programacion_ud);
+        $periodo_vigente = $this->objPeriodoAcademico->getPeriodoVigente($programacion['id_periodo_academico']);
+        if ($permitido && $periodo_vigente) {
+            $ok = $this->model->guardarCriterioEvaluacion($id_criterio, $valor);
+            echo json_encode(['ok' => $ok]);
+        }
         exit;
     }
 
@@ -90,13 +115,15 @@ class CalificacionesController extends Controller
     public function ver($id_programacion_ud)
     {
         $permitido = $this->model->puedeVerCalificaciones($id_programacion_ud);
-
         if (!$permitido) {
             $this->view('academico/calificaciones/ver', [
                 'permitido' => false
             ]);
             return;
         }
+        /*consultar si perdiodo esta vigente*/
+        $programacion = $this->objProgramacionUD->find($id_programacion_ud);
+        $periodo_vigente = $this->objPeriodoAcademico->getPeriodoVigente($programacion['id_periodo_academico']);
 
         $datos = $this->model->getDatosCalificaciones($id_programacion_ud);
         $mostrar_calificaciones = $this->model->getMostrarCalificaciones($id_programacion_ud, $datos['nros_calificacion']);
@@ -115,6 +142,7 @@ class CalificacionesController extends Controller
         $this->view('academico/calificaciones/ver', [
             'id_programacion_ud' => $id_programacion_ud,
             'permitido' => $permitido,
+            'periodo_vigente' => $periodo_vigente,
             'nombreUnidadDidactica' => $datos['nombreUnidadDidactica'],
             'periodo' => $datos['periodo'],
             'nros_calificacion' => $datos['nros_calificacion'],
@@ -130,11 +158,18 @@ class CalificacionesController extends Controller
     }
     public function actualizarMostrar()
     {
+
         $id_programacion_ud = $_POST['id_programacion_ud'] ?? 0;
         $nro_calificacion = $_POST['nro_calificacion'] ?? 0;
         $mostrar = $_POST['mostrar'] ?? 0;
 
-        $ok = $this->model->actualizarMostrarCalificacion($id_programacion_ud, $nro_calificacion, $mostrar);
+        $permitido = $this->model->puedeVerCalificaciones($id_programacion_ud);
+        /*consultar si perdiodo esta vigente*/
+        $programacion = $this->objProgramacionUD->find($id_programacion_ud);
+        $periodo_vigente = $this->objPeriodoAcademico->getPeriodoVigente($programacion['id_periodo_academico']);
+        if ($permitido && $periodo_vigente) {
+            $ok = $this->model->actualizarMostrarCalificacion($id_programacion_ud, $nro_calificacion, $mostrar);
+        }
         header('Content-Type: application/json');
         echo json_encode(['success' => $ok]);
         exit;
@@ -144,7 +179,13 @@ class CalificacionesController extends Controller
         $id_programacion_ud = $_POST['id_programacion_ud'] ?? 0;
         $mostrar = $_POST['mostrar'] ?? 0;
 
-        $ok = $this->model->actualizarMostrarPromedioTodos($id_programacion_ud, $mostrar);
+        $permitido = $this->model->puedeVerCalificaciones($id_programacion_ud);
+        /*consultar si perdiodo esta vigente*/
+        $programacion = $this->objProgramacionUD->find($id_programacion_ud);
+        $periodo_vigente = $this->objPeriodoAcademico->getPeriodoVigente($programacion['id_periodo_academico']);
+        if ($permitido && $periodo_vigente) {
+            $ok = $this->model->actualizarMostrarPromedioTodos($id_programacion_ud, $mostrar);
+        }
         echo json_encode(['ok' => $ok]);
         exit;
     }
@@ -177,12 +218,19 @@ class CalificacionesController extends Controller
     {
         $id_detalle_mat = $_POST['id_detalle_mat'] ?? 0;
         $valor = trim($_POST['valor'] ?? '');
-        $ok = $this->model->guardarRecuperacion($id_detalle_mat, $valor);
+
+        $det_mat = $this->objMatricula->getMatriculaByDetalle($id_detalle_mat);
+        $id_programacion_ud = $det_mat['id_programacion_ud'];
+        $permitido = $this->model->puedeVerCalificaciones($id_programacion_ud);
+        /*consultar si perdiodo esta vigente*/
+        $programacion = $this->objProgramacionUD->find($id_programacion_ud);
+        $periodo_vigente = $this->objPeriodoAcademico->getPeriodoVigente($programacion['id_periodo_academico']);
+        if ($permitido && $periodo_vigente) {
+            $ok = $this->model->guardarRecuperacion($id_detalle_mat, $valor);
+        }
         echo json_encode(['ok' => $ok]);
         exit;
     }
-
-
 
 
 
@@ -193,14 +241,11 @@ class CalificacionesController extends Controller
     public function registroOficial($id_programacion_ud)
     {
         // Obtener todos los datos igual que para la vista de edición
-        $permitido = $this->model->puedeVerCalificaciones($id_programacion_ud);
+        $esAdminAcademico = (\Core\Auth::esAdminAcademico());
+        $esDocenteEncargado = (isset($_SESSION['sigi_user_id']) && $_SESSION['sigi_user_id'] == $this->objProgramacionUD->getIdDocente($id_programacion_ud));
+        $permitido = $esAdminAcademico || $esDocenteEncargado;
 
-        if (!$permitido) {
-            $this->view('academico/calificaciones/ver', [
-                'permitido' => false
-            ]);
-            return;
-        }
+        //var_dump($permitido);
         // INFORMACION PARA ASISTENCIAS
         $datos_asistencia = $this->objAsistencia->getDatosAsistencia($id_programacion_ud);
 
@@ -247,14 +292,10 @@ class CalificacionesController extends Controller
     public function actaFinal($id_programacion_ud)
     {
         // Obtener todos los datos igual que para la vista de edición
-        $permitido = $this->model->puedeVerCalificaciones($id_programacion_ud);
+        $esAdminAcademico = (\Core\Auth::esAdminAcademico());
+        $esDocenteEncargado = (isset($_SESSION['sigi_user_id']) && $_SESSION['sigi_user_id'] == $this->objProgramacionUD->getIdDocente($id_programacion_ud));
+        $permitido = $esAdminAcademico || $esDocenteEncargado;
 
-        if (!$permitido) {
-            $this->view('academico/calificaciones/ver', [
-                'permitido' => false
-            ]);
-            return;
-        }
         // INFORMACION PARA CALIFICACIONES
         $datos = $this->model->getDatosCalificaciones($id_programacion_ud);
         $mostrar_calificaciones = $this->model->getMostrarCalificaciones($id_programacion_ud, $datos['nros_calificacion']);
@@ -297,14 +338,10 @@ class CalificacionesController extends Controller
     public function actaRecuperacion($id_programacion_ud)
     {
         // Obtener todos los datos igual que para la vista de edición
-        $permitido = $this->model->puedeVerCalificaciones($id_programacion_ud);
+        $esAdminAcademico = (\Core\Auth::esAdminAcademico());
+        $esDocenteEncargado = (isset($_SESSION['sigi_user_id']) && $_SESSION['sigi_user_id'] == $this->objProgramacionUD->getIdDocente($id_programacion_ud));
+        $permitido = $esAdminAcademico || $esDocenteEncargado;
 
-        if (!$permitido) {
-            $this->view('academico/calificaciones/ver', [
-                'permitido' => false
-            ]);
-            return;
-        }
         // INFORMACION PARA CALIFICACIONES
         $datos = $this->model->getDatosCalificaciones($id_programacion_ud);
         $mostrar_calificaciones = $this->model->getMostrarCalificaciones($id_programacion_ud, $datos['nros_calificacion']);
@@ -349,10 +386,12 @@ class CalificacionesController extends Controller
     public function reporteRegistra($id_programacion_ud)
     {
         // Obtener todos los datos igual que para la vista de edición
-        $permitido = $this->model->puedeVerCalificaciones($id_programacion_ud);
+        $esAdminAcademico = (\Core\Auth::esAdminAcademico());
+        $esDocenteEncargado = (isset($_SESSION['sigi_user_id']) && $_SESSION['sigi_user_id'] == $this->objProgramacionUD->getIdDocente($id_programacion_ud));
+        $permitido = $esAdminAcademico || $esDocenteEncargado;
 
         if (!$permitido) {
-            $this->view('academico/calificaciones/ver', [
+            $this->view('academico/calificaciones/ver/' . $id_programacion_ud, [
                 'permitido' => false
             ]);
             return;

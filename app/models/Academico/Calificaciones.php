@@ -11,8 +11,7 @@ class Calificaciones extends Model
     public function puedeVerCalificaciones($id_programacion_ud)
     {
         $idUsuario = $_SESSION['sigi_user_id'] ?? 0;
-        $rolActual = $_SESSION['sigi_rol_actual'] ?? 0;
-        if ($rolActual == 1) return true;
+        if (\Core\Auth::esAdminAcademico()) return true;
         $stmt = self::$db->prepare("SELECT id_docente FROM acad_programacion_unidad_didactica WHERE id = ?");
         $stmt->execute([$id_programacion_ud]);
         $idDocente = $stmt->fetchColumn();
@@ -375,5 +374,27 @@ class Calificaciones extends Model
         $porc_faltas = $faltas / $total;
 
         return $porc_faltas > 0.3;
+    }
+
+    public function obtenerProgPorIdCriterio($id_criterio)
+    {
+        $stmt = self::$db->prepare("SELECT adm.id_programacion_ud 
+        FROM acad_detalle_matricula adm 
+        INNER JOIN acad_calificacion ac ON ac.id_detalle_matricula = adm.id
+        INNER JOIN acad_evaluacion ae ON ae.id_calificacion = ac.id
+        INNER JOIN acad_criterio_evaluacion ace ON ace.id_evaluacion =ae.id
+        WHERE ace.id = ?");
+        $stmt->execute([$id_criterio]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+    public function obtenerProgPorIdEvaluacion($id_evaluacion)
+    {
+        $stmt = self::$db->prepare("SELECT adm.id_programacion_ud 
+        FROM acad_detalle_matricula adm 
+        INNER JOIN acad_calificacion ac ON ac.id_detalle_matricula = adm.id
+        INNER JOIN acad_evaluacion ae ON ae.id_calificacion = ac.id
+        WHERE ae.id = ?");
+        $stmt->execute([$id_evaluacion]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 }

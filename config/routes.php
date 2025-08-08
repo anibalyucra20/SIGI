@@ -97,6 +97,7 @@ return [
   // Endpoints AJAX para selects dependientes:
   'sigi/semestre/porModulo/{id_modulo}' => 'Sigi/SemestreController@porModulo',
   'sigi/semestre/porPlan/{id_plan}' => 'Sigi/SemestreController@porPlan',
+  'sigi/semestre/porPrograma/{id_programa}' => 'Sigi/SemestreController@porPrograma',
 
   // SIGI/UNIDAD DIDACTICA
   'sigi/unidadDidactica'               => 'Sigi/UnidadDidacticaController@index',

@@ -59,9 +59,9 @@ class SilabosController extends Controller
             $periodo = $this->objPeriodoAcademico->getPeriodoVigente($programacion['id_periodo_academico']);
 
             $esDocenteAsignado = ($programacion['id_docente'] == ($_SESSION['sigi_user_id'] ?? -1));
-            $esAdminAcademico = $this->esAdminAcademico();
-            $permitido = (($esDocenteAsignado || $esAdminAcademico) && ($periodo && $periodo['vigente']));
-
+            $esAdminAcademico = (\Core\Auth::esAdminAcademico());
+            $permitido = (($esDocenteAsignado || $esAdminAcademico));
+            $periodo_vigente = ($periodo && $periodo['vigente']);
             // DATOS GENERALES
             $datosGenerales = $this->model->getDatosGenerales($id_programacion);
             // SECCION III: COMPETENCIAS DEL MODULO
@@ -82,6 +82,7 @@ class SilabosController extends Controller
         $this->view('academico/silabos/editar', [
             'silabo' => $silabo,
             'permitido' => $permitido,
+            'periodo_vigente' => $periodo_vigente,
             'errores' => $errores,
             'datosGenerales' => $datosGenerales ?? [],
             'competenciasUnidadDidactica' => $competenciasUnidadDidactica ?? [],
@@ -107,7 +108,7 @@ class SilabosController extends Controller
             $programacion = $this->objProgramacionUD->find($silabo['id_prog_unidad_didactica']);
             $periodo = $this->objPeriodoAcademico->getPeriodoVigente($programacion['id_periodo_academico']);
             $esDocenteAsignado = ($programacion['id_docente'] == ($_SESSION['sigi_user_id'] ?? -1));
-            $esAdminAcademico = $this->esAdminAcademico();
+            $esAdminAcademico = (\Core\Auth::esAdminAcademico());
             $permitido = (($esDocenteAsignado || $esAdminAcademico) && ($periodo && $periodo['vigente']));
 
             if (!$permitido) {
@@ -175,15 +176,10 @@ class SilabosController extends Controller
         }
         $_SESSION['flash_success'] = "Sílabo actualizado correctamente.";
         //$this->editar($id_programacion);
-        header('Location: ' . BASE_URL . '/academico/silabos/editar/'.$id_programacion);
+        header('Location: ' . BASE_URL . '/academico/silabos/editar/' . $id_programacion);
         exit;
     }
 
-    protected function esAdminAcademico()
-    {
-        // Asume que el rol de admin académico es 1 (ajusta si tienes otro)
-        return (isset($_SESSION['sigi_rol_actual']) && $_SESSION['sigi_rol_actual'] == 1);
-    }
 
     public function pdf($id_programacion)
     {
@@ -197,12 +193,12 @@ class SilabosController extends Controller
         if ($silabo) {
             $datosInstitucionales = $this->objDatosIes->buscar();
             $datosSistema = $this->objDatosSistema->buscar();
+
             $programacion = $this->objProgramacionUD->find($id_programacion);
             $periodo = $this->objPeriodoAcademico->getPeriodoVigente($programacion['id_periodo_academico']);
-
             $esDocenteAsignado = ($programacion['id_docente'] == ($_SESSION['sigi_user_id'] ?? -1));
-            $esAdminAcademico = $this->esAdminAcademico();
-            $permitido = (($esDocenteAsignado || $esAdminAcademico) && ($periodo && $periodo['vigente']));
+            $esAdminAcademico = (\Core\Auth::esAdminAcademico());
+            $permitido = (($esDocenteAsignado || $esAdminAcademico));
             // DATOS GENERALES DE SILABO
             $datosGenerales = $this->model->getDatosGenerales($id_programacion);
             // SECCION III: COMPETENCIAS DEL MODULO

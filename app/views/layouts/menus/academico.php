@@ -41,26 +41,35 @@
                             <i class="mdi mdi-school"></i> Estudiantes
                         </a>
                     </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle arrow-none" href="#" id="nav-matriculas" role="button"
+                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="mdi mdi-bank-transfer"></i> Evaluación <div class="arrow-down"></div>
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="nav-matriculas">
+                            <a href="<?= BASE_URL ?>/academico/unidadesDidacticas/evaluar" class="dropdown-item">Registros de evaluacion</a>
+                        </div>
+                    </li>
                 <?php endif; ?>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle arrow-none" href="#" id="nav-matriculas" role="button"
-                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <i class="mdi mdi-bank-transfer"></i> Unidades Didácticas <div class="arrow-down"></div>
-                    </a>
-                    <div class="dropdown-menu" aria-labelledby="nav-matriculas">
-                        <a href="<?= BASE_URL ?>/academico/unidadesDidacticas" class="dropdown-item">Unidades Didácticas</a>
-                        <a href="<?= BASE_URL ?>/academico/misUnidadesDidacticas" class="dropdown-item">mis Unidades Didácticas</a>
-                    </div>
-                </li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle arrow-none" href="#" id="nav-matriculas" role="button"
-                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <i class="mdi mdi-bank-transfer"></i> Evaluación <div class="arrow-down"></div>
-                    </a>
-                    <div class="dropdown-menu" aria-labelledby="nav-matriculas">
-                        <a href="<?= BASE_URL ?>/academico/registroEvaluacion" class="dropdown-item">Registros de evaluacion</a>
-                    </div>
-                </li>
+                <?php if (\Core\Auth::esDocenteAcademico()): ?>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle arrow-none" href="#" id="nav-matriculas" role="button"
+                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="mdi mdi-bank-transfer"></i> Unidades Didácticas <div class="arrow-down"></div>
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="nav-matriculas">
+                            <a href="<?= BASE_URL ?>/academico/unidadesDidacticas" class="dropdown-item">Mis Unidades Didácticas</a>
+                        </div>
+                    </li>
+                <?php endif; ?>
+                <?php if ((\Core\Auth::esAdminAcademico()) || (\Core\Auth::esDirectorAcademico()) || (\Core\Auth::esSecretarioAcadAcademico()) || (\Core\Auth::esJUAAcademico()) || (\Core\Auth::esCoordinadorPEAcademico())): ?>
+                    <li class="nav-item">
+                        <a class="nav-link"
+                            href="<?= BASE_URL ?>/academico/reportes">
+                            <i class="mdi mdi-chart-line"></i> Reportes
+                        </a>
+                    </li>
+                <?php endif; ?>
             <?php else: ?>
                 <!-- Aquí va solo lo mínimo, o un mensaje, o nada -->
                 <!-- O simplemente no muestres nada más -->

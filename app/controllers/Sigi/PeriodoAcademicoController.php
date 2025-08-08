@@ -4,6 +4,7 @@ namespace App\Controllers\Sigi;
 // Incluir manualmente el modelo
 require_once __DIR__ . '/../../../app/models/Sigi/PeriodoAcademico.php';
 require_once __DIR__ . '/../../../app/models/Sigi/Docente.php';
+
 use App\Models\Sigi\PeriodoAcademico;
 use App\Models\Sigi\Docente;
 use Core\Controller;
@@ -36,27 +37,28 @@ class PeriodoAcademicoController extends Controller
         } else {
             $redirect = BASE_URL . '/intranet';
         }
-
         header('Location: ' . $redirect);
         exit;
     }
     public function data()
     {
-        header('Content-Type: application/json; charset=utf-8');
-        $draw      = $_GET['draw']  ?? 1;
-        $start     = $_GET['start'] ?? 0;
-        $length    = $_GET['length'] ?? 10;
-        $orderCol  = $_GET['order'][0]['column'] ?? 0;
-        $orderDir  = $_GET['order'][0]['dir']    ?? 'desc';
+        if (\Core\Auth::esAdminSigi()):
+            header('Content-Type: application/json; charset=utf-8');
+            $draw      = $_GET['draw']  ?? 1;
+            $start     = $_GET['start'] ?? 0;
+            $length    = $_GET['length'] ?? 10;
+            $orderCol  = $_GET['order'][0]['column'] ?? 0;
+            $orderDir  = $_GET['order'][0]['dir']    ?? 'desc';
 
-        $result = $this->model->getPaginated($length, $start, $orderCol, $orderDir);
+            $result = $this->model->getPaginated($length, $start, $orderCol, $orderDir);
 
-        echo json_encode([
-            'draw'            => (int)$draw,
-            'recordsTotal'    => (int)$result['total'],
-            'recordsFiltered' => (int)$result['total'],
-            'data'            => $result['data']
-        ], JSON_UNESCAPED_UNICODE);
+            echo json_encode([
+                'draw'            => (int)$draw,
+                'recordsTotal'    => (int)$result['total'],
+                'recordsFiltered' => (int)$result['total'],
+                'data'            => $result['data']
+            ], JSON_UNESCAPED_UNICODE);
+        endif;
         exit;
     }
 
@@ -73,28 +75,33 @@ class PeriodoAcademicoController extends Controller
 
     public function editar($id)
     {
-        $periodo    = $this->model->find($id);
-        $directores = $this->objDocente->getDirectores();
+        if (\Core\Auth::esAdminSigi()):
+            $periodo    = $this->model->find($id);
+            $directores = $this->objDocente->getDirectores();
+        endif;
         $this->view('sigi/periodoAcademico/editar', [
             'directores' => $directores,
             'periodo'    => $periodo,
             'module'     => 'sigi',
             'pageTitle'  => 'Editar Periodo Académico'
         ]);
+        exit;
     }
 
     public function guardar()
     {
-        $data = [
-            'id'           => $_POST['id'] ?? null,
-            'nombre'       => $_POST['nombre'],
-            'fecha_inicio' => $_POST['fecha_inicio'],
-            'fecha_fin'    => $_POST['fecha_fin'],
-            'director'     => $_POST['director'],
-            'fecha_actas'  => $_POST['fecha_actas']
-        ];
-        $id = $this->model->guardar($data);
-        $_SESSION['flash_success'] = "Periodo guardado correctamente.";
+        if (\Core\Auth::esAdminSigi()):
+            $data = [
+                'id'           => $_POST['id'] ?? null,
+                'nombre'       => $_POST['nombre'],
+                'fecha_inicio' => $_POST['fecha_inicio'],
+                'fecha_fin'    => $_POST['fecha_fin'],
+                'director'     => $_POST['director'],
+                'fecha_actas'  => $_POST['fecha_actas']
+            ];
+            $id = $this->model->guardar($data);
+            $_SESSION['flash_success'] = "Periodo guardado correctamente.";
+        endif;
         header('Location: ' . BASE_URL . '/sigi/periodoAcademico');
         exit;
     }

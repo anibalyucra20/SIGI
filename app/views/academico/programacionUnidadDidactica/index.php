@@ -196,6 +196,8 @@
         });
     </script>
 <?php else: ?>
-    <p>El módulo solo es para rol de Administrador Académico.</p>
+    <div class="alert alert-danger mt-4">
+        <p>El módulo solo es para rol de Administrador Académico.</p>
+    </div>
 <?php endif; ?>
 <?php require __DIR__ . '/../../layouts/footer.php'; ?>

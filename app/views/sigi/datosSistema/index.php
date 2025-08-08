@@ -90,6 +90,11 @@
                 <input type="number" name="nota_inasistencia" class="form-control" min="0" max="20" required
                     value="<?= htmlspecialchars($sistema['nota_inasistencia'] ?? '') ?>" readonly>
             </div>
+            <div class="mb-3">
+                <label class="form-label">Tiempo de Inactividad para Cerrar Sesión (en Minutos) *</label>
+                <input type="number" name="duracion_sesion" class="form-control" min="0" max="10000" required
+                    value="<?= htmlspecialchars($sistema['duracion_sesion'] ?? '') ?>" readonly>
+            </div>
 
             <div class="mb-3">
                 <label class="form-label">Token Sistema *</label>
