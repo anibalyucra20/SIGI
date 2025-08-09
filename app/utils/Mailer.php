@@ -1,4 +1,5 @@
 <?php
+
 // app/utils/Mailer.php
 namespace App\Utils;
 

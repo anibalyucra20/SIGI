@@ -159,7 +159,8 @@ class LoginController extends Controller
                 "Abre este enlace para restablecerla: {$resetUrl}\n\n" .
                 "Si no solicitaste este cambio, ignora este mensaje.";
 
-            $res = Mailer::send($user['correo'], $user['apellidos_nombres'], 'Restablecer contraseña', $html, $alt);
+            $mail = new Mailer();
+            $res = $mail->send($user['correo'], $user['apellidos_nombres'], 'Restablecer contraseña', $html, $alt);
 
             $_SESSION['flash_success'] = 'se envió un correo con instrucciones.' . $res['error'];
             header('Location: ' . BASE_URL . $back);
