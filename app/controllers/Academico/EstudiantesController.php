@@ -5,17 +5,21 @@ namespace App\Controllers\Academico;
 use Core\Controller;
 
 require_once __DIR__ . '/../../../app/models/Academico/Estudiantes.php';
+require_once __DIR__ . '/../../../app/models/Sigi/Docente.php';
 require_once __DIR__ . '/../../../app/models/Sigi/Sedes.php';
 require_once __DIR__ . '/../../../app/models/Sigi/Programa.php';
 require_once __DIR__ . '/../../../app/models/Sigi/Plan.php';
 require_once __DIR__ . '/../../../app/models/Sigi/PeriodoAcademico.php';
+require_once __DIR__ . '/../../../app/models/Sigi/DatosSistema.php';
 require_once __DIR__ . '/../../../vendor/autoload.php';
 
 use App\Models\Academico\Estudiantes;
+use App\Models\Sigi\Docente;
 use App\Models\Sigi\Sedes;
 use App\Models\Sigi\Programa;
 use App\Models\Sigi\Plan;
 use App\Models\Sigi\PeriodoAcademico;
+use App\Models\Sigi\DatosSistema;
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -27,20 +31,25 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 class EstudiantesController extends Controller
 {
     protected $model;
+    protected $objDocente;
     protected $objSede;
     protected $objPrograma;
     protected $objPlan;
     protected $objPeriodoAcademico;
+    protected $objDatosSistema;
 
     public function __construct()
     {
         parent::__construct();
         $this->model = new Estudiantes();
+        $this->objDocente = new Docente();
         $this->objSede = new Sedes();
         $this->objPrograma = new Programa();
         $this->objPlan = new Plan();
         $this->objPeriodoAcademico = new PeriodoAcademico();
+        $this->objDatosSistema = new DatosSistema();
     }
+
 
     public function index()
     {
@@ -73,7 +82,13 @@ class EstudiantesController extends Controller
             ];
 
             $result = $this->model->getPaginated($filters, $length, $start, $orderCol, $orderDir);
-
+            $estudiantes = $result['data'];
+            //actualizamos los permisos elegidos en datos sistema 
+            foreach ($estudiantes as $estudiante) {
+                //var_dump($estudiante['id']);
+                $id_estudiante = $estudiante['id'];
+                $this->registrar_permiso_inicial($id_estudiante);
+            }
             echo json_encode([
                 'draw'            => (int)$draw,
                 'recordsTotal'    => (int)$result['total'],
@@ -187,11 +202,23 @@ class EstudiantesController extends Controller
             }
 
             // Guardar normal si todo está OK
-            $this->model->guardar($data);
+            $id_estudiante =  $this->model->guardar($data);
+            if ($id_estudiante > 0) {
+                $this->registrar_permiso_inicial($id_estudiante);
+            }
             $_SESSION['flash_success'] = "Estudiante guardado correctamente.";
         endif;
         header('Location: ' . BASE_URL . '/academico/estudiantes');
         exit;
+    }
+
+    protected function registrar_permiso_inicial($id_estudiante)
+    {
+        $idRolEstudiante = 7; // 'ESTUDIANTE'
+        //registrar los permisoselegidos por sistema para nuevos docentes
+        $ds = $this->objDatosSistema->buscar();
+        $idsSistemas = $this->objDatosSistema->decodePermisos($ds['permisos_inicial_docente'] ?? '');
+        $this->objDocente->asignarLote($id_estudiante, $idRolEstudiante, $idsSistemas);
     }
 
 
@@ -418,7 +445,10 @@ class EstudiantesController extends Controller
 
                 // Insertar estudiantes
                 foreach ($datosAInsertar as $estudiante) {
-                    $this->model->guardar($estudiante);
+                    $id_estudiante = $this->model->guardar($estudiante);
+                    if ($id_estudiante > 0) {
+                        $this->registrar_permiso_inicial($id_estudiante);
+                    }
                 }
                 $_SESSION['flash_error'] = implode('<br>', $errores);
                 $_SESSION['flash_success'] = "Importación completada correctamente.";

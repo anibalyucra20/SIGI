@@ -5,12 +5,15 @@ namespace App\Controllers\Sigi;
 use Core\Controller;
 // Incluir manualmente el modelo
 require_once __DIR__ . '/../../../app/models/Sigi/DatosSistema.php';
+require_once __DIR__ . '/../../../app/models/Sigi/Sistema.php';
 
 use App\Models\Sigi\DatosSistema;
+use App\Models\Sigi\Sistema;
 
 class DatosSistemaController extends Controller
 {
     protected $model;
+    protected $objSistema;
     public function __construct()
     {
         parent::__construct();
@@ -21,14 +24,21 @@ class DatosSistemaController extends Controller
             exit;
         }
         $this->model = new DatosSistema();
+        $this->objSistema = new Sistema();
     }
     public function index()
     {
         if (\Core\Auth::esAdminSigi()):
             $sistema = $this->model->buscar();
+            $sistemas = $this->objSistema->getSistemas();
+            $seleccionados = $this->model->decodePermisos($sistema['permisos_inicial_docente'] ?? '');
+            $seleccionadosEst = $this->model->decodePermisos($sistema['permisos_inicial_estudiante'] ?? '');
         endif;
         $this->view('sigi/datosSistema/index', [
             'sistema' => $sistema,
+            'sistemas' => $sistemas,
+            'permisos_iniciales' => $seleccionados,
+            'permisos_iniciales_estudiante' => $seleccionadosEst,
             'module' => 'sigi',
             'pageTitle' => 'Datos del Sistema'
         ]);
@@ -38,6 +48,23 @@ class DatosSistemaController extends Controller
     public function guardar()
     {
         if (\Core\Auth::esAdminSigi()):
+
+            // Permisos iniciales desde el form (checkbox[])
+            $raw = $_POST['permisos_inicial_docente'] ?? []; // array de ids
+            if (!is_array($raw)) $raw = [];
+
+            // Permisos iniciales estudiante desde el form (checkbox[])
+            $rawEst = $_POST['permisos_inicial_estudiante'] ?? []; // array de ids
+            if (!is_array($rawEst)) $rawEst = [];
+
+            // Validar contra ids válidos
+            $validos = $this->objSistema->idsValidos();
+            $seleccion = array_values(array_intersect(array_map('intval', $raw), $validos));
+            $seleccionEst = array_values(array_intersect(array_map('intval', $rawEst), $validos));
+
+            $permisosJson = $this->model->encodePermisos($seleccion);
+            $permisosEstudianteJson = $this->model->encodePermisos($seleccionEst);
+
             $data = [
                 'id'               => $_POST['id'] ?? 1,
                 'dominio_pagina'   => $_POST['dominio_pagina'],
@@ -52,8 +79,10 @@ class DatosSistemaController extends Controller
                 'puerto_email'     => $_POST['puerto_email'],
                 'color_correo'     => $_POST['color_correo'],
                 'cant_semanas'     => $_POST['cant_semanas'],
-                'nota_inasistencia'=> $_POST['nota_inasistencia'],
+                'nota_inasistencia' => $_POST['nota_inasistencia'],
                 'duracion_sesion'  => $_POST['duracion_sesion'],
+                'permisos_inicial_docente' => $permisosJson,
+                'permisos_inicial_estudiante' => $permisosEstudianteJson,
                 'token_sistema'    => $_POST['token_sistema'],
             ];
 

@@ -10,6 +10,17 @@ class Matricula extends Model
 {
     protected $table = 'acad_matricula';
 
+    public function getMatriculaByEstudiante($id_estudiante, $periodo, $sede)
+    {
+        $sql = "SELECT m.id FROM acad_matricula m
+            INNER JOIN acad_estudiante_programa ep ON ep.id = m.id_estudiante
+            INNER JOIN sigi_usuarios u ON u.id = ep.id_usuario
+            WHERE u.id = ? AND m.id_periodo_academico = ? AND m.id_sede = ?";
+        $stmt = self::$db->prepare($sql);
+        $stmt->execute([$id_estudiante, $periodo, $sede]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
     // Paginar matrículas con filtros
     public function getPaginated($filters, $length, $start, $orderCol, $orderDir)
     {
@@ -170,7 +181,7 @@ class Matricula extends Model
         $stmt->execute([$id_detalle]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
-    
+
 
 
     public function getDetalleMatricula($id_matricula)

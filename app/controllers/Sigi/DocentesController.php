@@ -11,6 +11,7 @@ require_once __DIR__ . '/../../../app/models/Sigi/Sedes.php';
 require_once __DIR__ . '/../../../app/models/Sigi/PeriodoAcademico.php';
 require_once __DIR__ . '/../../../app/models/Sigi/Programa.php';
 require_once __DIR__ . '/../../../app/models/Sigi/Sistema.php';
+require_once __DIR__ . '/../../../app/models/Sigi/DatosSistema.php';
 require_once __DIR__ . '/../../../app/models/Sigi/Permiso.php';
 
 use App\Models\Sigi\Docente;
@@ -19,6 +20,7 @@ use App\Models\Sigi\Sedes;
 use App\Models\Sigi\PeriodoAcademico;
 use App\Models\Sigi\Programa;
 use App\Models\Sigi\Sistema;
+use App\Models\Sigi\DatosSistema;
 use App\Models\Sigi\Permiso;
 
 class DocentesController extends Controller
@@ -29,6 +31,7 @@ class DocentesController extends Controller
     protected $objPrograma;
     protected $objPeriodoAcademico;
     protected $objSistema;
+    protected $objDatosSistema;
     protected $objPermiso;
 
     public function __construct()
@@ -46,6 +49,7 @@ class DocentesController extends Controller
         $this->objPeriodoAcademico = new PeriodoAcademico();
         $this->objPrograma = new Programa();
         $this->objSistema = new Sistema();
+        $this->objDatosSistema = new DatosSistema();
         $this->objPermiso = new Permiso();
     }
 
@@ -53,6 +57,12 @@ class DocentesController extends Controller
     {
         if (\Core\Auth::esAdminSigi()):
             $docentes = $this->model->getAllDocente();
+
+            //para actualizar permisos de docente
+            foreach ($docentes as $docente) {
+                //var_dump($docente['id']);
+                $this->registrar_permiso_inicial($docente['id']);
+            }
         endif;
         $this->view('sigi/docentes/index', ['docentes' => $docentes]);
         exit;
@@ -124,12 +134,23 @@ class DocentesController extends Controller
             $data['reset_password'] = 0;
             $data['token_password'] = '';
 
-            $this->model->nuevo($data);
+            $id_docente = $this->model->nuevo($data);
+            if ($id_docente > 0) {
+                $this->registrar_permiso_inicial($id_docente);
+            }
             // Guardar contraseña en sesión temporal para mostrarla una sola vez
             $_SESSION['flash_success'] = "Docente registrado correctamente. La contraseña generada es: <strong>{$password}</strong>";
         endif;
         header('Location: ' . BASE_URL . '/sigi/docentes');
         exit;
+    }
+    protected function registrar_permiso_inicial($id_docente)
+    {
+        $idRolDocente = 6; // 'ESTUDIANTE'
+        //registrar los permisoselegidos por sistema para nuevos docentes
+        $ds = $this->objDatosSistema->buscar();
+        $idsSistemas = $this->objDatosSistema->decodePermisos($ds['permisos_inicial_docente'] ?? '');
+        $this->model->asignarLote($id_docente, $idRolDocente, $idsSistemas);
     }
 
     // EDITAR

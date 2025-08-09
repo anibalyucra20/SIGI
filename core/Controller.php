@@ -9,7 +9,7 @@ class Controller
     public function __construct()
     {
         \Core\Auth::start();
-        $allowedNoAuth = ['logout', 'login', 'login/acceder']; // rutas públicas
+        $allowedNoAuth = ['logout', 'login', 'login/acceder', 'recuperar', 'reestablecer']; // rutas públicas
 
         $current = $_GET['url'] ?? '';
 

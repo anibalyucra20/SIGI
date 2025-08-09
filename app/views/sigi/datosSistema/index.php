@@ -2,7 +2,7 @@
 <?php if (\Core\Auth::esAdminSigi()): ?>
     <div class="container mt-4">
         <h3 class="mb-4">Datos del Sistema</h3>
-        <form id="form-datos-sistema" action="<?= BASE_URL ?>/sigi/datosSistema/guardar" method="post" enctype="multipart/form-data" class="card p-4 shadow-sm rounded-3" autocomplete="off" >
+        <form id="form-datos-sistema" action="<?= BASE_URL ?>/sigi/datosSistema/guardar" method="post" enctype="multipart/form-data" class="card p-4 shadow-sm rounded-3" autocomplete="off">
             <input type="hidden" name="id" value="<?= htmlspecialchars($sistema['id'] ?? '') ?>">
 
             <div class="mb-3">
@@ -21,7 +21,7 @@
                         <img src="<?= BASE_URL ?>/img/favicon.ico" alt="Favicon" style="height:32px;">
                     </div>
                 <?php endif; ?>
-                <input type="file" name="favicon_file" class="form-control d-none" maxlength="100" 
+                <input type="file" name="favicon_file" class="form-control d-none" maxlength="100"
                     value="<?= htmlspecialchars($sistema['favicon'] ?? '') ?>" readonly accept="image/x-icon">
                 <input type="hidden" name="favicon" value="<?= htmlspecialchars($sistema['favicon'] ?? '') ?>">
             </div>
@@ -36,7 +36,7 @@
                         <img src="<?= BASE_URL ?>/img/logo_completo.png" alt="logo" style="height:62px;">
                     </div>
                 <?php endif; ?>
-                <input type="file" name="logo_file" class="form-control d-none" maxlength="100" 
+                <input type="file" name="logo_file" class="form-control d-none" maxlength="100"
                     value="<?= htmlspecialchars($sistema['logo'] ?? '') ?>" readonly accept="image/png,image/jpeg,image/svg+xml">
                 <input type="hidden" name="logo" value="<?= htmlspecialchars($sistema['logo'] ?? '') ?>">
             </div>
@@ -95,7 +95,46 @@
                 <input type="number" name="duracion_sesion" class="form-control" min="0" max="10000" required
                     value="<?= htmlspecialchars($sistema['duracion_sesion'] ?? '') ?>" readonly>
             </div>
-
+            <div class="mb-3">
+                <label class="form-label"><b>Permisos iniciales para DOCENTE</b></label>
+                <div class="row" id="permisos_docente">
+                    <?php foreach ($sistemas as $sis):
+                        $checked = in_array((int)$sis['id'], $permisos_iniciales, true) ? 'checked' : '';
+                    ?>
+                        <div class="col-md-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox"
+                                    id="sis<?= (int)$sis['id'] ?>"
+                                    name="permisos_inicial_docente[]"
+                                    value="<?= (int)$sis['id'] ?>" <?= $checked ?>>
+                                <label class="form-check-label" for="sis<?= (int)$sis['id'] ?>">
+                                    <?= htmlspecialchars($sis['nombre']) ?> <small class="text-muted">(<?= htmlspecialchars($sis['codigo']) ?>)</small>
+                                </label>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label"><b>Permisos iniciales para ESTUDIANTE</b></label>
+                <div class="row" id="permisos_estudiante">
+                    <?php foreach ($sistemas as $sis):
+                        $checked = in_array((int)$sis['id'], $permisos_iniciales_estudiante, true) ? 'checked' : '';
+                    ?>
+                        <div class="col-md-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox"
+                                    id="sisest<?= (int)$sis['id'] ?>"
+                                    name="permisos_inicial_estudiante[]"
+                                    value="<?= (int)$sis['id'] ?>" <?= $checked ?>>
+                                <label class="form-check-label" for="sisest<?= (int)$sis['id'] ?>">
+                                    <?= htmlspecialchars($sis['nombre']) ?> <small class="text-muted">(<?= htmlspecialchars($sis['codigo']) ?>)</small>
+                                </label>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
             <div class="mb-3">
                 <label class="form-label">Token Sistema *</label>
                 <textarea name="token_sistema" class="form-control" maxlength="1000" required readonly><?= htmlspecialchars($sistema['token_sistema'] ?? '') ?></textarea>
@@ -115,6 +154,8 @@
             const btnEditar = document.getElementById('btn-editar-ds');
             const btnGuardar = document.getElementById('btn-guardar-ds');
             const btnCancelar = document.getElementById('btn-cancelar-ds');
+            const PermisosDocente = document.getElementById('permisos_docente');
+            const PermisosEstudiante = document.getElementById('permisos_estudiante');
             const inputs = form.querySelectorAll('input:not([type="hidden"]), select, textarea');
 
             function setEditable(editable) {
@@ -137,7 +178,10 @@
                 });
                 btnGuardar.classList.toggle('d-none', !editable);
                 btnCancelar.classList.toggle('d-none', !editable);
+                PermisosDocente.classList.toggle('d-none', !editable);
+                PermisosEstudiante.classList.toggle('d-none', !editable);
                 btnEditar.classList.toggle('d-none', editable);
+                
             }
 
             btnEditar.addEventListener('click', function() {

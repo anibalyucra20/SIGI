@@ -70,6 +70,14 @@
                         </a>
                     </li>
                 <?php endif; ?>
+                <?php if ((\Core\Auth::esEstudianteAcademico())): ?>
+                    <li class="nav-item">
+                        <a class="nav-link"
+                            href="<?= BASE_URL ?>/academico/calificaciones/consulta">
+                            <i class="mdi mdi-chart-line"></i> Calificaciones
+                        </a>
+                    </li>
+                <?php endif; ?>
             <?php else: ?>
                 <!-- Aquí va solo lo mínimo, o un mensaje, o nada -->
                 <!-- O simplemente no muestres nada más -->

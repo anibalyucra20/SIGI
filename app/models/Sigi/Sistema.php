@@ -11,15 +11,16 @@ class Sistema extends Model
     protected $table = 'sigi_permisos_usuarios';
 
     // Obtener todos los docentes (roles distintos de ESTUDIANTE y EXTERNO)
-    public function buscar()
-    {
-        
-    }
+    public function buscar() {}
     // Listado de sistemas (para asignar)
     public function getSistemas()
     {
         return self::$db->query("SELECT id, nombre FROM sigi_sistemas_integrados ORDER BY nombre")
             ->fetchAll(PDO::FETCH_ASSOC);
     }
-    
+    public function idsValidos(): array
+    {
+        $st = self::$db->query("SELECT id FROM sigi_sistemas_integrados");
+        return array_map('intval', $st->fetchAll(PDO::FETCH_COLUMN));
+    }
 }

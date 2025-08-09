@@ -25,6 +25,61 @@ class App
             $controller->salir();
             exit;
         }
+        if (!empty($segments[0]) && ($segments[0]) === 'recuperar') {
+            $this->module     = 'Auth';
+            $this->controller = 'LoginController';
+            $this->method     = 'recuperar';
+            require_once __DIR__ . "/../app/controllers/Auth/LoginController.php";
+            // Ejecuta y termina
+            $class = "App\\Controllers\\Auth\\LoginController";
+            $controller = new $class();
+            $controller->recuperar();
+            exit;
+        }
+        if (!empty($segments[0]) && ($segments[0]) === 'resetPassword') {
+            $this->module     = 'Auth';
+            $this->controller = 'LoginController';
+            $this->method     = 'resetPassword';
+            require_once __DIR__ . "/../app/controllers/Auth/LoginController.php";
+            // Ejecuta y termina
+            $class = "App\\Controllers\\Auth\\LoginController";
+            $controller = new $class();
+            $controller->resetPassword();
+            exit;
+        }
+        if (!empty($segments[0]) && ($segments[0]) === 'enviarRecuperacion') {
+            $this->module     = 'Auth';
+            $this->controller = 'LoginController';
+            $this->method     = 'enviarRecuperacion';
+            require_once __DIR__ . "/../app/controllers/Auth/LoginController.php";
+            // Ejecuta y termina
+            $class = "App\\Controllers\\Auth\\LoginController";
+            $controller = new $class();
+            $controller->enviarRecuperacion();
+            exit;
+        }
+        if (!empty($segments[0]) && strtolower($segments[0]) === 'restablecer') {
+            $this->module     = 'Auth';
+            $this->controller = 'LoginController';
+            $this->method     = 'restablecer';
+            require_once __DIR__ . "/../app/controllers/Auth/LoginController.php";
+            // Ejecuta y termina
+            $class = "App\\Controllers\\Auth\\LoginController";
+            $controller = new $class();
+            $controller->restablecer();
+            exit;
+        }
+        if (!empty($segments[0]) && ($segments[0]) === 'guardarNuevaPassword') {
+            $this->module     = 'Auth';
+            $this->controller = 'LoginController';
+            $this->method     = 'guardarNuevaPassword';
+            require_once __DIR__ . "/../app/controllers/Auth/LoginController.php";
+            // Ejecuta y termina
+            $class = "App\\Controllers\\Auth\\LoginController";
+            $controller = new $class();
+            $controller->guardarNuevaPassword();
+            exit;
+        }
         if (!empty($segments[0])) {
             // para poder hacer el logo dinamico segun el modulo donde se encuentre
             \Core\Auth::start();

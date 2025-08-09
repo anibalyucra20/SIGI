@@ -179,6 +179,6 @@ class Auth
     {
         return (isset($_SESSION['sigi_modulo_actual'], $_SESSION['sigi_rol_actual'])
             && $_SESSION['sigi_modulo_actual'] == 2    // ACADEMICO
-            && $_SESSION['sigi_rol_actual'] == 6);     // DOCENTE
+            && $_SESSION['sigi_rol_actual'] == 7);     // DOCENTE
     }
 }

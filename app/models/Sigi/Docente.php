@@ -109,8 +109,11 @@ class Docente extends Model
          :id_rol, :id_sede, :id_programa_estudios, :id_periodo_registro,
          :reset_password, :token_password)";
         $stmt = self::$db->prepare($sql);
-        // Asume que $data['password'] ya está hasheado
-        return $stmt->execute($data);
+        if ($stmt->execute($data)) {
+            return self::$db->lastInsertId(); // Retorna el ID del nuevo usuario
+        } else {
+            return false; // O lanza una excepción, según tu manejo de errores
+        }
     }
 
     // Actualizar docente
@@ -300,6 +303,25 @@ class Docente extends Model
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function asignarLote(int $id_usuario, int $id_rol, array $ids_sistema): void
+    {
+        if (empty($ids_sistema)) return;
+        $sql = "INSERT IGNORE INTO sigi_permisos_usuarios (id_usuario, id_sistema, id_rol) VALUES (?, ?, ?)";
+        $st = self::$db->prepare($sql);
+        /*foreach ($ids_sistema as $id_sis) {
+            $st->execute([$id_usuario, (int)$id_sis, (int)$id_rol]);
+        }*/
+        foreach ($ids_sistema as $id_sis) {
+            $b = "SELECT * FROM sigi_permisos_usuarios WHERE id_usuario = ? AND id_sistema = ? AND id_rol= ?";
+            $rb = self::$db->prepare($b);
+            $rb->execute([$id_usuario, (int)$id_sis, (int)$id_rol]);
+            $cont = $rb->rowCount();
+            if ($cont == 0) {
+                $st->execute([$id_usuario, (int)$id_sis, (int)$id_rol]);
+            }
+        }
+    }
+
     public function actualizarPermisos($id_usuario, $permisos)
     {
         // Formatea array ["1-2", "2-4"] a [['id_sistema'=>1,'id_rol'=>2], ...] si fuera necesario
@@ -345,5 +367,42 @@ class Docente extends Model
         $stmt = self::$db->prepare("SELECT u.id as id_director, u.apellidos_nombres as director FROM sigi_usuarios u LEFT JOIN sigi_periodo_academico pa ON pa.director = u.id WHERE pa.id = ?");
         $stmt->execute([$id_periodo]);
         return $stmt->fetch(PDO::FETCH_ASSOC);;
+    }
+
+
+
+
+    //===================================== PARA RESETEAR PASSWORD ==============================
+    public function findByEmailAndDni(string $email, $dni)
+    {
+        $email = trim(mb_strtolower($email));
+        $dni   = trim($dni);
+        $sql = "SELECT * FROM sigi_usuarios WHERE LOWER(correo) = ? AND dni = ? AND estado = 1 LIMIT 1";
+        $st = self::$db->prepare($sql);
+        $st->execute([$email, $dni]);
+        return $st->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function setResetToken(int $idUsuario, string $token): bool
+    {
+        $sql = "UPDATE sigi_usuarios SET token_password = ?, reset_password = 1 WHERE id = ?";
+        $st = self::$db->prepare($sql);
+        $st->execute([$token, $idUsuario]);
+        return $st->rowCount() > 0;
+    }
+
+    public function findByResetToken(string $token, $id_user)
+    {
+        $sql = "SELECT * FROM sigi_usuarios WHERE token_password = ? AND reset_password = 1  AND estado = 1 AND id = ? LIMIT 1";
+        $st = self::$db->prepare($sql);
+        $st->execute([$token, $id_user]);
+        return $st->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function updatePassword(int $idUsuario, string $hash): bool
+    {
+        $sql = "UPDATE sigi_usuarios SET password = ?, reset_password = 0, token_password = '' WHERE id = ?";
+        $st = self::$db->prepare($sql);
+        return $st->execute([$hash, $idUsuario]);
     }
 }

@@ -133,7 +133,7 @@ endif;
                   <span>Mi perfil</span>
                 </a>
                 <a class="dropdown-item d-flex align-items-center justify-content-between"
-                  href="<?= BASE_URL ?>/cambiar-password">
+                  href="<?= BASE_URL ?>/resetPassword?data=<?= base64_encode($_SESSION['sigi_user_id']) ?>&back=<?= urlencode($_SERVER['REQUEST_URI']) ?>">
                   <span>Cambiar contraseña</span>
                 </a>
                 <a class="dropdown-item d-flex align-items-center justify-content-between text-danger"

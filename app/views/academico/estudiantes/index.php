@@ -148,7 +148,10 @@
                         data: null,
                         orderable: false,
                         searchable: false,
-                        render: row => `<a href="<?= BASE_URL ?>/academico/estudiantes/editar/${row.id}" class="btn btn-warning btn-sm">Editar</a>`
+                        render: row => `
+                        <a href="<?= BASE_URL ?>/academico/estudiantes/editar/${row.id}" title="Editar" class="btn btn-warning btn-sm"><i class="fa fa-edit"></i></a>
+                        <a href="<?= BASE_URL ?>/resetPassword?data=${btoa(row.id)}&back=<?= urlencode($_SERVER['REQUEST_URI']) ?>" title="Enviar Correo" class="btn btn-dark btn-sm"><i class="fa fa-envelope"></i></a>`
+                        
                     }
                 ],
                 language: {

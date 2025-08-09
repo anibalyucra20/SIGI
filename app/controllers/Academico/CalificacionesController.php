@@ -9,6 +9,7 @@ require_once __DIR__ . '/../../../app/models/Academico/Calificaciones.php';
 require_once __DIR__ . '/../../../app/models/Academico/Asistencia.php';
 require_once __DIR__ . '/../../../app/models/Academico/Silabos.php';
 require_once __DIR__ . '/../../../app/models/Academico/Matricula.php';
+require_once __DIR__ . '/../../../app/models/Academico/Reportes.php';
 require_once __DIR__ . '/../../../app/models/Sigi/DatosInstitucionales.php';
 require_once __DIR__ . '/../../../app/models/Sigi/PeriodoAcademico.php';
 require_once __DIR__ . '/../../../app/models/Sigi/DatosSistema.php';
@@ -21,11 +22,12 @@ use App\Models\Academico\ProgramacionUnidadDidactica;
 use App\Models\Academico\Asistencia;
 use App\Models\Academico\Silabos;
 use App\Models\Academico\Matricula;
+use App\Models\Academico\Reportes;
 use App\Models\Sigi\DatosInstitucionales;
 use App\Models\Sigi\DatosSistema;
 use App\Models\Sigi\PeriodoAcademico;
 use App\Models\Sigi\IndicadorLogroCapacidad;
-
+use Complex\Functions;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Border;
@@ -44,6 +46,7 @@ class CalificacionesController extends Controller
     protected $objIndLogroCapacidad;
     protected $objSilabo;
     protected $objMatricula;
+    protected $objReporte;
 
     public function __construct()
     {
@@ -57,6 +60,7 @@ class CalificacionesController extends Controller
         $this->objIndLogroCapacidad = new IndicadorLogroCapacidad();
         $this->objSilabo = new Silabos();
         $this->objMatricula = new Matricula();
+        $this->objReporte = new Reportes();
     }
     public function evaluar($id_programacion_ud, $nro_calificacion)
     {
@@ -479,6 +483,62 @@ class CalificacionesController extends Controller
         header('Cache-Control: max-age=0');
         $writer = new Xlsx($spreadsheet);
         $writer->save('php://output');
+        exit;
+    }
+
+
+    //========================================== APARTADO PARA ESTUDIANTES =========================================
+
+    public function consulta()
+    {
+        $id_estudiante = $_SESSION['sigi_user_id'];
+        $id_periodo = $_SESSION['sigi_periodo_actual_id'];
+        $id_sede = $_SESSION['sigi_sede_actual'];
+
+        $id_matricula = $this->objMatricula->getMatriculaByEstudiante($id_estudiante, $id_periodo, $id_sede);
+
+        if (!$id_matricula) {
+            $_SESSION['flash_error'] = "No cuenta con matricula en el periodo seleccionado";
+            $this->view('academico/calificaciones/consulta', [
+                'ver' => false,
+                'module' => 'academico',
+                'pageTitle' => 'Reporte Individual'
+            ]);
+            exit;
+        }
+
+        $califs  = $this->objReporte->calificacionesVisibles($id_matricula['id']);
+        $proms   = $this->objReporte->promediosVisibles($id_matricula['id']);
+        $asist   = $this->objReporte->asistenciasEstudiante($id_matricula['id']);
+
+        /* organización de datos para la vista */
+        $udOrder = [];  // [nombreUd] => idx
+        $tablaCalif = []; // [ud][nro] => nota
+        foreach ($califs as $c) {
+            $ud = $c['ud'];
+            if (!isset($udOrder[$ud])) $udOrder[$ud] = $c['id_ud'];
+            if ($c['mostrar_calificacion']) { // si esta habilitado mostrar
+                $tablaCalif[$ud][$c['nro']] = $c['nota'];
+                $tablaCalif[$ud]['recuperacion'] = $c['recuperacion'];
+            }
+        }
+        //var_dump($proms);
+
+        /* asistencia re-mapeada */
+        $tablaAsist = []; // [ud][semana] => 'P'|'F'
+        foreach ($asist as $a) {
+            $tablaAsist[$a['ud']][$a['semana']] = $a['asistencia'];
+        }
+
+        $this->view('academico/calificaciones/consulta', [
+            'ver' => true,
+            'udOrder' => $udOrder,
+            'tablaCalif' => $tablaCalif,
+            'proms' => $proms,
+            'tablaAsist' => $tablaAsist,
+            'module' => 'academico',
+            'pageTitle' => 'Reporte Individual'
+        ]);
         exit;
     }
 }

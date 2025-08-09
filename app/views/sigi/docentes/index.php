@@ -82,9 +82,10 @@
             orderable: false,
             render: function(data, type, row) {
               return `
-            <a href="<?= BASE_URL ?>/sigi/docentes/ver/${row.id}"        class="btn btn-info btn-sm">Ver</a>
-            <a href="<?= BASE_URL ?>/sigi/docentes/editar/${row.id}"     class="btn btn-warning btn-sm">Editar</a>
-            <a href="<?= BASE_URL ?>/sigi/docentes/permisos/${row.id}" class="btn btn-primary btn-sm">Gestionar permisos</a>`;
+            <a href="<?= BASE_URL ?>/sigi/docentes/ver/${row.id}"      title="ver" class="btn btn-info btn-sm"><i class="fa fa-eye"></i></a>
+            <a href="<?= BASE_URL ?>/sigi/docentes/editar/${row.id}"   title="editar" class="btn btn-warning btn-sm"><i class="fa fa-edit"></i></a>
+            <a href="<?= BASE_URL ?>/sigi/docentes/permisos/${row.id}" title="Permisos" class="btn btn-primary btn-sm"><i class="fa fa-project-diagram"></i></a>
+            <a href="<?= BASE_URL ?>/resetPassword?data=${btoa(row.id)}&back=<?= urlencode($_SERVER['REQUEST_URI']) ?>" title="Enviar Correo" class="btn btn-dark btn-sm"><i class="fa fa-envelope"></i></a>`;
             }
           }
         ],

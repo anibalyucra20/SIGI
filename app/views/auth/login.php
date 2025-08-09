@@ -42,7 +42,7 @@
 
 <body style="background-color: <?= $datosSistema['color_correo'] ?>;">
     <div class="container d-flex align-items-center justify-content-center login-container">
-        <div class="col-md-6 col-lg-4">
+        <div class="col-md-6 col-lg-6">
             <div class="card p-4">
                 <div class="text-center">
                     <?php
@@ -59,6 +59,25 @@
                 <?php if (isset($_GET['error'])): ?>
                     <div class="alert alert-danger">Credenciales incorrectas</div>
                 <?php endif; ?>
+                <?php if (!empty($_SESSION['flash_success'])): ?>
+                    <div class="alert alert-success alert-dismissible">
+                        <?= $_SESSION['flash_success'] ?>
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <?php unset($_SESSION['flash_success']); ?>
+                <?php endif; ?>
+
+                <?php if (!empty($_SESSION['flash_error'])): ?>
+                    <div class="alert alert-danger alert-dismissible">
+                        <?= $_SESSION['flash_error'] ?>
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <?php unset($_SESSION['flash_error']); ?>
+                <?php endif; ?>
                 <form action="<?= BASE_URL ?>/login/acceder" method="post">
                     <div class="form-group">
                         <label for="dni">Usuario</label>
@@ -71,7 +90,7 @@
                     <button type="submit" class="btn btn-primary btn-block">Ingresar</button>
                 </form>
                 <p class="mt-3 text-center">
-                    <a href="#">¿Olvidaste tu contraseña?</a>
+                    <a href="<?= BASE_URL ?>/recuperar">¿Olvidaste tu contraseña?</a>
                 </p>
             </div>
         </div>
