@@ -5,6 +5,7 @@ namespace App\Controllers\Auth;
 require_once __DIR__ . '/../../../app/models/Sigi/DatosSistema.php';
 require_once __DIR__ . '/../../../app/models/Sigi/DatosInstitucionales.php';
 require_once __DIR__ . '/../../../app/models/Sigi/Docente.php';
+require_once __DIR__ . '/../../../app/utils/Mailer.php';
 require_once __DIR__ . '/../../../vendor/autoload.php';
 
 use Core\Controller;
