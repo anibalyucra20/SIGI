@@ -98,7 +98,7 @@ class Competencias extends Model
     public function getModulosByCompetencia($id_competencia)
     {
         $stmt = self::$db->prepare("SELECT mf.id, mf.descripcion 
-            FROM sigi_competencia_moduloFormativo cm
+            FROM sigi_competencia_moduloformativo cm
             JOIN sigi_modulo_formativo mf ON mf.id = cm.id_modulo_formativo
             WHERE cm.id_competencia = ?");
         $stmt->execute([$id_competencia]);
@@ -109,9 +109,9 @@ class Competencias extends Model
     {
         // $modulos es array de IDs de módulos formativos
         self::$db->beginTransaction();
-        self::$db->prepare("DELETE FROM sigi_competencia_moduloFormativo WHERE id_competencia = ?")->execute([$id_competencia]);
+        self::$db->prepare("DELETE FROM sigi_competencia_moduloformativo WHERE id_competencia = ?")->execute([$id_competencia]);
         if (!empty($modulos)) {
-            $stmt = self::$db->prepare("INSERT INTO sigi_competencia_moduloFormativo (id_competencia, id_modulo_formativo) VALUES (?, ?)");
+            $stmt = self::$db->prepare("INSERT INTO sigi_competencia_moduloformativo (id_competencia, id_modulo_formativo) VALUES (?, ?)");
             foreach ($modulos as $id_modulo) {
                 $stmt->execute([$id_competencia, $id_modulo]);
             }
@@ -124,7 +124,7 @@ class Competencias extends Model
         $stmt = self::$db->prepare(
             "SELECT c.id, c.codigo, c.descripcion 
              FROM sigi_competencias c
-             JOIN sigi_competencia_moduloFormativo cmf ON cmf.id_competencia = c.id
+             JOIN sigi_competencia_moduloformativo cmf ON cmf.id_competencia = c.id
              WHERE cmf.id_modulo_formativo = ?
              ORDER BY c.codigo"
         );
@@ -137,7 +137,7 @@ class Competencias extends Model
     {
         $sql = "SELECT c.id 
             FROM sigi_competencias c
-            INNER JOIN sigi_competencia_moduloFormativo cmf ON c.id = cmf.id_competencia
+            INNER JOIN sigi_competencia_moduloformativo cmf ON c.id = cmf.id_competencia
             WHERE cmf.id_modulo_formativo = ? AND c.tipo = 'TRANSVERSAL'
             ORDER BY c.id ASC LIMIT 1";
         $stmt = self::$db->prepare($sql);
@@ -162,7 +162,7 @@ class Competencias extends Model
         $stmt = self::$db->prepare(
             "SELECT c.id, c.codigo, c.descripcion
              FROM sigi_competencias c
-             INNER JOIN sigi_competencia_moduloFormativo cmf ON c.id = cmf.id_competencia
+             INNER JOIN sigi_competencia_moduloformativo cmf ON c.id = cmf.id_competencia
              WHERE cmf.id_modulo_formativo = ? AND c.tipo = 'TRANSVERSAL'"
         );
         $stmt->execute([$row['id_modulo_formativo']]);

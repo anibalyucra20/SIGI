@@ -5,7 +5,9 @@
 
         <div class="mb-3">
             <a href="<?= BASE_URL ?>/academico/matricula" class="btn btn-danger">Regresar</a>
-            <a href="<?= BASE_URL ?>/academico/matricula/agregarUd/<?= $id_matricula ?>" class="btn btn-success">Agregar Unidad Didáctica</a>
+            <?php if ($periodo_vigente): ?>
+                <a href="<?= BASE_URL ?>/academico/matricula/agregarUd/<?= $id_matricula ?>" class="btn btn-success">Agregar Unidad Didáctica</a>
+            <?php endif; ?>
         </div>
 
         <div class="table-responsive">
@@ -27,7 +29,9 @@
                             <td><?= htmlspecialchars($row['semestre']) ?></td>
                             <td><?= htmlspecialchars($row['unidad_didactica']) ?></td>
                             <td>
-                                <a href="<?= BASE_URL ?>/academico/matricula/eliminarDetalle/<?= $row['id'] ?>" class="btn btn-danger btn-sm" onclick="return confirm('¿Seguro de eliminar esta unidad didáctica?')">Eliminar</a>
+                                <?php if ($periodo_vigente): ?>
+                                    <a href="<?= BASE_URL ?>/academico/matricula/eliminarDetalle/<?= $row['id'] ?>" class="btn btn-danger btn-sm" onclick="return confirm('¿Seguro de eliminar esta unidad didáctica?')">Eliminar</a>
+                                <?php endif; ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>

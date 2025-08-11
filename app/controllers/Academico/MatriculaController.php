@@ -8,29 +8,36 @@ use Exception;
 
 require_once __DIR__ . '/../../../app/models/Academico/Matricula.php';
 require_once __DIR__ . '/../../../app/models/Sigi/Semestre.php';
+require_once __DIR__ . '/../../../app/models/Sigi/PeriodoAcademico.php';
 
 use App\Models\Academico\Matricula;
 use App\Models\Sigi\Semestre;
+use App\Models\Sigi\PeriodoAcademico;
 
 class MatriculaController extends Controller
 {
     protected $model;
     protected $objSemestre;
+    protected $objPeriodoAcademico;
 
     public function __construct()
     {
         parent::__construct();
         $this->model = new Matricula();
         $this->objSemestre = new Semestre();
+        $this->objPeriodoAcademico = new PeriodoAcademico();
     }
 
     public function index()
     {
+        $periodo = $this->objPeriodoAcademico->getPeriodoVigente($_SESSION['sigi_periodo_actual_id']);
+        $periodo_vigente = ($periodo && $periodo['vigente']);
         $programas = $this->model->getProgramas();
         $planes = $this->model->getPlanes();
         $semestres = $this->model->getSemestres();
 
         $this->view('academico/matricula/index', [
+            'periodo_vigente' => $periodo_vigente,
             'programas' => $programas,
             'planes' => $planes,
             'semestres' => $semestres,
@@ -76,10 +83,13 @@ class MatriculaController extends Controller
 
     public function ver($id_matricula)
     {
+        $periodo = $this->objPeriodoAcademico->getPeriodoVigente($_SESSION['sigi_periodo_actual_id']);
+        $periodo_vigente = ($periodo && $periodo['vigente']);
         $detalle = $this->model->getDetalleMatricula($id_matricula);
         $estudiante = $this->model->getEstudianteByMatricula($id_matricula);
 
         $this->view('academico/matricula/ver', [
+            'periodo_vigente' => $periodo_vigente,
             'detalle' => $detalle,
             'estudiante' => $estudiante,
             'id_matricula' => $id_matricula,
@@ -91,7 +101,10 @@ class MatriculaController extends Controller
 
     public function nuevo()
     {
+        $periodo = $this->objPeriodoAcademico->getPeriodoVigente($_SESSION['sigi_periodo_actual_id']);
+        $periodo_vigente = ($periodo && $periodo['vigente']);
         $this->view('academico/matricula/nuevo', [
+            'periodo_vigente' =>  $periodo_vigente,
             'errores' => [],
             'module' => 'academico',
             'pageTitle' => 'Nueva Matrícula'
@@ -148,50 +161,56 @@ class MatriculaController extends Controller
     // POST: Guardar la matrícula y todo el árbol dependiente
     public function guardar()
     {
-        if (\Core\Auth::esAdminAcademico()):
-            $errores = [];
-            try {
-                $data = [
-                    'dni' => $_POST['dni'] ?? '',
-                    'id_programa_estudios' => $_POST['id_programa_estudios'] ?? '',
-                    'id_plan_estudio' => $_POST['id_plan_estudio'] ?? '',
-                    'id_semestre' => $_POST['id_semestre'] ?? '',
-                    'turno' => $_POST['turno'] ?? '',
-                    'seccion' => $_POST['seccion'] ?? '',
-                    'ud_programadas' => $_POST['ud_programadas'] ?? [],
-                ];
-                $periodo = $_SESSION['sigi_periodo_actual_id'] ?? 0;
-                $sede = $_SESSION['sigi_sede_actual'] ?? 0;
-                $usuario = $this->model->buscarEstudiantePorDNI($data['dni'], $sede);
-                if (!$usuario) throw new Exception("Estudiante no encontrado o no está en esta sede.");
+        $periodo = $this->objPeriodoAcademico->getPeriodoVigente($_SESSION['sigi_periodo_actual_id']);
+        $periodo_vigente = ($periodo && $periodo['vigente']);
+        if ($periodo_vigente) {
+            if (\Core\Auth::esAdminAcademico()):
+                $errores = [];
+                try {
+                    $data = [
+                        'dni' => $_POST['dni'] ?? '',
+                        'id_programa_estudios' => $_POST['id_programa_estudios'] ?? '',
+                        'id_plan_estudio' => $_POST['id_plan_estudio'] ?? '',
+                        'id_semestre' => $_POST['id_semestre'] ?? '',
+                        'turno' => $_POST['turno'] ?? '',
+                        'seccion' => $_POST['seccion'] ?? '',
+                        'ud_programadas' => $_POST['ud_programadas'] ?? [],
+                    ];
+                    $periodo = $_SESSION['sigi_periodo_actual_id'] ?? 0;
+                    $sede = $_SESSION['sigi_sede_actual'] ?? 0;
+                    $usuario = $this->model->buscarEstudiantePorDNI($data['dni'], $sede);
+                    if (!$usuario) throw new Exception("Estudiante no encontrado o no está en esta sede.");
 
-                // Validaciones (programa/plan corresponde a estudiante, no matrícula duplicada, etc.)
-                $esValido = $this->model->validarMatricula($usuario['id'], $data['id_plan_estudio'], $periodo, $sede, $data['id_semestre']);
-                if (!$esValido['ok']) throw new Exception($esValido['msg']);
+                    // Validaciones (programa/plan corresponde a estudiante, no matrícula duplicada, etc.)
+                    $esValido = $this->model->validarMatricula($usuario['id'], $data['id_plan_estudio'], $periodo, $sede, $data['id_semestre']);
+                    if (!$esValido['ok']) throw new Exception($esValido['msg']);
 
-                // El proceso de matrícula completo (transacción)
-                $exito = $this->model->registrarMatriculaCompleta($usuario['id'], $data, $periodo, $sede, $errores);
-                if (!$exito) throw new Exception("No se pudo registrar la matrícula." . (isset($errores[0]) ? ' Motivo: ' . $errores[0] : ''));
+                    // El proceso de matrícula completo (transacción)
+                    $exito = $this->model->registrarMatriculaCompleta($usuario['id'], $data, $periodo, $sede, $errores);
+                    if (!$exito) throw new Exception("No se pudo registrar la matrícula." . (isset($errores[0]) ? ' Motivo: ' . $errores[0] : ''));
 
-                $_SESSION['flash_success'] = "¡Matrícula registrada correctamente!";
-                header('Location: ' . BASE_URL . '/academico/matricula');
-                exit;
-            } catch (Exception $e) {
-                $errores[] = $e->getMessage();
-                $nombre_sede_actual = $_SESSION['sigi_sede_nombre'] ?? '';
-                $this->view('academico/matricula/nuevo', [
-                    'nombre_sede_actual' => $nombre_sede_actual,
-                    'errores' => $errores,
-                    'module' => 'academico',
-                    'pageTitle' => 'Nueva Matrícula'
-                ]);
-            }
-        endif;
+                    $_SESSION['flash_success'] = "¡Matrícula registrada correctamente!";
+                    header('Location: ' . BASE_URL . '/academico/matricula');
+                    exit;
+                } catch (Exception $e) {
+                    $errores[] = $e->getMessage();
+                    $nombre_sede_actual = $_SESSION['sigi_sede_nombre'] ?? '';
+                    $this->view('academico/matricula/nuevo', [
+                        'nombre_sede_actual' => $nombre_sede_actual,
+                        'errores' => $errores,
+                        'module' => 'academico',
+                        'pageTitle' => 'Nueva Matrícula'
+                    ]);
+                }
+            endif;
+        }
         exit;
     }
 
     public function agregarUd($id_matricula)
     {
+        $periodo = $this->objPeriodoAcademico->getPeriodoVigente($_SESSION['sigi_periodo_actual_id']);
+        $periodo_vigente = ($periodo && $periodo['vigente']);
         if (\Core\Auth::esAdminAcademico()):
             $matricula = $this->model->getDatosMatricula($id_matricula);
             $estudiante = $this->model->getEstudianteByMatricula($id_matricula);
@@ -200,6 +219,7 @@ class MatriculaController extends Controller
             $unidadesDisponibles = [];
         endif;
         $this->view('academico/matricula/agregarUd', [
+            'periodo_vigente' => $periodo_vigente,
             'matricula' => $matricula,
             'estudiante' => $estudiante,
             'semestresDisponibles' => $semestresDisponibles,
@@ -257,20 +277,24 @@ class MatriculaController extends Controller
 
     public function eliminarDetalle($id_detalle)
     {
-        if (\Core\Auth::esAdminAcademico()):
-            // 1. Obtener el id_matricula antes de borrar
-            $stmt = $this->model->getMatriculaByDetalle($id_detalle);
-            $id_matricula = $stmt ? $stmt['id_matricula'] : null;
+        $periodo = $this->objPeriodoAcademico->getPeriodoVigente($_SESSION['sigi_periodo_actual_id']);
+        $periodo_vigente = ($periodo && $periodo['vigente']);
+        if ($periodo_vigente) {
+            if (\Core\Auth::esAdminAcademico()):
+                // 1. Obtener el id_matricula antes de borrar
+                $stmt = $this->model->getMatriculaByDetalle($id_detalle);
+                $id_matricula = $stmt ? $stmt['id_matricula'] : null;
 
-            // 2. Eliminar el detalle y registros dependientes
-            $res = $this->model->eliminarDetalleMatricula($id_detalle);
+                // 2. Eliminar el detalle y registros dependientes
+                $res = $this->model->eliminarDetalleMatricula($id_detalle);
 
-            if ($res) {
-                $_SESSION['flash_success'] = "Unidad Didáctica eliminada correctamente.";
-            } else {
-                $_SESSION['flash_error'] = "Error al eliminar el detalle. Intente nuevamente o contacte soporte.";
-            }
-        endif;
+                if ($res) {
+                    $_SESSION['flash_success'] = "Unidad Didáctica eliminada correctamente.";
+                } else {
+                    $_SESSION['flash_error'] = "Error al eliminar el detalle. Intente nuevamente o contacte soporte.";
+                }
+            endif;
+        }
         // 3. Redirige a la vista del detalle de la matrícula
         header('Location: ' . BASE_URL . '/academico/matricula/ver/' . $id_matricula);
         exit;

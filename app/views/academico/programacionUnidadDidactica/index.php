@@ -2,9 +2,85 @@
 <?php if (\Core\Auth::esAdminAcademico()): ?>
     <div class="card p-2">
         <h3 class="mb-2">Programaciones de Unidades Didácticas</h3>
-        <div class="mb-2">
-            <a href="<?= BASE_URL ?>/academico/programacionUnidadDidactica/nuevo" class="btn btn-success">+ Nueva Programación</a>
-        </div>
+        <?php if ($periodo_vigente): ?>
+            <div class="mb-2">
+                <a href="<?= BASE_URL ?>/academico/programacionUnidadDidactica/nuevo" class="btn btn-success">+ Nueva Programación</a>
+                <button type="button" class="btn btn-info waves-effect waves-light" data-toggle="modal" data-target="#modal-prog-masiva">Programación Masiva</button>
+            </div>
+            <div class="modal fade" id="modal-prog-masiva" tabindex="-1" role="dialog" aria-labelledby="modal-carga-masiva" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="modal-prog-masiva">Progrmación Masiva</h5>
+                            <button type="button" class="close waves-effect waves-light" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form action="<?= BASE_URL ?>/academico/programacionUnidadDidactica/programacionMasiva" method="post">
+                                <div class="col-md-12 mb-2">
+                                    <label>Programa de Estudios *</label>
+                                    <select name="id_programa_estudios" id="id_programa_estudios" class="form-control" required>
+                                        <option value="">Seleccione...</option>
+                                        <?php foreach ($programas as $p): ?>
+                                            <option value="<?= $p['id'] ?>" <?= (isset($id_programa_selected) && $id_programa_selected == $p['id']) ? 'selected' : '' ?>>
+                                                <?= htmlspecialchars($p['nombre']) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="col-md-12 mb-2">
+                                    <label>Plan de Estudios *</label>
+                                    <select name="id_plan_estudio" id="id_plan_estudio" class="form-control" required>
+                                        <option value="">Seleccione...</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-12 mb-2">
+                                    <label>Módulo Profesional *</label>
+                                    <select name="id_modulo_formativo" id="id_modulo_formativo" class="form-control" required>
+                                        <option value="">Seleccione...</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-12 mb-2">
+                                    <label>Semestre *</label>
+                                    <select name="id_semestre" id="id_semestre" class="form-control" required>
+                                        <option value="">Seleccione...</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <label>Turno *</label>
+                                    <select name="turno" class="form-control" required>
+                                        <option value="">Seleccione...</option>
+                                        <option value="M">Mañana</option>
+                                        <option value="T">Tarde</option>
+                                        <option value="N">Noche</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <label>Sección *</label>
+                                    <select name="seccion" class="form-control" required>
+                                        <option value="">Seleccione...</option>
+                                        <option value="A">A</option>
+                                        <option value="B">B</option>
+                                        <option value="C">C</option>
+                                        <option value="D">D</option>
+                                        <option value="E">E</option>
+                                    </select>
+                                </div>
+                                <br>
+                                <br>
+
+                                <button type="submit" class="btn btn-primary waves-effect waves-light">Generar Programaciones</button>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary waves-effect waves-light" data-dismiss="modal">Cancelar</button>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <?php endif; ?>
         <h5 class="mb-2">Filtros:</h5>
         <div class="row mb-3">
             <div class="col-md-2">
@@ -91,7 +167,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Filtros dependientes
+            // Filtros dependientes tabla 
             $('#filter-programa').on('change', function() {
                 let idPrograma = $(this).val();
                 $('#filter-plan').html('<option value="">Todos</option>');
@@ -186,11 +262,53 @@
                         data: null,
                         orderable: false,
                         searchable: false,
-                        render: row => `<a href="<?= BASE_URL ?>/academico/programacionUnidadDidactica/editar/${row.id}" class="btn btn-warning btn-sm">Editar</a>`
+
+                        render: row => ` <?php if ($periodo_vigente): ?><a href="<?= BASE_URL ?>/academico/programacionUnidadDidactica/editar/${row.id}" class="btn btn-warning btn-sm">Editar</a> <?php endif; ?>`
+
                     }
                 ],
                 language: {
                     url: '//cdn.datatables.net/plug-ins/1.13.5/i18n/es-ES.json'
+                }
+            });
+
+
+            // filtros modal
+            // Cascada de selects dependientes
+            $('#id_programa_estudios').on('change', function() {
+                let idPrograma = $(this).val();
+                $('#id_plan_estudio').html('<option value="">Seleccione...</option>');
+                $('#id_modulo_formativo').html('<option value="">Seleccione...</option>');
+                $('#id_semestre').html('<option value="">Seleccione...</option>');
+                if (idPrograma) {
+                    $.getJSON('<?= BASE_URL ?>/sigi/planes/porPrograma/' + idPrograma, function(planes) {
+                        planes.forEach(function(pl) {
+                            $('#id_plan_estudio').append('<option value="' + pl.id + '">' + pl.nombre + '</option>');
+                        });
+                    });
+                }
+            });
+            $('#id_plan_estudio').on('change', function() {
+                let idPlan = $(this).val();
+                $('#id_modulo_formativo').html('<option value="">Seleccione...</option>');
+                $('#id_semestre').html('<option value="">Seleccione...</option>');
+                if (idPlan) {
+                    $.getJSON('<?= BASE_URL ?>/sigi/moduloFormativo/porPlan/' + idPlan, function(modulos) {
+                        modulos.forEach(function(m) {
+                            $('#id_modulo_formativo').append('<option value="' + m.id + '">' + m.descripcion + '</option>');
+                        });
+                    });
+                }
+            });
+            $('#id_modulo_formativo').on('change', function() {
+                let idModulo = $(this).val();
+                $('#id_semestre').html('<option value="">Seleccione...</option>');
+                if (idModulo) {
+                    $.getJSON('<?= BASE_URL ?>/sigi/semestre/porModulo/' + idModulo, function(semestres) {
+                        semestres.forEach(function(s) {
+                            $('#id_semestre').append('<option value="' + s.id + '">' + s.descripcion + '</option>');
+                        });
+                    });
                 }
             });
         });

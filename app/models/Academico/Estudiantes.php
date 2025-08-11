@@ -100,8 +100,8 @@ class Estudiantes extends Model
             $tipo = (strpos($k, 'dni') !== false || strpos($k, 'apellidos_nombres') !== false) ? PDO::PARAM_STR : PDO::PARAM_INT;
             $stmtTotal->bindValue($k, $v, $tipo);
         }
-        error_log($sql);
-        error_log(print_r($params, true));
+        //error_log($sql);
+        //error_log(print_r($params, true));
 
         $stmtTotal->execute();
         $total = $stmtTotal->fetchColumn();

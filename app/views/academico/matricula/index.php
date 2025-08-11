@@ -3,7 +3,9 @@
     <div class="card p-2">
         <h3 class="mb-2">Listado de Matrículas</h3>
         <div class="mb-2">
-            <a href="<?= BASE_URL ?>/academico/matricula/nuevo" class="btn btn-success">+ Nueva Matrícula</a>
+            <?php if ($periodo_vigente): ?>
+                <a href="<?= BASE_URL ?>/academico/matricula/nuevo" class="btn btn-success">+ Nueva Matrícula</a>
+            <?php endif; ?>
         </div>
         <h5 class="mb-2">Filtros:</h5>
         <div class="row mb-3">
