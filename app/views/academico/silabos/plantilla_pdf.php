@@ -50,7 +50,7 @@ if (!$permitido) {
     <!-- Puedes incluir tu header institucional aquí en HTML, o dejar que TCPDF lo pinte -->
     <div class="titulo">SÍLABO</div>
     <span class="section-title">I. DATOS GENERALES</span><br>
-    <table>
+    <table style="font-size: 11px;">
         <tr>
             <td width="30%" style="border: 1px solid white;"><b>Programa de Estudios:</b></td>
             <td width="70%" style="border: 1px solid white;"><?= htmlspecialchars($datosGenerales['programa']) ?></td>
@@ -109,14 +109,14 @@ if (!$permitido) {
     <div><?= nl2br(htmlspecialchars($silabo['sumilla'])) ?></div>
     <br>
     <span class="section-title">III. UNIDAD DE COMPETENCIA ESPECÍFICA O TÉCNICA DEL MÓDULO</span>
-    <div>
+    <div style="font-size: 10px;">
         <?php foreach ($competenciasUnidadDidactica as $comp): ?>
             <b><?= htmlspecialchars($comp['codigo']) ?>:</b> <?= htmlspecialchars($comp['descripcion']) ?>
         <?php endforeach; ?>
     </div><br>
     <span class="section-title">IV. CAPACIDADES DE LA UNIDAD DIDÁCTICA</span>
     <br>
-    <table>
+    <table style="font-size: 10px;">
         <tr>
             <th width="30%"><b>Capacidad</b></th>
             <th width="70%"><b>Indicadores de Logro</b></th>
@@ -138,10 +138,10 @@ if (!$permitido) {
     <br>
     <span class="section-title">V. COMPETENCIA PARA LA EMPLEABILIDAD COMO CONTENIDO TRANSVERSAL</span>
     <br>
-    <table>
+    <table style="font-size: 10px;">
         <tr>
-            <th width="50%">Competencia para la empleabilidad como contenido transversal</th>
-            <th>Estrategias</th>
+            <th width="30%">Competencia para la empleabilidad como contenido transversal</th>
+            <th width="70%">Estrategias</th>
         </tr>
         <?php foreach ($competenciasTransversales as $ct): ?>
             <tr>
@@ -160,7 +160,7 @@ if (!$permitido) {
     <br>
     <span class="section-title">VI. PROGRAMACIÓN DE SESIONES DE APRENDIZAJE</span>
     <br>
-    <table style="font-size: 11px;">
+    <table style="font-size: 10px;">
         <tr>
             <th width="12%">Semana / Fecha</th>
             <th width="20%">Indicador de Logro de Capacidad</th>
