@@ -89,7 +89,7 @@ class IndicadorLogroCapacidad extends Model
     // Lista de indicadores de logro de capacidad para el select
     public function getIndicadoresLogroCapacidad($id_unidad_didactica)
     {
-        $sql = "SELECT ilc.id, ilc.codigo, ilc.descripcion
+        $sql = "SELECT ilc.id, ilc.codigo, ilc.descripcion, cap.codigo as codigo_capacidad
             FROM sigi_capacidades cap
             INNER JOIN sigi_ind_logro_capacidad ilc ON ilc.id_capacidad = cap.id
             WHERE cap.id_unidad_didactica = ?

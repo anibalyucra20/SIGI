@@ -184,7 +184,7 @@
                                         <option value="">Seleccione...</option>
                                         <?php foreach ($indicadoresLogroCapacidad as $ilc): ?>
                                             <option value="<?= $ilc['id'] ?>" <?= ($sesion['id_ind_logro_aprendizaje'] == $ilc['id']) ? 'selected' : '' ?>>
-                                                <?= htmlspecialchars($ilc['codigo']) ?> - <?= htmlspecialchars(mb_substr($ilc['descripcion'], 0, 60)) ?>
+                                                <?= htmlspecialchars($ilc['codigo_capacidad'].'.'.$ilc['codigo']) ?> - <?= htmlspecialchars(mb_substr($ilc['descripcion'], 0, 60)) ?>
                                             </option>
                                         <?php endforeach; ?>
                                     </select>
