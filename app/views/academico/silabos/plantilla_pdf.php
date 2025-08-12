@@ -243,7 +243,7 @@ if (!$permitido) {
     <table>
         <thead>
             <tr>
-                <td colspan="2" style="border: 1px solid white; text-align: center;"><br><br><br><br>Docente de la Unidad Académica</td>
+                <td colspan="2" style="border: 1px solid white; text-align: center;"><br><br><br><br>Docente de la Unidad Didáctica</td>
             </tr>
             <tr>
                 <td style="border: 1px solid white; text-align: center;"><br><br><br><br><br><br>Jefe de la Unidad Académica</td>

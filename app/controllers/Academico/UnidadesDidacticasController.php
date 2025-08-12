@@ -391,6 +391,11 @@ class UnidadesDidacticasController extends Controller
             header('Location: ' . BASE_URL . '/academico/unidadesDidacticas');
             exit;
         }
+        if ($id_prog_dest === $id_prog_origen) {
+            $_SESSION['flash_error'] = "La programación origen y destino no pueden ser la misma.";
+            header('Location: ' . BASE_URL . "/academico/unidadesDidacticas/configuracion/$id_prog_dest");
+            exit;
+        }
 
         $dest = $this->objProgramacionUD->find($id_prog_dest);
         $origen = $this->objProgramacionUD->find($id_prog_origen);

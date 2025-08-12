@@ -80,9 +80,12 @@
 
             <?php if ($periodo_vigente): ?>
                 <button type="submit" class="btn btn-primary">Copiar Sílabo + Sesiones</button>
-                <a href="<?= BASE_URL ?>/academico/unidadesDidacticas" class="btn btn-secondary">Volver</a>
-            <?php else: ?>
-                <a href="<?= BASE_URL ?>/academico/unidadesDidacticas" class="btn btn-secondary">Volver</a>
+            <?php endif; ?>
+            <?php if (\Core\Auth::esDocenteAcademico()): ?>
+                <a class="btn btn-danger btn-sm btn-block col-sm-1 col-4 mb-1" href="<?= BASE_URL; ?>/academico/unidadesDidacticas">Regresar</a>
+            <?php endif; ?>
+            <?php if (\Core\Auth::esAdminAcademico()): ?>
+                <a class="btn btn-danger btn-sm btn-block col-sm-1 col-4 mb-1" href="<?= BASE_URL; ?>/academico/unidadesDidacticas/evaluar">Regresar</a>
             <?php endif; ?>
         </form>
     </div>
@@ -156,7 +159,15 @@
                 columns: [{
                         data: null,
                         orderable: false,
-                        render: row => `<input type="radio" name="id_prog_origen" value="${row.id}" required>`
+                        render: (data, type, row) => {
+                            const isSelf = Number(row.id) === Number(idProg);
+                            const hasSyll = Number(row.tiene_silabo) === 1; // cuidado con "0" string
+                            const disabled = isSelf || !hasSyll ? 'disabled' : '';
+                            const title = isSelf ?
+                                'No puedes seleccionar la misma programación' :
+                                (!hasSyll ? 'La programación origen no tiene Sílabo' : 'Seleccionar esta programación');
+                            return `<input type="radio" name="id_prog_origen" value="${row.id}" ${disabled} title="${title}">`;
+                        }
                     },
                     {
                         data: 'periodo'
@@ -184,7 +195,10 @@
                     },
                     {
                         data: 'tiene_silabo',
-                        render: v => v ? '<span class="badge bg-success">Sí</span>' : '<span class="badge bg-danger">No</span>'
+                        defaultContent: 'No',
+                        render: v => Number(v) === 1 ?
+                            '<span class="badge bg-success">Sí</span>' :
+                            '<span class="badge bg-danger">No</span>'
                     },
                     {
                         data: 'actividades'
