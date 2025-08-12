@@ -143,8 +143,8 @@ class ProgramacionUnidadDidactica extends Model
         $sql = "INSERT INTO acad_programacion_unidad_didactica
             (id_unidad_didactica, id_docente, id_sede, id_periodo_academico, turno, seccion,
              supervisado, reg_evaluacion, reg_auxiliar, prog_curricular, otros,
-             logros_obtenidos, dificultades, sugerencias)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+             logros_obtenidos, dificultades, sugerencias, plantilla_silabo, plantilla_sesion)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = self::$db->prepare($sql);
         $stmt->execute([
             $data['id_unidad_didactica'],
@@ -161,6 +161,8 @@ class ProgramacionUnidadDidactica extends Model
             $data['logros_obtenidos'],
             $data['dificultades'],
             $data['sugerencias'],
+            $data['plantilla_silabo'],
+            $data['plantilla_sesion']
         ]);
         return self::$db->lastInsertId();
     }

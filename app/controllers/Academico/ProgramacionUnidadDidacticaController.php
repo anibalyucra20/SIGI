@@ -194,7 +194,8 @@ class ProgramacionUnidadDidacticaController extends Controller
         )) {
             throw new \Exception('Ya existe una programación con esos datos.');
         }
-
+        $nro_plantilla_silabo = $this->objDatosSistema->getNro_PlantillaSilabos();
+        $nro_plantilla_sesion = $this->objDatosSistema->getNro_PlantillaSesion();
         $db = $this->model->getDB();
         $db->beginTransaction();
 
@@ -215,10 +216,12 @@ class ProgramacionUnidadDidacticaController extends Controller
                 'logros_obtenidos'      => '',
                 'dificultades'          => '',
                 'sugerencias'           => '',
+                'plantilla_silabo'      => $nro_plantilla_silabo,
+                'plantilla_sesion'      => $nro_plantilla_sesion,
             ]);
 
             // 2) Sílabo
-            $nro_plantilla_silabo = $this->objDatosSistema->getNro_PlantillaSilabos();
+
             $fecha_registro = date('Y-m-d');
             $id_silabo = $this->objSilabo->registrarSilabo([
                 'id_prog_unidad_didactica'       => $id_prog_ud,
@@ -234,7 +237,6 @@ class ProgramacionUnidadDidacticaController extends Controller
                 'promedio_indicadores_logro'     => '',
                 'recursos_bibliograficos_impresos'  => '',
                 'recursos_bibliograficos_digitales' => '',
-                'n_plantilla' => $nro_plantilla_silabo,
             ]);
 
             // 3) Programación de actividades (semanas)
@@ -265,7 +267,6 @@ class ProgramacionUnidadDidacticaController extends Controller
             }
 
             // 4) Sesiones + momentos + evaluaciones
-            $nro_plantilla_sesion = $this->objDatosSistema->getNro_PlantillaSesion();
             $id_modulo = $this->objModuloFormativo->getModuloByUnidadDidactica($id_unidad_didactica);
             $id_comp_transversal = $this->objCompetencia->getPrimerCompetenciaTransversal($id_modulo);
             if (!$id_comp_transversal) {
@@ -286,7 +287,6 @@ class ProgramacionUnidadDidacticaController extends Controller
                     'bibliografia_obligatoria_estudiante'   => '',
                     'bibliografia_opcional_estudiante'      => '',
                     'anexos'                                => '',
-                    'n_plantilla'                           => $nro_plantilla_sesion,
                 ]);
 
                 foreach (['INICIO', 'DESARROLLO', 'CIERRE'] as $momento) {

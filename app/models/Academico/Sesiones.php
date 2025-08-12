@@ -15,8 +15,8 @@ class Sesiones extends Model
             (id_prog_actividad_silabo, tipo_actividad, tipo_sesion, denominacion, fecha_desarrollo,
              id_ind_logro_competencia_vinculado, id_ind_logro_capacidad_vinculado,
              logro_sesion, bibliografia_obligatoria_docente, bibliografia_opcional_docente,
-             bibliografia_obligatoria_estudiante, bibliografia_opcional_estudiante, anexos, n_plantilla)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+             bibliografia_obligatoria_estudiante, bibliografia_opcional_estudiante, anexos)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = self::$db->prepare($sql);
         $stmt->execute([
             $data['id_prog_actividad_silabo'],
@@ -31,8 +31,7 @@ class Sesiones extends Model
             $data['bibliografia_opcional_docente'],
             $data['bibliografia_obligatoria_estudiante'],
             $data['bibliografia_opcional_estudiante'],
-            $data['anexos'],
-            $data['n_plantilla']
+            $data['anexos']
         ]);
         return self::$db->lastInsertId();
     }

@@ -14,8 +14,8 @@ class Silabos extends Model
             (id_prog_unidad_didactica, id_coordinador, fecha_inicio,
              sumilla, horario, metodologia, recursos_didacticos, sistema_evaluacion,
              estrategia_evaluacion_indicadores, estrategia_evaluacion_tecnica, promedio_indicadores_logro,
-             recursos_bibliograficos_impresos, recursos_bibliograficos_digitales, n_plantilla)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+             recursos_bibliograficos_impresos, recursos_bibliograficos_digitales)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = self::$db->prepare($sql);
         $stmt->execute([
             $data['id_prog_unidad_didactica'],
@@ -30,8 +30,7 @@ class Silabos extends Model
             $data['estrategia_evaluacion_tecnica'],
             $data['promedio_indicadores_logro'],
             $data['recursos_bibliograficos_impresos'],
-            $data['recursos_bibliograficos_digitales'],
-            $data['n_plantilla']
+            $data['recursos_bibliograficos_digitales']
         ]);
         return self::$db->lastInsertId();
     }
