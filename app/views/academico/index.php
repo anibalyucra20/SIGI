@@ -1,8 +1,9 @@
 <?php require __DIR__ . '/../layouts/header.php'; ?>
 
-<h3 class="mb-4">Dashboard ACADEMICO</h3>
-<?php if (\Core\Auth::esAdminAcademico()): ?>
-  <div class="row">
+<h3 class="mb-4">MÓDULO ACADEMICO</h3>
+
+<div class="row">
+  <?php if (\Core\Auth::esAdminAcademico() || \Core\Auth::esDocenteAcademico()): ?>
     <div class="col-md-3">
       <div class="card text-center">
         <div class="card-body">
@@ -11,31 +12,45 @@
         </div>
       </div>
     </div>
-    <div class="col-md-3">
-      <div class="card text-center">
-        <div class="card-body">
-          <h5 class="card-title">Sedes</h5>
-          <p class="display-5"><?= $sedes_count ?></p>
+    <?php if (\Core\Auth::esDocenteAcademico()): ?>
+      <div class="col-md-3">
+        <a href="<?= BASE_URL ?>/academico/unidadesDidacticas">
+        <div class="card text-center">
+          <div class="card-body">
+            <h5 class="card-title">Mis Unidades Didácticas</h5>
+            <p class="display-5"><?= $uds_count ?></p>
+          </div>
+        </div>
+        </a>
+      </div>
+    <?php endif; ?>
+    <?php if (\Core\Auth::esAdminAcademico()): ?>
+      <div class="col-md-3">
+        <div class="card text-center">
+          <div class="card-body">
+            <h5 class="card-title">Sedes</h5>
+            <p class="display-5"><?= $sedes_count ?></p>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card text-center">
-        <div class="card-body">
-          <h5 class="card-title">Programas de estudio</h5>
-          <p class="display-5"><?= $programas ?></p>
+      <div class="col-md-3">
+        <div class="card text-center">
+          <div class="card-body">
+            <h5 class="card-title">Programas de estudio</h5>
+            <p class="display-5"><?= $programas ?></p>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card text-center">
-        <div class="card-body">
-          <h5 class="card-title">Docentes</h5>
-          <p class="display-5"><?= $docentes ?></p>
+      <div class="col-md-3">
+        <div class="card text-center">
+          <div class="card-body">
+            <h5 class="card-title">Docentes</h5>
+            <p class="display-5"><?= $docentes ?></p>
+          </div>
         </div>
       </div>
-    </div>
+    <?php endif; ?>
   <?php endif; ?>
- 
-    </div>
-    <?php require __DIR__ . '/../layouts/footer.php'; ?>
+
+</div>
+<?php require __DIR__ . '/../layouts/footer.php'; ?>

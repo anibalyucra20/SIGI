@@ -47,6 +47,9 @@ class HomeController extends Controller
             header('Location: ' . BASE_URL . '/intranet');
             exit;
         }
+        $id_docente = $_SESSION['sigi_user_id'];
+        $id_periodo = $_SESSION['sigi_periodo_actual_id'];
+        $id_sede  = $_SESSION['sigi_sede_actual'];
         $db = (new Model())->getDB();
         // 1. Periodo actual
         $periodo = $db->query("SELECT nombre FROM sigi_periodo_academico ORDER BY fecha_inicio DESC LIMIT 1")
@@ -57,12 +60,15 @@ class HomeController extends Controller
         $programas = $db->query("SELECT COUNT(*) FROM sigi_programa_estudios")->fetchColumn();
         // 4. Cantidad de docentes (rol docente)
         $docentes = $db->query("SELECT COUNT(*) FROM sigi_usuarios WHERE id_rol IN (SELECT id FROM sigi_roles WHERE nombre LIKE '%DOCENTE%')")->fetchColumn();
+        // 3. Cantidad de programas de estudio
+        $uds_count = $db->query("SELECT COUNT(*) FROM acad_programacion_unidad_didactica WHERE id_docente = '$id_docente' AND id_periodo_academico = '$id_periodo' AND  id_sede ='$id_sede' ")->fetchColumn();
 
         $this->view('academico/index', [
             'periodo'   => $periodo,
             'sedes_count'     => $sedes_count,
             'programas' => $programas,
             'docentes'  => $docentes,
+            'uds_count'  => $uds_count,
             'pageTitle' => 'Panel ACADEMICO',
             'module'    => 'academico'
         ]);
