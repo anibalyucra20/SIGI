@@ -62,7 +62,7 @@
                     <td width="30%"><b>Horario:</b></td>
                     <td>
                         <?php if ($periodo_vigente): ?>
-                            <textarea name="horario" required style="width:50%; resize: none; height:auto;" rows="3"><?= htmlspecialchars($silabo['horario']) ?></textarea>
+                            <textarea name="horario" style="width:50%; resize: none; height:auto;" rows="3"><?= htmlspecialchars($silabo['horario']) ?></textarea>
                         <?php else: ?>
                             <?= ($silabo['horario']) ?>
                         <?php endif; ?>
@@ -232,7 +232,7 @@
         <!-- VII. METODOLOGÍA -->
         <h5 class="mt-4 mb-2">VII. METODOLOGÍA</h5>
         <?php if ($periodo_vigente): ?>
-            <textarea name="metodologia" class="form-control mb-2" rows="3" maxlength="1000" required style="width:100%; resize: none; height:auto;"><?= (htmlspecialchars($silabo['metodologia'] ?? '')) ?></textarea>
+            <textarea name="metodologia" class="form-control mb-2" rows="3" maxlength="1000" style="width:100%; resize: none; height:auto;"><?= (htmlspecialchars($silabo['metodologia'] ?? '')) ?></textarea>
         <?php else: ?>
             <?= (htmlspecialchars($silabo['metodologia'] ?? '')) ?>
         <?php endif; ?>
