@@ -181,12 +181,14 @@ class SilabosController extends Controller
     }
 
 
-    public function pdf($id_programacion)
+    public function pdf($id_silabo)
     {
         require_once __DIR__ . '/../../../vendor/autoload.php';
 
+        
         // Obtener todos los datos igual que para la vista de edición
-        $silabo = $this->model->getSilaboByProgramacion($id_programacion);
+        $silabo = $this->model->getSilaboById($id_silabo);
+        $id_programacion = $silabo['id_prog_unidad_didactica'];
         $permitido = false;
         $errores = [];
 
