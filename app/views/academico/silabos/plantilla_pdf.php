@@ -106,10 +106,10 @@ if (!$permitido) {
     </table>
     <br><br>
     <span class="section-title">II. SUMILLA</span>
-    <div><?= nl2br(htmlspecialchars($silabo['sumilla'])) ?></div>
+    <div style="font-size: 10px; text-align:justify;"><?= nl2br(htmlspecialchars($silabo['sumilla'])) ?></div>
     <br>
     <span class="section-title">III. UNIDAD DE COMPETENCIA ESPECÍFICA O TÉCNICA DEL MÓDULO</span>
-    <div style="font-size: 10px;">
+    <div style="font-size: 10px; text-align:justify;">
         <?php foreach ($competenciasUnidadDidactica as $comp): ?>
             <b><?= htmlspecialchars($comp['codigo']) ?>:</b> <?= htmlspecialchars($comp['descripcion']) ?>
         <?php endforeach; ?>
@@ -123,9 +123,9 @@ if (!$permitido) {
         </tr>
         <?php foreach ($capacidades as $cap): ?>
             <tr>
-                <td><?= htmlspecialchars($cap['descripcion']) ?></td>
-                <td>
-                    <ul>
+                <td style="text-align:justify;"><?= htmlspecialchars($cap['descripcion']) ?></td>
+                <td style="text-align:justify;">
+                    <ul style="text-align:justify;">
                         <?php foreach ($cap['indicadores'] as $ind): ?>
                             <li><?= htmlspecialchars($ind['descripcion']) ?></li>
                         <?php endforeach; ?>
@@ -140,14 +140,14 @@ if (!$permitido) {
     <br>
     <table style="font-size: 10px;">
         <tr>
-            <th width="30%">Competencia para la empleabilidad como contenido transversal</th>
+            <th width="30%" >Competencia para la empleabilidad como contenido transversal</th>
             <th width="70%">Estrategias</th>
         </tr>
         <?php foreach ($competenciasTransversales as $ct): ?>
             <tr>
-                <td><?= htmlspecialchars($ct['codigo']) ?>: <?= htmlspecialchars($ct['descripcion']) ?></td>
-                <td>
-                    <ul>
+                <td style="text-align:justify;"><?= htmlspecialchars($ct['codigo']) ?>: <?= htmlspecialchars($ct['descripcion']) ?></td>
+                <td style="text-align:justify;">
+                    <ul style="text-align:justify;">
                         <?php foreach ($ct['estrategias'] as $estr): ?>
                             <li><?= htmlspecialchars($estr) ?></li>
                         <?php endforeach; ?>
@@ -196,10 +196,10 @@ if (!$permitido) {
                 <?php if ($contar > 0) { ?>
                     <td rowspan="<?= $contar; ?>"><?= htmlspecialchars($sesion['codigo_ind_logro']) ?> - <?= htmlspecialchars(mb_substr($sesion['desc_ind_logro'], 0, 200)) ?></td>
                 <?php } ?>
-                <td><?= htmlspecialchars($sesion['denominacion']) ?></td>
-                <td><?= htmlspecialchars($sesion['contenidos_basicos']) ?></td>
-                <td><?= htmlspecialchars($sesion['logro_sesion']) ?></td>
-                <td><?= htmlspecialchars($sesion['tareas_previas']) ?></td>
+                <td style="text-align:justify;"><?= htmlspecialchars($sesion['denominacion']) ?></td>
+                <td style="text-align:justify;"><?= htmlspecialchars($sesion['contenidos_basicos']) ?></td>
+                <td style="text-align:justify;"><?= htmlspecialchars($sesion['logro_sesion']) ?></td>
+                <td style="text-align:justify;"><?= htmlspecialchars($sesion['tareas_previas']) ?></td>
             </tr>
         <?php
             $contar = 0;
@@ -208,20 +208,20 @@ if (!$permitido) {
     <br>
     <br>
     <span class="section-title">VII. METODOLOGÍA</span>
-    <div><?= nl2br(htmlspecialchars($silabo['metodologia'])) ?></div>
+    <div style="font-size: 10px; text-align:justify;"><?= nl2br(htmlspecialchars($silabo['metodologia'])) ?></div>
     <br>
     <span class="section-title">VIII. AMBIENTES Y RECURSOS</span>
-    <div><?= nl2br(htmlspecialchars($silabo['recursos_didacticos'])) ?></div>
+    <div style="font-size: 10px; text-align:justify;"><?= nl2br(htmlspecialchars($silabo['recursos_didacticos'])) ?></div>
     <br>
     <span class="section-title">IX. SISTEMA DE EVALUACIÓN</span>
-    <div><?= nl2br(htmlspecialchars($silabo['sistema_evaluacion'])) ?></div>
+    <div style="font-size: 10px; text-align:justify;"><?= nl2br(htmlspecialchars($silabo['sistema_evaluacion'])) ?></div>
     <br>
     <span class="section-title">X. FUENTES DE INFORMACIÓN</span>
     <br>
     <b>10.1 Bibliografía (Impresos):</b>
-    <div><?= nl2br(htmlspecialchars($silabo['recursos_bibliograficos_impresos'])) ?></div>
-    <b>  10.2 URL (digitales):</b>
-    <div><?= nl2br(htmlspecialchars($silabo['recursos_bibliograficos_digitales'])) ?></div>
+    <div style="font-size: 10px; text-align:justify;"><?= nl2br(htmlspecialchars($silabo['recursos_bibliograficos_impresos'])) ?></div>
+    <b> 10.2 URL (digitales):</b>
+    <div style="font-size: 10px; text-align:justify;"><?= nl2br(htmlspecialchars($silabo['recursos_bibliograficos_digitales'])) ?></div>
     <br>
     <span class="section-title">FECHA:</span>
     <?php
