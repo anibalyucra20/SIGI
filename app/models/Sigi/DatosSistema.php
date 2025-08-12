@@ -53,6 +53,18 @@ class DatosSistema extends Model
         $res = $stmt->fetch(PDO::FETCH_ASSOC);
         return $res ? (int)$res['cant_semanas'] : 16; // Valor por defecto si no existe
     }
+    public function getNro_PlantillaSilabos()
+    {
+        $stmt = self::$db->query("SELECT plantilla_silabo FROM sigi_datos_sistema LIMIT 1");
+        $res = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $res ? (int)$res['plantilla_silabo'] : 1; // Valor por defecto si no existe
+    }
+    public function getNro_PlantillaSesion()
+    {
+        $stmt = self::$db->query("SELECT plantilla_sesion FROM sigi_datos_sistema LIMIT 1");
+        $res = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $res ? (int)$res['plantilla_sesion'] : 1; // Valor por defecto si no existe
+    }
     public function getNotaSiInasistencia()
     {
         $stmt = self::$db->query("SELECT nota_inasistencia FROM sigi_datos_sistema LIMIT 1");

@@ -9,7 +9,12 @@ $limiteInasistencia = 30; // Porcentaje para resaltar en rojo
 <?php if ((\Core\Auth::esDocenteAcademico() || \Core\Auth::esAdminAcademico()) && $permitido): ?>
     <div class="card p-2">
         <h4 class="text-center my-3">Asistencia - <?= htmlspecialchars($nombreUnidadDidactica) ?></h4>
-        <a href="<?= BASE_URL ?>/academico/unidadesDidacticas" class="btn btn-danger mb-3 col-sm-2">Regresar</a>
+        <?php if (\Core\Auth::esDocenteAcademico()): ?>
+            <a class="btn btn-danger btn-sm btn-block col-sm-1 col-4 mb-1" href="<?= BASE_URL; ?>/academico/unidadesDidacticas">Regresar</a>
+        <?php endif; ?>
+        <?php if (\Core\Auth::esAdminAcademico()): ?>
+            <a class="btn btn-danger btn-sm btn-block col-sm-1 col-4 mb-1" href="<?= BASE_URL; ?>/academico/unidadesDidacticas/evaluar">Regresar</a>
+        <?php endif; ?>
         <div class="table-responsive" style="overflow-x:auto;">
             <form action="<?= BASE_URL ?>/academico/asistencia/guardar" method="post" autocomplete="off" id="form-asistencia">
                 <input type="hidden" name="id_programacion_ud" value="<?= (int)$id_programacion_ud ?>">

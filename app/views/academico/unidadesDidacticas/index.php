@@ -68,7 +68,7 @@
                             $periodo_vigente = (isset($periodo['vigente']) && $periodo['vigente'] == 1);
                             ?>
                             // Este valor JS se setea dinámicamente según el backend, aquí solo a modo ejemplo:
-                            let periodoVigente = <?= $periodo_vigente ? 'true' : 'false' ?>;
+                            let periodoVigente = <?= ($periodo_vigente) ? 'true' : 'false' ?>;
 
                             acciones += `<a href="<?= BASE_URL ?>/academico/silabos/editar/${row.id}" class="btn btn-sm btn-outline-warning mb-1" title="Sílabo"><i class="fa fa-book"></i></a> `;
                             acciones += `<a href="<?= BASE_URL ?>/academico/sesiones/ver/${row.id}" class="btn btn-sm btn-outline-primary mb-1" title="Sesiones de Aprendizaje"><i class="fa fa-briefcase"></i></a> `;

@@ -55,8 +55,11 @@ class UnidadesDidacticasController extends Controller
     public function index()
     {
         // Puedes pasar $periodo si lo necesitas para la lógica JS de acciones.
+        $periodo = $this->objPeriodoAcademico->getPeriodoVigente($_SESSION['sigi_periodo_actual_id']);
+        $periodo_vigente = ($periodo && $periodo['vigente']);
         $this->view('academico/unidadesDidacticas/index', [
             'periodo' => $this->objPeriodoAcademico->getPeriodoVigente($_SESSION['sigi_periodo_actual_id'] ?? 0),
+            'periodo_vigente' => $periodo_vigente,
             'module' => 'academico',
             'pageTitle' => 'Mis Unidades Didácticas Programadas'
         ]);
@@ -234,8 +237,11 @@ class UnidadesDidacticasController extends Controller
         $id_periodo = $_SESSION['sigi_periodo_actual_id'] ?? 0;
         $programas = $this->objPrograma->getAllBySede($id_sede);
         $docentes = $this->objDocente->getDocentesPorSede($id_sede);
-
+        $periodo = $this->objPeriodoAcademico->getPeriodoVigente($_SESSION['sigi_periodo_actual_id']);
+        $periodo_vigente = ($periodo && $periodo['vigente']);
         $this->view('academico/unidadesDidacticas/evaluar', [
+            'periodo' => $this->objPeriodoAcademico->getPeriodoVigente($_SESSION['sigi_periodo_actual_id'] ?? 0),
+            'periodo_vigente' => $periodo_vigente,
             'programas' => $programas,
             'docentes' => $docentes,
             'module' => 'academico',
