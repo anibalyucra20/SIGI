@@ -27,7 +27,12 @@
                 <tbody><!-- DataTables llenará esto --></tbody>
             </table>
         </div>
-        <a href="<?= BASE_URL ?>/academico/unidadesDidacticas" class="btn btn-secondary mt-2">Volver</a>
+        <?php if (\Core\Auth::esDocenteAcademico()): ?>
+            <a class="btn btn-danger btn-sm btn-block col-sm-1 col-4 mb-1" href="<?= BASE_URL; ?>/academico/unidadesDidacticas">Regresar</a>
+        <?php endif; ?>
+        <?php if (\Core\Auth::esAdminAcademico()): ?>
+            <a class="btn btn-danger btn-sm btn-block col-sm-1 col-4 mb-1" href="<?= BASE_URL; ?>/academico/unidadesDidacticas/evaluar">Regresar</a>
+        <?php endif; ?>
     </div>
 
     <script>
@@ -74,7 +79,7 @@
                                 acciones += `<a href="<?= BASE_URL ?>/academico/sesiones/editar/${row.id}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="fa fa-edit"></i></a> `;
                             <?php endif; ?>
                             acciones += `<a href="<?= BASE_URL ?>/academico/sesiones/pdf/${row.id}" class="btn btn-sm btn-outline-secondary" title="Imprimir" target="_blank"><i class="fa fa-print"></i></a> `;
-                            <?php if ($periodo_vigente && 100>1000): ?>
+                            <?php if ($periodo_vigente && 100 > 1000): ?>
                                 acciones += `<a href="<?= BASE_URL ?>/academico/sesiones/duplicar/${row.id}" class="btn btn-sm btn-outline-success" title="Duplicar"  onclick="return confirm('¿Duplicar esta sesión?');"><i class="fa fa-copy"></i></a> `;
                             <?php endif; ?>
                             // Eliminar solo si es la 2da o mayor sesión de esa semana

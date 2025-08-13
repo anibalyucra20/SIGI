@@ -277,7 +277,14 @@
             <?php if ($periodo_vigente): ?>
                 <button type="submit" class="btn btn-primary px-4">Guardar Cambios</button>
             <?php endif; ?>
-            <a href="<?= BASE_URL ?>/academico/unidadesDidacticas" class="btn btn-secondary">Cancelar</a>
+            <br>
+            <br>
+            <?php if (\Core\Auth::esDocenteAcademico()): ?>
+                <a class="btn btn-danger btn-sm btn-block col-md-2 mb-1 px-4" href="<?= BASE_URL; ?>/academico/unidadesDidacticas">Regresar</a>
+            <?php endif; ?>
+            <?php if (\Core\Auth::esAdminAcademico()): ?>
+                <a class="btn btn-danger btn-sm btn-block col-md-2 mb-1 px-4" href="<?= BASE_URL; ?>/academico/unidadesDidacticas/evaluar">Regresar</a>
+            <?php endif; ?>
 
         </div>
     </form>
