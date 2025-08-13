@@ -35,19 +35,19 @@ if (!$permitido) {
 
     .titulo {
         text-align: center;
-        font-size: 14px;
+        font-size: 12px;
         font-weight: bold;
         margin-bottom: 10px;
     }
 
     .cuerpo {
         text-align: justify;
-        font-size: 11px;
+        font-size: 10px;
         margin-bottom: 10px;
     }
 
     .section-title {
-        font-size: 12px;
+        font-size: 11px;
         font-weight: bold;
         margin: 10px 0 5px 0;
         text-align: center;
@@ -57,10 +57,10 @@ if (!$permitido) {
         background-color: grey;
     }
 </style>
-<div class="titulo">SESIÓN DE APRENDIZAJE</div>
+<div class="titulo">SESIÓN DE APRENDIZAJE - <?= $sesion['semana']; ?></div>
 <br>
 
-<table>
+<table class="cuerpo">
     <tr>
         <td colspan="2" style="background-color:#bebdbd;"><span class="section-title">I. INFORMACIÓN GENERAL</span></td>
     </tr>
@@ -126,7 +126,7 @@ if (!$permitido) {
 </table>
 <br>
 <br>
-<table>
+<table class="cuerpo">
     <thead>
         <tr style="background-color:#bebdbd;">
             <th colspan="4"><span class="section-title">II. ACTIVIDADES DE APRENDIZAJE</span></th>
@@ -151,7 +151,7 @@ if (!$permitido) {
 </table>
 <br>
 <br>
-<table>
+<table class="cuerpo">
     <thead>
         <tr style="background-color:#bebdbd;">
             <th colspan="4"><span class="section-title">III. ACTIVIDADES DE EVALUACIÓN</span></th>
@@ -163,7 +163,7 @@ if (!$permitido) {
             <th style="width: 20%;"><b>Momento</b></th>
         </tr>
     </thead>
-    <tbody>
+    <tbody >
         <?php foreach ($activEval as $a): ?>
             <tr>
                 <td style="width: 30%; text-align: justify; !important"><?= nl2br(htmlspecialchars($a['indicador_logro_sesion'])) ?></td>

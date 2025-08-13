@@ -77,7 +77,7 @@ class Sesiones extends Model
     {
         // Trae datos principales
         $stmt = self::$db->prepare("
-        SELECT 
+                SELECT 
             ud.nombre AS unidad,
             u.apellidos_nombres AS docente,
             pr.nombre AS programa,
@@ -103,10 +103,10 @@ class Sesiones extends Model
         INNER JOIN sigi_programa_estudios pr ON pl.id_programa_estudios = pr.id
         INNER JOIN sigi_periodo_academico pa ON pud.id_periodo_academico = pa.id
         LEFT JOIN sigi_capacidades cap ON cap.id_unidad_didactica = ud.id
+        LEFT JOIN sigi_competencias uc ON uc.id = cap.id_competencia          -- << corrección
         LEFT JOIN sigi_competencias ct ON ct.tipo = 'TRANSVERSAL' AND ct.id_plan_estudio = pl.id
-        LEFT JOIN sigi_competencias uc ON uc.id = ud.id
         WHERE pud.id = ?
-        LIMIT 1
+        LIMIT 1;
         ");
         $stmt->execute([$id_programacion]);
         $datos = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -168,29 +168,29 @@ class Sesiones extends Model
         try {
             $sql = "
             SELECT 
-    sa.id,
-    sa.id_prog_actividad_silabo,
-    pas.semana,
-    pas.id_ind_logro_aprendizaje,
-    sa.denominacion,
-    sa.fecha_desarrollo,
-    sa.tipo_actividad,
-    sa.logro_sesion,
-    sa.bibliografia_obligatoria_docente,
-    s.id_prog_unidad_didactica as id_programacion,         -- id de la programación de unidad
-    pu.id_unidad_didactica,             -- FK real a la unidad
-    ud.nombre   AS nombre_unidad        -- datos de la unidad
-FROM acad_sesion_aprendizaje sa
-INNER JOIN acad_programacion_actividades_silabo pas 
-    ON sa.id_prog_actividad_silabo = pas.id
-INNER JOIN acad_silabos s 
-    ON pas.id_silabo = s.id
-INNER JOIN acad_programacion_unidad_didactica pu
-    ON s.id_prog_unidad_didactica = pu.id
-INNER JOIN sigi_unidad_didactica ud
-    ON pu.id_unidad_didactica = ud.id
-WHERE sa.id = ?
-LIMIT 1;
+                sa.id,
+                sa.id_prog_actividad_silabo,
+                pas.semana,
+                pas.id_ind_logro_aprendizaje,
+                sa.denominacion,
+                sa.fecha_desarrollo,
+                sa.tipo_actividad,
+                sa.logro_sesion,
+                sa.bibliografia_obligatoria_docente,
+                s.id_prog_unidad_didactica as id_programacion,         -- id de la programación de unidad
+                pu.id_unidad_didactica,             -- FK real a la unidad
+                ud.nombre   AS nombre_unidad        -- datos de la unidad
+            FROM acad_sesion_aprendizaje sa
+            INNER JOIN acad_programacion_actividades_silabo pas 
+                ON sa.id_prog_actividad_silabo = pas.id
+            INNER JOIN acad_silabos s 
+                ON pas.id_silabo = s.id
+            INNER JOIN acad_programacion_unidad_didactica pu
+                ON s.id_prog_unidad_didactica = pu.id
+            INNER JOIN sigi_unidad_didactica ud
+                ON pu.id_unidad_didactica = ud.id
+            WHERE sa.id = ?
+            LIMIT 1;
 
         ";
             $stmt = self::$db->prepare($sql);
