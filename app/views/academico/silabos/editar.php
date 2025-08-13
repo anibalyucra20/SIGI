@@ -183,7 +183,7 @@
                                     <select name="sesiones[<?= $sesion['id_actividad'] ?>][id_ind_logro_aprendizaje]" class="form-control">
                                         <?php foreach ($indicadoresLogroCapacidad as $ilc): ?>
                                             <option value="<?= $ilc['id'] ?>" <?= ($sesion['id_ind_logro_aprendizaje'] == $ilc['id']) ? 'selected' : '' ?>>
-                                                <?= htmlspecialchars($ilc['codigo_capacidad'].'.'.$ilc['codigo']) ?> - <?= htmlspecialchars(mb_substr($ilc['descripcion'], 0, 60)) ?>
+                                                <?= htmlspecialchars($ilc['codigo_capacidad'] . '.' . $ilc['codigo']) ?> - <?= htmlspecialchars($ilc['descripcion']) ?>
                                             </option>
                                         <?php endforeach; ?>
                                     </select>
@@ -281,6 +281,52 @@
 
         </div>
     </form>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // todos los inputs de fecha en VI. Programación de sesiones
+            const dateInputs = Array.from(document.querySelectorAll('input[type="date"][name^="sesiones"][name$="[fecha]"]'));
+            if (dateInputs.length < 2) return;
+
+            const first = dateInputs[0];
+
+            // sumar días a una fecha YYYY-MM-DD
+            function addDays(yyyyMMdd, days) {
+                const [y, m, d] = yyyyMMdd.split('-').map(Number);
+                const dt = new Date(y, m - 1, d);
+                dt.setDate(dt.getDate() + days);
+                const yy = dt.getFullYear();
+                const mm = String(dt.getMonth() + 1).padStart(2, '0');
+                const dd = String(dt.getDate()).padStart(2, '0');
+                return `${yy}-${mm}-${dd}`;
+            }
+
+            // limitar por min/max (ambos en formato YYYY-MM-DD)
+            function clamp(val, min, max) {
+                if (min && val < min) return min;
+                if (max && val > max) return max;
+                return val;
+            }
+
+            function autopoblarDesdePrimera() {
+                if (!first.value) return; // no hay base
+                let prev = first.value;
+                for (let i = 1; i < dateInputs.length; i++) {
+                    let next = addDays(prev, 7); // +1 semana
+                    const min = dateInputs[i].getAttribute('min') || '';
+                    const max = dateInputs[i].getAttribute('max') || '';
+                    next = clamp(next, min, max); // respeta ventana del período
+                    dateInputs[i].value = next;
+                    prev = next;
+                }
+            }
+            // cuando el usuario elija la primera fecha, se completan las demás
+            first.addEventListener('change', autopoblarDesdePrimera);
+
+            // OPCIONAL: si quieres que cargue ya autocompletado si la primera viene con valor
+            // autopoblarDesdePrimera();
+        });
+    </script>
+
 <?php else: ?>
     <p>No tiene permisos para editar este sílabo o el periodo ya culminó.</p>
 <?php endif; ?>
