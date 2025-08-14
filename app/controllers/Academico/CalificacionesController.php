@@ -236,6 +236,91 @@ class CalificacionesController extends Controller
         exit;
     }
 
+    public function registroAuxiliar($id_programacion_ud = null, $nro_calificacion = null)
+    {
+        if (empty($id_programacion_ud) || empty($nro_calificacion)) {
+            $_SESSION['flash_error'] = "Datos Imcompletos para imprimir";
+            header('Location: ' . BASE_URL . '/academico');
+        }
+        $esAdminAcademico = (\Core\Auth::esAdminAcademico());
+        $esDocenteEncargado = (isset($_SESSION['sigi_user_id']) && $_SESSION['sigi_user_id'] == $this->objProgramacionUD->getIdDocente($id_programacion_ud));
+        $permitido = $esAdminAcademico || $esDocenteEncargado;
+
+        // Periodo (por si lo usas para el título u otros datos)
+        $programacion    = $this->objProgramacionUD->find($id_programacion_ud);
+        $periodo_vigente = $this->objPeriodoAcademico->getPeriodoVigente($programacion['id_periodo_academico']);
+
+        // Trae TODO lo necesario para la vista
+        $datos                         = $this->model->getDatosEvaluacion($id_programacion_ud, $nro_calificacion);
+        $estudiantes                   = $datos['estudiantes'] ?? [];
+        $evaluacionesEstudiante        = $datos['evaluacionesEstudiante'] ?? [];
+        $promediosEvaluacion           = $datos['promediosEvaluacion'] ?? [];
+        $promedioFinal                 = $datos['promedioFinal'] ?? [];
+        $nombreIndicador               = $datos['nombreIndicador'] ?? '';
+        $nombreUnidadDidactica         = $datos['nombreUnidadDidactica'] ?? ''; // si no viene, tomamos del silabo abajo
+        $estudiantes_inhabilitados     = [];
+        $nota_inasistencia             = $this->objDatosSistema->getNotaSiInasistencia();
+        $datosGenerales                = $this->objSilabo->getDatosGenerales($id_programacion_ud);
+        $datosSistema = $this->objDatosSistema->buscar();
+        if ($nombreUnidadDidactica === '' && !empty($datosGenerales['unidad'])) {
+            $nombreUnidadDidactica = $datosGenerales['unidad'];
+        }
+
+        foreach ($estudiantes as $est) {
+            $id_detalle = $est['id_detalle_matricula'];
+            $estudiantes_inhabilitados[$id_detalle] = $this->model->inhabilitadoPorInasistencia($id_detalle);
+        }
+
+        // ---------- Plantilla robusta de evaluaciones/criterios para el PDF ----------
+        $plantillaEvaluaciones = [];
+
+        // 1) Intento: tomar el primer alumno que tenga evaluaciones
+        if (!empty($estudiantes) && !empty($evaluacionesEstudiante)) {
+            foreach ($estudiantes as $e) {
+                $id_det = $e['id_detalle_matricula'] ?? null;
+                if ($id_det && !empty($evaluacionesEstudiante[$id_det])) {
+                    $plantillaEvaluaciones = array_values($evaluacionesEstudiante[$id_det]);
+                    break;
+                }
+            }
+        }
+
+        // 2) Fallback: recorrer todo el arreglo y consolidar por id de evaluación
+        if (empty($plantillaEvaluaciones) && !empty($evaluacionesEstudiante)) {
+            $map = [];
+            foreach ($evaluacionesEstudiante as $evalsAlumno) {
+                if (!is_array($evalsAlumno)) continue;
+                foreach ($evalsAlumno as $ev) {
+                    if (isset($ev['id']) && !isset($map[$ev['id']])) {
+                        $map[$ev['id']] = $ev;
+                    }
+                }
+            }
+            ksort($map); // orden estable
+            $plantillaEvaluaciones = array_values($map);
+        }
+
+        // 3) Último recurso (si arriba no hubo datos): leer una calificación “representativa” de BD
+        if (empty($plantillaEvaluaciones) && method_exists($this->model, 'getPlantillaEvaluaciones')) {
+            $plantillaEvaluaciones = $this->model->getPlantillaEvaluaciones((int)$id_programacion_ud, (int)$nro_calificacion);
+        }
+
+        // ---------- Generar PDF ----------
+        $pdf = new TCPDF('L', 'mm', 'A4', true, 'UTF-8', false);
+        $pdf->SetTitle('Registro Auxiliar - ' . ($datosGenerales['unidad'] ?? '') . ' - Calificación ' . $nro_calificacion);
+        $pdf->setPrintHeader(false);
+        $pdf->SetMargins(8, 15, 8);
+        $pdf->SetAutoPageBreak(true, 5);
+        $pdf->AddPage();
+
+        // La vista usa las variables definidas arriba (están en el mismo scope)
+        ob_start();
+        include __DIR__ . '/../../views/academico/calificaciones/pdf_registro_auxiliar.php';
+        $html = ob_get_clean();
+
+        $pdf->writeHTML($html, true, false, true, false, '');
+        $pdf->Output('Registro Auxiliar - ' . ($datosGenerales['unidad'] ?? '') . ' - Calificación ' . $nro_calificacion . '.pdf', 'I');
+    }
 
 
 

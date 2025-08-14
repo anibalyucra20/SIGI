@@ -5,14 +5,18 @@ require __DIR__ . '/../../layouts/header.php';
 
 <?php if ((\Core\Auth::esDocenteAcademico() || \Core\Auth::esAdminAcademico()) && $permitido): ?>
     <div class="card p-2">
-        <a class="btn btn-danger mb-3 col-6 col-md-2" href="<?= BASE_URL; ?>/academico/calificaciones/ver/<?php echo $id_programacion_ud; ?>">Regresar</a>
-        <h5 class="text-center font-weight-bold mb-4" style="color:#607d8b;">
-            Evaluación - Calificación <?= $nro_calificacion ?>
-            <?php if (!empty($nombreIndicador)) : ?>
-                - <?= $nombreIndicador ?>
-            <?php endif; ?>
-            - <span style="color:#4153a1;"><?php echo strtoupper($nombreUnidadDidactica ?? ''); ?></span>
-        </h5>
+        <div class="col-4 col-md-2 mb-3">
+            <a class="btn btn-danger mb-3 col-12" href="<?= BASE_URL; ?>/academico/calificaciones/ver/<?php echo $id_programacion_ud; ?>">Regresar</a>
+            <a class="btn btn-info btn-sm btn-block mb-2 col-12" target="_blank" href="<?= BASE_URL ?>/academico/calificaciones/registroAuxiliar/<?= $id_programacion_ud ?>/<?= $nro_calificacion ?>">Imprimir</a>
+            </div>
+            <h5 class="text-center font-weight-bold mb-4" style="color:#607d8b;">
+                Evaluación - Calificación <?= $nro_calificacion ?>
+                <?php if (!empty($nombreIndicador)) : ?>
+                    - <?= $nombreIndicador ?>
+                <?php endif; ?>
+                - <span style="color:#4153a1;"><?php echo strtoupper($nombreUnidadDidactica ?? ''); ?></span>
+            </h5>
+        
         <div class="table-responsive">
             <table class="table table-bordered" style="font-size:14px;">
                 <thead>
