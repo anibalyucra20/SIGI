@@ -1,5 +1,6 @@
 config.php
 public/images/*.jpg
+public/images/*.ico
 public/images/*.png
 public/images/*.gif
 public/images/*.jpeg
