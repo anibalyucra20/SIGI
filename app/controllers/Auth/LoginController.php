@@ -74,14 +74,14 @@ class LoginController extends Controller
                 FROM sigi_permisos_usuarios psu
                 INNER JOIN sigi_sistemas_integrados s ON s.id = psu.id_sistema
                 INNER JOIN sigi_roles r ON r.id = psu.id_rol
-                WHERE psu.id_usuario = ?";
+                WHERE psu.id_usuario = ? ORDER BY r.id AND s.id DESC";
             $stmt = $db->prepare($sql);
             $stmt->execute([$user['id']]);
-            $_SESSION['permisos_usuario'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $_SESSION['sigi_permisos_usuario'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            if (!empty($_SESSION['permisos_usuario'])) {
-                $_SESSION['modulo_actual'] = $_SESSION['permisos_usuario'][0]['id_sistema'];
-                $_SESSION['rol_actual']    = $_SESSION['permisos_usuario'][0]['id_rol'];
+            if (!empty($_SESSION['sigi_permisos_usuario'])) {
+                $_SESSION['sigi_modulo_actual'] = $_SESSION['sigi_permisos_usuario'][0]['id_sistema'];
+                $_SESSION['sigi_rol_actual']    = $_SESSION['sigi_permisos_usuario'][0]['id_rol'];
             }
             // registro de log
             (new \Core\Model())->log($user['id'], 'LOGIN', 'Ingreso al sistema');

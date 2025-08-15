@@ -62,7 +62,7 @@
                     <td width="30%"><b>Horario:</b></td>
                     <td>
                         <?php if ($periodo_vigente): ?>
-                            <textarea name="horario" style="width:50%; resize: none; height:auto;" rows="3"><?= htmlspecialchars($silabo['horario']) ?></textarea>
+                            <textarea name="horario" style="width:50%; resize: none; height:auto;" rows="3" maxlength="200"><?= htmlspecialchars($silabo['horario']) ?></textarea>
                         <?php else: ?>
                             <?= ($silabo['horario']) ?>
                         <?php endif; ?>
@@ -194,14 +194,14 @@
                             </td>
                             <td>
                                 <?php if ($periodo_vigente): ?>
-                                    <textarea name="sesiones[<?= $sesion['id_actividad'] ?>][denominacion]" rows="5" class="form-control" style="width:100%; resize: none; height:auto;"><?= (htmlspecialchars($sesion['denominacion'])) ?></textarea>
+                                    <textarea name="sesiones[<?= $sesion['id_actividad'] ?>][denominacion]" rows="5" class="form-control" style="width:100%; resize: none; height:auto;" maxlength="255"><?= (htmlspecialchars($sesion['denominacion'])) ?></textarea>
                                 <?php else: ?>
                                     <?= (htmlspecialchars($sesion['denominacion'])) ?>
                                 <?php endif; ?>
                             </td>
                             <td>
                                 <?php if ($periodo_vigente): ?>
-                                    <textarea name="sesiones[<?= $sesion['id_actividad'] ?>][contenido]" rows="5" class="form-control" style="width:100%; resize: none; height:auto;"><?= (htmlspecialchars($sesion['contenidos_basicos'])) ?></textarea>
+                                    <textarea name="sesiones[<?= $sesion['id_actividad'] ?>][contenido]" rows="5" class="form-control" style="width:100%; resize: none; height:auto;" maxlength="1000"><?= (htmlspecialchars($sesion['contenidos_basicos'])) ?></textarea>
                                 <?php else: ?>
                                     <?= (htmlspecialchars($sesion['contenidos_basicos'])) ?>
                                 <?php endif; ?>
@@ -209,14 +209,14 @@
                             </td>
                             <td>
                                 <?php if ($periodo_vigente): ?>
-                                    <textarea name="sesiones[<?= $sesion['id_actividad'] ?>][logro_sesion]" rows="5" class="form-control" style="width:100%; resize: none; height:auto;"><?= (htmlspecialchars($sesion['logro_sesion'])) ?></textarea>
+                                    <textarea name="sesiones[<?= $sesion['id_actividad'] ?>][logro_sesion]" rows="5" class="form-control" style="width:100%; resize: none; height:auto;" maxlength="1000"><?= (htmlspecialchars($sesion['logro_sesion'])) ?></textarea>
                                 <?php else: ?>
                                     <?= (htmlspecialchars($sesion['logro_sesion'])) ?>
                                 <?php endif; ?>
                             </td>
                             <td>
                                 <?php if ($periodo_vigente): ?>
-                                    <textarea name="sesiones[<?= $sesion['id_actividad'] ?>][tareas_previas]" rows="5" class="form-control" style="width:100%; resize: none; height:auto;"><?= (htmlspecialchars($sesion['tareas_previas'])) ?></textarea>
+                                    <textarea name="sesiones[<?= $sesion['id_actividad'] ?>][tareas_previas]" rows="5" class="form-control" style="width:100%; resize: none; height:auto;"  maxlength="500"><?= (htmlspecialchars($sesion['tareas_previas'])) ?></textarea>
                                 <?php else: ?>
                                     <?= (htmlspecialchars($sesion['tareas_previas'])) ?>
                                 <?php endif; ?>

@@ -48,7 +48,7 @@
                         <td><b>Sesión de Aprendizaje:</b></td>
                         <td>
                             <?php if ($periodo_vigente): ?>
-                                <input type="text" name="denominacion" class="form-control" maxlength="200" required value="<?= htmlspecialchars($sesion['denominacion']) ?>">
+                                <input type="text" name="denominacion" class="form-control" maxlength="255" required value="<?= htmlspecialchars($sesion['denominacion']) ?>">
                             <?php else: ?>
                                 <?= htmlspecialchars($sesion['denominacion']) ?>
                             <?php endif; ?>
@@ -114,14 +114,14 @@
                                 <td><?= htmlspecialchars($m['momento']) ?></td>
                                 <td>
                                     <?php if ($periodo_vigente): ?>
-                                        <textarea name="actividad_<?= $m['id'] ?>" class="form-control" rows="5" style="width:100%; resize: none; height:auto;"><?= htmlspecialchars($m['actividad']) ?></textarea>
+                                        <textarea name="actividad_<?= $m['id'] ?>" class="form-control" rows="5" style="width:100%; resize: none; height:auto;" maxlength="2000"><?= htmlspecialchars($m['actividad']) ?></textarea>
                                     <?php else: ?>
                                         <?= htmlspecialchars($m['actividad']) ?>
                                     <?php endif; ?>
                                 </td>
                                 <td>
                                     <?php if ($periodo_vigente): ?>
-                                        <textarea name="recursos_<?= $m['id'] ?>" class="form-control" rows="5" style="width:100%; resize: none; height:auto;"><?= htmlspecialchars($m['recursos']) ?></textarea>
+                                        <textarea name="recursos_<?= $m['id'] ?>" class="form-control" rows="5" style="width:100%; resize: none; height:auto;" maxlength="500"><?= htmlspecialchars($m['recursos']) ?></textarea>
                                     <?php else: ?>
                                         <?= htmlspecialchars($m['recursos']) ?>
                                     <?php endif; ?>
@@ -156,21 +156,21 @@
                             <tr>
                                 <td>
                                     <?php if ($periodo_vigente): ?>
-                                        <textarea name="indicador_<?= $a['id'] ?>" class="form-control" rows="3" style="width:100%; resize: none; height:auto;"><?= htmlspecialchars($a['indicador_logro_sesion']) ?></textarea>
+                                        <textarea name="indicador_<?= $a['id'] ?>" class="form-control" rows="3" style="width:100%; resize: none; height:auto;"  maxlength="300"><?= htmlspecialchars($a['indicador_logro_sesion']) ?></textarea>
                                     <?php else: ?>
                                         <?= htmlspecialchars($a['indicador_logro_sesion']) ?>
                                     <?php endif; ?>
                                 </td>
                                 <td>
                                     <?php if ($periodo_vigente): ?>
-                                        <textarea name="tecnica_<?= $a['id'] ?>" class="form-control" rows="3" style="width:100%; resize: none; height:auto;"><?= htmlspecialchars($a['tecnica']) ?></textarea>
+                                        <textarea name="tecnica_<?= $a['id'] ?>" class="form-control" rows="3" style="width:100%; resize: none; height:auto;"  maxlength="300"><?= htmlspecialchars($a['tecnica']) ?></textarea>
                                     <?php else: ?>
                                         <?= htmlspecialchars($a['tecnica']) ?>
                                     <?php endif; ?>
                                 </td>
                                 <td>
                                     <?php if ($periodo_vigente): ?>
-                                        <textarea name="instrumentos_<?= $a['id'] ?>" class="form-control" rows="3" style="width:100%; resize: none; height:auto;"><?= htmlspecialchars($a['instrumentos']) ?></textarea>
+                                        <textarea name="instrumentos_<?= $a['id'] ?>" class="form-control" rows="3" style="width:100%; resize: none; height:auto;" maxlength="300"><?= htmlspecialchars($a['instrumentos']) ?></textarea>
                                     <?php else: ?>
                                         <?= htmlspecialchars($a['instrumentos']) ?>
                                     <?php endif; ?>
@@ -186,7 +186,7 @@
             <h6 class="mb-2">IV. BIBLIOGRAFÍA (APA)</h6>
             <div class="mb-3">
                 <?php if ($periodo_vigente): ?>
-                    <textarea name="bibliografia" class="form-control" rows="4" style="width:100%; resize: none; height:auto;"><?= htmlspecialchars($sesion['bibliografia_obligatoria_docente']) ?></textarea>
+                    <textarea name="bibliografia" class="form-control" rows="4" style="width:100%; resize: none; height:auto;" maxlength="2000"><?= htmlspecialchars($sesion['bibliografia_obligatoria_docente']) ?></textarea>
                 <?php else: ?>
                     <?= htmlspecialchars($sesion['bibliografia_obligatoria_docente']) ?>
                 <?php endif; ?>

@@ -24,7 +24,7 @@
             </div>
             <div class="mb-3">
                 <label class="form-label">Dre a la que pertenece *</label>
-                <input type="text" name="dre" class="form-control" maxlength="50" required
+                <input type="text" name="dre" class="form-control" maxlength="200" required
                     value="<?= htmlspecialchars($institucion['dre'] ?? '') ?>" disabled>
             </div>
             <div class="mb-3">

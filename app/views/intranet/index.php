@@ -9,6 +9,7 @@
   <?php unset($_SESSION['flash_error']); ?>
 <?php endif; ?>
 <h4 class="mb-4">Bienvenido, <?= htmlspecialchars($_SESSION['sigi_user_name']) ?></h4>
+
 <div class="row">
   <?php foreach ($sistemas as $s) : ?>
     <div class="col-md-4 col-lg-3 mb-4">

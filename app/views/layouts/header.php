@@ -66,7 +66,6 @@ endif;
             </button>
           </div>
           <div class="d-flex align-items-center">
-
             <div class="dropdown d-inline-block">
               <form action="<?= BASE_URL ?>/sedes/cambiarSesion" method="get" class="d-flex align-items-center">
                 <label for="sedeee" class="me-2 small">Sede:</label>

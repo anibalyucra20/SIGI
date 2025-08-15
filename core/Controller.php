@@ -38,7 +38,7 @@ class Controller
                 FROM sigi_permisos_usuarios psu
                 INNER JOIN sigi_sistemas_integrados s ON s.id = psu.id_sistema
                 INNER JOIN sigi_roles r ON r.id = psu.id_rol
-                WHERE psu.id_usuario = ?";
+                WHERE psu.id_usuario = ? ORDER BY r.id DESC";
             $stmt = $db->prepare($sql);
             $stmt->execute([$id_usuario]);
             $_SESSION['sigi_permisos_usuario'] = $stmt->fetchAll(\PDO::FETCH_ASSOC);

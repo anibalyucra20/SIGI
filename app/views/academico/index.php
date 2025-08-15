@@ -3,7 +3,7 @@
 <h3 class="mb-4">MÓDULO ACADEMICO</h3>
 
 <div class="row">
-  <?php if (\Core\Auth::esAdminAcademico() || \Core\Auth::esDocenteAcademico()): ?>
+  <?php if (\Core\Auth::tieneRolEnAcademico()): ?>
     <div class="col-md-3">
       <div class="card text-center">
         <div class="card-body">
@@ -19,6 +19,18 @@
           <div class="card-body">
             <h5 class="card-title">Mis Unidades Didácticas</h5>
             <p class="display-5"><?= $uds_count ?></p>
+          </div>
+        </div>
+        </a>
+      </div>
+    <?php endif; ?>
+    <?php if (\Core\Auth::esCoordinadorPEAcademico()|| \Core\Auth::esDirectorAcademico()|| \Core\Auth::esJUAAcademico()|| \Core\Auth::esSecretarioAcadAcademico()|| \Core\Auth::esAdminAcademico()): ?>
+      <div class="col-md-3">
+        <a href="<?= BASE_URL ?>/academico/reportes">
+        <div class="card text-center">
+          <div class="card-body">
+            <h5 class="card-title">reportes</h5>
+            <p class="display-5"><?= htmlspecialchars($periodo) ?></p>
           </div>
         </div>
         </a>
