@@ -225,6 +225,137 @@ class SesionesController extends Controller
         header('Location: ' . BASE_URL . "/academico/sesiones/ver/{$id_programacion}");
         exit;
     }
+
+
+    // GET /academico/sesiones/listarPorProgramacion/{id_programacion}
+    public function listarPorProgramacion($id_programacion)
+    {
+        header('Content-Type: application/json; charset=utf-8');
+
+        $prog = $this->objProgracionUD->find((int)$id_programacion);
+        if (!$prog) {
+            echo json_encode([]);
+            return;
+        }
+
+        $esDocenteAsignado = ($prog['id_docente'] == ($_SESSION['sigi_user_id'] ?? -1));
+        $esAdminAcademico  = (\Core\Auth::esAdminAcademico());
+        if (!($esDocenteAsignado || $esAdminAcademico)) {
+            echo json_encode([]);
+            return;
+        }
+
+        // Reutiliza getSesionesPaginadas con un límite grande
+        $result = $this->model->getSesionesPaginadas((int)$id_programacion, 1000, 0, 0, 'ASC');
+        $rows   = $result['data'] ?? [];
+
+        // Añadimos fecha si te interesa (opcional)
+        // (si deseas fecha, puedes extender getSesionesPaginadas en el modelo)
+        echo json_encode($rows, JSON_UNESCAPED_UNICODE);
+    }
+
+    // POST /academico/sesiones/copiarDesde
+    public function copiarDesde()
+    {
+        header('Content-Type: application/json; charset=utf-8');
+
+        $id_origen      = (int)($_POST['id_origen'] ?? 0);
+        $id_destino     = (int)($_POST['id_destino'] ?? 0);
+        $copiar_fechas  = (int)($_POST['copiar_fechas'] ?? 1) === 1;
+
+        if (!$id_origen || !$id_destino) {
+            echo json_encode(['ok' => false, 'msg' => 'Parámetros incompletos.']);
+            return;
+        }
+
+        // Info mínima de las sesiones para validar misma programación
+        $sesOri = $this->model->getSesionParaEditar($id_origen);
+        $sesDes = $this->model->getSesionParaEditar($id_destino);
+        if (!$sesOri || !$sesDes) {
+            echo json_encode(['ok' => false, 'msg' => 'Sesión origen/destino no encontrada.']);
+            return;
+        }
+        if ((int)$sesOri['id_programacion'] !== (int)$sesDes['id_programacion']) {
+            echo json_encode(['ok' => false, 'msg' => 'Las sesiones no pertenecen a la misma programación.']);
+            return;
+        }
+
+        // Permisos + periodo vigente
+        $prog = $this->objProgracionUD->find((int)$sesDes['id_programacion']);
+        if (!$prog) {
+            echo json_encode(['ok' => false, 'msg' => 'Programación no encontrada.']);
+            return;
+        }
+
+        $esDocenteAsignado = ($prog['id_docente'] == ($_SESSION['sigi_user_id'] ?? -1));
+        $esAdminAcademico  = (\Core\Auth::esAdminAcademico());
+        if (!($esDocenteAsignado || $esAdminAcademico)) {
+            echo json_encode(['ok' => false, 'msg' => 'No autorizado.']);
+            return;
+        }
+
+        $periodo = $this->objPeriodoAcademico->getPeriodoVigente($prog['id_periodo_academico']);
+        if (!($periodo && $periodo['vigente'])) {
+            echo json_encode(['ok' => false, 'msg' => 'El periodo académico ya culminó.']);
+            return;
+        }
+
+        // 1) Datos principales de la sesión de origen (reutiliza tu método)
+        //    getSesionParaEditar ya trae: denominacion, fecha_desarrollo, tipo_actividad, logro_sesion, bibliografia_...
+        $data = [
+            'denominacion'     => $sesOri['denominacion'] ?? '',
+            'fecha_desarrollo' => $copiar_fechas ? ($sesOri['fecha_desarrollo'] ?? null) : ($sesDes['fecha_desarrollo'] ?? null),
+            'tipo_actividad'   => $sesOri['tipo_actividad'] ?? '',
+            'logro_sesion'     => $sesOri['logro_sesion'] ?? '',
+            'bibliografia'     => $sesOri['bibliografia_obligatoria_docente'] ?? '',
+            'momentos'         => [],
+            'activEval'        => [],
+            // 'id_ind_logro_aprendizaje' => $sesOri['id_ind_logro_aprendizaje'] ?? null, // si quisieras actualizar PAS (lo tienes comentado en tu modelo)
+        ];
+
+        // 2) Pareo de momentos por índice (orden ya está definido en tus queries)
+        $momOri  = $this->model->getMomentosSesion($id_origen);
+        $momDes  = $this->model->getMomentosSesion($id_destino);
+        $kM      = min(count($momOri), count($momDes));
+        for ($i = 0; $i < $kM; $i++) {
+            $o = $momOri[$i];
+            $d = $momDes[$i];
+            $data['momentos']["actividad_{$d['id']}"] = $o['actividad'] ?? '';
+            $data['momentos']["recursos_{$d['id']}"]   = $o['recursos'] ?? '';
+            $data['momentos']["tiempo_{$d['id']}"]     = $o['tiempo'] ?? 20;
+        }
+
+        // 3) Pareo de actividades de evaluación por índice (orden por momento, luego id)
+        $aeOri = $this->model->getActividadesEvaluacion($id_origen);
+        $aeDes = $this->model->getActividadesEvaluacion($id_destino);
+        $kA    = min(count($aeOri), count($aeDes));
+        for ($i = 0; $i < $kA; $i++) {
+            $o = $aeOri[$i];
+            $d = $aeDes[$i];
+            $data['activEval']["indicador_{$d['id']}"]    = $o['indicador_logro_sesion'] ?? '';
+            $data['activEval']["tecnica_{$d['id']}"]      = $o['tecnica'] ?? '';
+            $data['activEval']["instrumentos_{$d['id']}"] = $o['instrumentos'] ?? '';
+        }
+
+        try {
+            // 4) Actualización usando tu método existente
+            $this->model->actualizarSesionCompleta($id_destino, $data);
+
+            echo json_encode([
+                'ok'  => true,
+                'msg' => 'Sesión actualizada desde el origen.',
+                'res' => [
+                    'momentos_actualizados'      => $kM,
+                    'activ_eval_actualizadas'    => $kA
+                ]
+            ]);
+        } catch (\Throwable $e) {
+            echo json_encode(['ok' => false, 'msg' => $e->getMessage()]);
+        }
+    }
+
+
+
     public function pdf($id_sesion)
     {
         require_once __DIR__ . '/../../../vendor/autoload.php'; // ruta según tu estructura

@@ -1,8 +1,62 @@
 <?php require __DIR__ . '/../../layouts/header.php'; ?>
 <?php if ($permitido): ?>
     <div class="card p-4 shadow-sm rounded-3 mt-3">
-        <a class="btn btn-danger btn-sm btn-block col-sm-1 col-4 mb-1" href="<?= BASE_URL; ?>/academico/sesiones/ver/<?= $id_programacion; ?>">Regresar</a>
-        <h4>Editar Sesión de Aprendizaje - <?= $sesion['semana']; ?></h4>
+        <a class="btn btn-danger btn-sm btn-block col-sm-1 col-md-2 mb-1" href="<?= BASE_URL; ?>/academico/sesiones/ver/<?= $id_programacion; ?>">Regresar</a>
+        <?php if ($periodo_vigente): ?>
+            <!-- Botón para abrir modal (Bootstrap 4) -->
+            <button type="button"
+                class="btn btn-primary btn-sm mb-2 col-md-2"
+                data-toggle="modal"
+                data-target="#modalCopiarSesion"
+                id="btnAbrirModalCopiar">
+                Copiar desde otra sesión
+            </button>
+
+            <!-- Modal Bootstrap 4 -->
+            <div class="modal fade" id="modalCopiarSesion" tabindex="-1" role="dialog" aria-labelledby="modalCopiarSesionLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header py-2">
+                            <h5 class="modal-title" id="modalCopiarSesionLabel">Copiar contenido desde otra sesión</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+
+                            <div class="form-group">
+                                <label for="selectSesionOrigen">Seleccione la sesión de origen</label>
+                                <select id="selectSesionOrigen" class="form-control">
+                                    <option value="">Cargando...</option>
+                                </select>
+                                <small class="form-text text-muted">
+                                    Se listan las sesiones de esta misma programación de UD.
+                                </small>
+                            </div>
+
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" value="1" id="chkCopiarFechas">
+                                <label class="form-check-label" for="chkCopiarFechas">
+                                    Copiar también la fecha de desarrollo
+                                </label>
+                            </div>
+
+                            <div class="alert alert-info mt-2" id="infoCopiarSesion" style="display:none;"></div>
+                            <div class="alert alert-danger mt-2" id="errCopiarSesion" style="display:none;"></div>
+
+                        </div>
+                        <div class="modal-footer py-2">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                            <button type="button" class="btn btn-success" id="btnConfirmarCopiar">Copiar ahora</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        <?php endif; ?>
+
+
+        <h4 class="text-center">Editar Sesión de Aprendizaje - <?= $sesion['semana']; ?></h4>
         <form action="<?= BASE_URL ?>/academico/sesiones/guardarEdicionSesion/<?= $sesion['id'] ?>" method="post" autocomplete="off">
             <h6 class="mb-2">I. INFORMACIÓN GENERAL</h6>
             <table class="table table table-striped table-bordered align-middle">
@@ -156,14 +210,14 @@
                             <tr>
                                 <td>
                                     <?php if ($periodo_vigente): ?>
-                                        <textarea name="indicador_<?= $a['id'] ?>" class="form-control" rows="3" style="width:100%; resize: none; height:auto;"  maxlength="300"><?= htmlspecialchars($a['indicador_logro_sesion']) ?></textarea>
+                                        <textarea name="indicador_<?= $a['id'] ?>" class="form-control" rows="3" style="width:100%; resize: none; height:auto;" maxlength="300"><?= htmlspecialchars($a['indicador_logro_sesion']) ?></textarea>
                                     <?php else: ?>
                                         <?= htmlspecialchars($a['indicador_logro_sesion']) ?>
                                     <?php endif; ?>
                                 </td>
                                 <td>
                                     <?php if ($periodo_vigente): ?>
-                                        <textarea name="tecnica_<?= $a['id'] ?>" class="form-control" rows="3" style="width:100%; resize: none; height:auto;"  maxlength="300"><?= htmlspecialchars($a['tecnica']) ?></textarea>
+                                        <textarea name="tecnica_<?= $a['id'] ?>" class="form-control" rows="3" style="width:100%; resize: none; height:auto;" maxlength="300"><?= htmlspecialchars($a['tecnica']) ?></textarea>
                                     <?php else: ?>
                                         <?= htmlspecialchars($a['tecnica']) ?>
                                     <?php endif; ?>
@@ -198,11 +252,110 @@
                 <?php endif; ?>
                 <a href="<?= BASE_URL ?>/academico/sesiones/ver/<?= $id_programacion ?>" class="btn btn-secondary">Cancelar</a>
             </div>
+
+
         </form>
     </div>
+    <script>
+        (function() {
+            if (!(window.bootstrap && bootstrap.Modal) && window.jQuery) {
+                // Bootstrap 4: mostrar el botón .close y ocultar el .btn-close
+                var closeV4 = document.querySelector('#modalCopiarSesion .close');
+                var closeV5 = document.querySelector('#modalCopiarSesion .btn-close');
+                if (closeV4) closeV4.classList.remove('d-none');
+                if (closeV5) closeV5.style.display = 'none';
+            }
+        })();
+    </script>
+
+
 <?php else: ?>
     <div class="alert alert-danger mt-4">
         <b>Acceso denegado:</b> Solo puede editar la sesión el administrador académico o el docente encargado de esta programación.
     </div>
 <?php endif; ?>
+
+
 <?php require __DIR__ . '/../../layouts/footer.php'; ?>
+<script>
+    (function($) {
+        if (!$) {
+            console.error('jQuery no está cargado todavía.');
+            return;
+        }
+
+        $(function() {
+            var BASE = '<?= BASE_URL ?>';
+            var idProgramacion = <?= (int)$id_programacion ?>;
+            var idSesionActual = <?= (int)$sesion['id'] ?>;
+
+            // Carga sesiones en el select al abrir el modal
+            $('#modalCopiarSesion').on('show.bs.modal', function() {
+                var $sel = $('#selectSesionOrigen');
+                $sel.html('<option value="">Cargando...</option>');
+                $('#infoCopiarSesion').hide();
+                $('#errCopiarSesion').hide();
+
+                $.getJSON(BASE + '/academico/sesiones/listarPorProgramacion/' + idProgramacion, function(rows) {
+                    var opts = ['<option value="">-- Seleccione --</option>'];
+                    (rows || []).forEach(function(r) {
+                        if (parseInt(r.id, 10) === idSesionActual) return; // excluir actual
+                        var etiqueta = 'Semana ' + (r.semana || '') + ' - ' + (r.denominacion || '');
+                        opts.push('<option value="' + r.id + '">' + etiqueta + '</option>');
+                    });
+                    if (opts.length === 1) {
+                        opts = ['<option value="">No hay otras sesiones disponibles</option>'];
+                    }
+                    $sel.html(opts.join(''));
+                }).fail(function() {
+                    $sel.html('<option value="">Error al cargar</option>');
+                });
+            });
+
+            // Confirmar copia
+            $('#btnConfirmarCopiar').on('click', function() {
+                var id_origen = $('#selectSesionOrigen').val();
+                var copiar_fechas = $('#chkCopiarFechas').is(':checked') ? 1 : 0;
+
+                $('#infoCopiarSesion').hide();
+                $('#errCopiarSesion').hide();
+
+                if (!id_origen) {
+                    $('#errCopiarSesion').text('Seleccione una sesión de origen.').show();
+                    return;
+                }
+                if (parseInt(id_origen, 10) === idSesionActual) {
+                    $('#errCopiarSesion').text('La sesión de origen no puede ser la misma que la actual.').show();
+                    return;
+                }
+
+                $.ajax({
+                    url: BASE + '/academico/sesiones/copiarDesde',
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {
+                        id_origen: id_origen,
+                        id_destino: idSesionActual,
+                        copiar_fechas: copiar_fechas
+                    },
+                    success: function(resp) {
+                        if (resp && resp.ok) {
+                            $('#infoCopiarSesion').html('¡Listo! Contenido copiado. ' +
+                                (resp.res ? ('Mom. act.: ' + (resp.res.momentos_actualizados || 0) + ' · Eval. act.: ' + (resp.res.activ_eval_actualizadas || 0)) : '')
+                            ).show();
+                            setTimeout(function() {
+                                location.reload();
+                            }, 700);
+                        } else {
+                            $('#errCopiarSesion').text(resp && resp.msg ? resp.msg : 'No fue posible copiar.').show();
+                        }
+                    },
+                    error: function() {
+                        $('#errCopiarSesion').text('Error de comunicación con el servidor.').show();
+                    }
+                });
+            });
+
+        });
+    })(window.jQuery);
+</script>
