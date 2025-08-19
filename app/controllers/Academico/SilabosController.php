@@ -215,6 +215,9 @@ class SilabosController extends Controller
             // SECCION VI: SESIONES DE APRENDIZAJE
             //$sesiones = $this->model->getSesionesSilabo($silabo['id']);
             $sesiones = $this->model->getSesionesSilaboDetallado($silabo['id']); // método especial, ver abajo
+            $cant_ses = count($sesiones)-1;
+            $datosGenerales['fecha_inicio'] = $sesiones[0]['fecha'];
+            $datosGenerales['fecha_fin'] = $sesiones[$cant_ses]['fecha'];
         } else {
             $errores[] = "No existe un sílabo registrado para esta programación.";
             $datosGenerales = $competenciasUnidadDidactica = $capacidades = $competenciasTransversales = $sesiones = [];
