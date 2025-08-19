@@ -19,7 +19,7 @@
                     <tr>
                         <th>#</th>
                         <th>Semana</th>
-                        <th>N° de Sesión</th>
+                        <!--<th>N° de Sesión</th>-->
                         <th>Denominación de la Sesión</th>
                         <th>Acciones</th>
                     </tr>
@@ -54,7 +54,7 @@
                     {
                         data: 'semana'
                     },
-                    {
+                    /*{
                         data: null,
                         render: function(data, type, row, meta) {
                             // Vamos a numerar correlativo por semana en el frontend
@@ -64,7 +64,7 @@
                             row._nroSesion = window._sesionSemana[semana];
                             return row._nroSesion;
                         }
-                    },
+                    },*/
                     {
                         data: 'denominacion'
                     },

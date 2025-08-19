@@ -196,10 +196,12 @@ class Silabos extends Model
         // Actualiza la sesión de aprendizaje correspondiente
         $stmt2 = self::$db->prepare("UPDATE acad_sesion_aprendizaje
         SET denominacion = :denominacion,
+            fecha_desarrollo = :fecha,
             logro_sesion = :logro_sesion
         WHERE id_prog_actividad_silabo = :id_actividad");
         $stmt2->execute([
             ':denominacion' => $info['denominacion'],
+            ':fecha' => $info['fecha'],
             ':logro_sesion' => $info['logro_sesion'],
             ':id_actividad' => $id_actividad
         ]);
@@ -234,23 +236,25 @@ class Silabos extends Model
 
 
     public function clonarContenidoDesdeProgramacion(int $id_prog_origen, int $id_prog_dest, array $opts = []): array
-{
-    $copiarFechas        = (bool)($opts['copiar_fechas'] ?? false);   // fechas en Silabo/PAS/sesión
-    $copiarIndicadorILC  = (bool)($opts['copiar_indicador'] ?? true); // id_ind_logro_aprendizaje en PAS
+    {
+        $copiarFechas        = (bool)($opts['copiar_fechas'] ?? false);   // fechas en Silabo/PAS/sesión
+        $copiarIndicadorILC  = (bool)($opts['copiar_indicador'] ?? true); // id_ind_logro_aprendizaje en PAS
 
-    $silaboOrigen  = $this->getSilaboByProgramacion($id_prog_origen);
-    if (!$silaboOrigen) throw new \Exception("La programación ORIGEN no tiene Sílabo.");
-    $silaboDestino = $this->getSilaboByProgramacion($id_prog_dest);
-    if (!$silaboDestino) throw new \Exception("La programación DESTINO no tiene Sílabo. Cree el Sílabo y su programación primero.");
+        $silaboOrigen  = $this->getSilaboByProgramacion($id_prog_origen);
+        if (!$silaboOrigen) throw new \Exception("La programación ORIGEN no tiene Sílabo.");
+        $silaboDestino = $this->getSilaboByProgramacion($id_prog_dest);
+        if (!$silaboDestino) throw new \Exception("La programación DESTINO no tiene Sílabo. Cree el Sílabo y su programación primero.");
 
-    // Normalizador de 'momento' para el match
-    $normMom = static function ($v) { return mb_strtolower(trim((string)$v)); };
+        // Normalizador de 'momento' para el match
+        $normMom = static function ($v) {
+            return mb_strtolower(trim((string)$v));
+        };
 
-    try {
-        self::$db->beginTransaction();
+        try {
+            self::$db->beginTransaction();
 
-        // 1) Actualizar SOLO contenido del SÍLABO destino
-        $setSil = "
+            // 1) Actualizar SOLO contenido del SÍLABO destino
+            $setSil = "
             sumilla = :sumilla,
             metodologia = :metodologia,
             recursos_didacticos = :recursos_didacticos,
@@ -261,49 +265,49 @@ class Silabos extends Model
             recursos_bibliograficos_impresos = :recursos_bibliograficos_impresos,
             recursos_bibliograficos_digitales = :recursos_bibliograficos_digitales
         ";
-        if ($copiarFechas) $setSil .= ", fecha_inicio = :fecha_inicio";
+            if ($copiarFechas) $setSil .= ", fecha_inicio = :fecha_inicio";
 
-        $stSil = self::$db->prepare("UPDATE acad_silabos SET {$setSil} WHERE id = :id_dest");
-        $paramsSil = [
-            ':sumilla' => $silaboOrigen['sumilla'],
-            ':metodologia' => $silaboOrigen['metodologia'],
-            ':recursos_didacticos' => $silaboOrigen['recursos_didacticos'],
-            ':sistema_evaluacion' => $silaboOrigen['sistema_evaluacion'],
-            ':estrategia_evaluacion_indicadores' => $silaboOrigen['estrategia_evaluacion_indicadores'],
-            ':estrategia_evaluacion_tecnica' => $silaboOrigen['estrategia_evaluacion_tecnica'],
-            ':promedio_indicadores_logro' => $silaboOrigen['promedio_indicadores_logro'],
-            ':recursos_bibliograficos_impresos' => $silaboOrigen['recursos_bibliograficos_impresos'],
-            ':recursos_bibliograficos_digitales' => $silaboOrigen['recursos_bibliograficos_digitales'],
-            ':id_dest' => $silaboDestino['id'],
-        ];
-        if ($copiarFechas) $paramsSil[':fecha_inicio'] = $silaboOrigen['fecha_inicio'];
-        $stSil->execute($paramsSil);
+            $stSil = self::$db->prepare("UPDATE acad_silabos SET {$setSil} WHERE id = :id_dest");
+            $paramsSil = [
+                ':sumilla' => $silaboOrigen['sumilla'],
+                ':metodologia' => $silaboOrigen['metodologia'],
+                ':recursos_didacticos' => $silaboOrigen['recursos_didacticos'],
+                ':sistema_evaluacion' => $silaboOrigen['sistema_evaluacion'],
+                ':estrategia_evaluacion_indicadores' => $silaboOrigen['estrategia_evaluacion_indicadores'],
+                ':estrategia_evaluacion_tecnica' => $silaboOrigen['estrategia_evaluacion_tecnica'],
+                ':promedio_indicadores_logro' => $silaboOrigen['promedio_indicadores_logro'],
+                ':recursos_bibliograficos_impresos' => $silaboOrigen['recursos_bibliograficos_impresos'],
+                ':recursos_bibliograficos_digitales' => $silaboOrigen['recursos_bibliograficos_digitales'],
+                ':id_dest' => $silaboDestino['id'],
+            ];
+            if ($copiarFechas) $paramsSil[':fecha_inicio'] = $silaboOrigen['fecha_inicio'];
+            $stSil->execute($paramsSil);
 
-        // 2) PAS origen por semana (primera ocurrencia de cada semana)
-        $selPasOri = self::$db->prepare("
+            // 2) PAS origen por semana (primera ocurrencia de cada semana)
+            $selPasOri = self::$db->prepare("
             SELECT * FROM acad_programacion_actividades_silabo
             WHERE id_silabo = ?
             ORDER BY semana, id
         ");
-        $selPasOri->execute([$silaboOrigen['id']]);
-        $oriByWeek = [];
-        foreach ($selPasOri->fetchAll(PDO::FETCH_ASSOC) as $row) {
-            $w = (int)$row['semana'];
-            if (!isset($oriByWeek[$w])) $oriByWeek[$w] = $row;
-        }
+            $selPasOri->execute([$silaboOrigen['id']]);
+            $oriByWeek = [];
+            foreach ($selPasOri->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                $w = (int)$row['semana'];
+                if (!isset($oriByWeek[$w])) $oriByWeek[$w] = $row;
+            }
 
-        // 3) PAS destino
-        $selPasDest = self::$db->prepare("
+            // 3) PAS destino
+            $selPasDest = self::$db->prepare("
             SELECT id, semana FROM acad_programacion_actividades_silabo
             WHERE id_silabo = ?
             ORDER BY semana, id
         ");
-        $selPasDest->execute([$silaboDestino['id']]);
-        $pasDest = $selPasDest->fetchAll(PDO::FETCH_ASSOC);
+            $selPasDest->execute([$silaboDestino['id']]);
+            $pasDest = $selPasDest->fetchAll(PDO::FETCH_ASSOC);
 
-        // --- PREPARES Sesión + Hijos ---
-        // Sesiones del ORIGEN/DESTINO por lista
-        $stSesOriList = self::$db->prepare("
+            // --- PREPARES Sesión + Hijos ---
+            // Sesiones del ORIGEN/DESTINO por lista
+            $stSesOriList = self::$db->prepare("
             SELECT id, tipo_actividad, tipo_sesion, denominacion,
                    id_ind_logro_competencia_vinculado, id_ind_logro_capacidad_vinculado,
                    logro_sesion, bibliografia_obligatoria_docente, bibliografia_opcional_docente,
@@ -313,15 +317,15 @@ class Silabos extends Model
             WHERE id_prog_actividad_silabo = ?
             ORDER BY fecha_desarrollo, id
         ");
-        $stSesDestList = self::$db->prepare("
+            $stSesDestList = self::$db->prepare("
             SELECT id
             FROM acad_sesion_aprendizaje
             WHERE id_prog_actividad_silabo = ?
             ORDER BY fecha_desarrollo, id
         ");
 
-        // Update sesión (si se copian fechas, ya va en el SET)
-        $setSes = "
+            // Update sesión (si se copian fechas, ya va en el SET)
+            $setSes = "
             tipo_actividad = :tipo_actividad,
             tipo_sesion = :tipo_sesion,
             denominacion = :denominacion,
@@ -334,23 +338,23 @@ class Silabos extends Model
             bibliografia_opcional_estudiante = :boeop,
             anexos = :anexos
         ";
-        if ($copiarFechas) $setSes .= ", fecha_desarrollo = :fecha_desarrollo";
-        $stUpdSes = self::$db->prepare("UPDATE acad_sesion_aprendizaje SET {$setSes} WHERE id = :id_ses");
+            if ($copiarFechas) $setSes .= ", fecha_desarrollo = :fecha_desarrollo";
+            $stUpdSes = self::$db->prepare("UPDATE acad_sesion_aprendizaje SET {$setSes} WHERE id = :id_ses");
 
-        // Actividades (HIJO): leer y actualizar por 'momento' (no pisamos 'momento')
-        $stActOri = self::$db->prepare("
+            // Actividades (HIJO): leer y actualizar por 'momento' (no pisamos 'momento')
+            $stActOri = self::$db->prepare("
             SELECT indicador_logro_sesion, tecnica, instrumentos, peso, momento
             FROM acad_actividad_evaluacion_sesion_aprendizaje
             WHERE id_sesion_aprendizaje = ?
             ORDER BY id
         ");
-        $stActDest = self::$db->prepare("
+            $stActDest = self::$db->prepare("
             SELECT id, momento
             FROM acad_actividad_evaluacion_sesion_aprendizaje
             WHERE id_sesion_aprendizaje = ?
             ORDER BY id
         ");
-        $updAct = self::$db->prepare("
+            $updAct = self::$db->prepare("
             UPDATE acad_actividad_evaluacion_sesion_aprendizaje
             SET indicador_logro_sesion = :ind,
                 tecnica                 = :tec,
@@ -359,20 +363,20 @@ class Silabos extends Model
             WHERE id = :id
         ");
 
-        // Momentos (HIJO): leer y actualizar por 'momento' (no pisamos 'momento')
-        $stMomOri = self::$db->prepare("
+            // Momentos (HIJO): leer y actualizar por 'momento' (no pisamos 'momento')
+            $stMomOri = self::$db->prepare("
             SELECT momento, estrategia, actividad, recursos, tiempo
             FROM acad_momentos_sesion_aprendizaje
             WHERE id_sesion_aprendizaje = ?
             ORDER BY id
         ");
-        $stMomDest = self::$db->prepare("
+            $stMomDest = self::$db->prepare("
             SELECT id, momento
             FROM acad_momentos_sesion_aprendizaje
             WHERE id_sesion_aprendizaje = ?
             ORDER BY id
         ");
-        $updMom = self::$db->prepare("
+            $updMom = self::$db->prepare("
             UPDATE acad_momentos_sesion_aprendizaje
             SET estrategia = :est,
                 actividad  = :act,
@@ -381,141 +385,157 @@ class Silabos extends Model
             WHERE id = :id
         ");
 
-        $contSemanas = 0;
-        $contSesiones = 0;
+            $contSemanas = 0;
+            $contSesiones = 0;
 
-        foreach ($pasDest as $pd) {
-            $week = (int)$pd['semana'];
-            if (!isset($oriByWeek[$week])) continue; // no hay matching de semana en origen
-            $po = $oriByWeek[$week]; // PAS origen para esa semana
+            foreach ($pasDest as $pd) {
+                $week = (int)$pd['semana'];
+                if (!isset($oriByWeek[$week])) continue; // no hay matching de semana en origen
+                $po = $oriByWeek[$week]; // PAS origen para esa semana
 
-            // 3.1 Actualizar PAS destino (dinámico para no romper si no hay ILC)
-            $baseSet = "
+                // 3.1 Actualizar PAS destino (dinámico para no romper si no hay ILC)
+                $baseSet = "
                 elemento_capacidad = :elem,
                 actividades_aprendizaje = :acts,
                 contenidos_basicos = :cont,
                 tareas_previas = :tareas
             ";
-            $sqlPas = "UPDATE acad_programacion_actividades_silabo SET {$baseSet}";
-            $paramsPas = [
-                ':elem' => $po['elemento_capacidad'],
-                ':acts' => $po['actividades_aprendizaje'],
-                ':cont' => $po['contenidos_basicos'],
-                ':tareas' => $po['tareas_previas'],
-            ];
-            if ($copiarIndicadorILC && !empty($po['id_ind_logro_aprendizaje'])) {
-                $sqlPas .= ", id_ind_logro_aprendizaje = :id_ilc";
-                $paramsPas[':id_ilc'] = (int)$po['id_ind_logro_aprendizaje'];
-            }
-            if ($copiarFechas) {
-                $sqlPas .= ", fecha = :fecha";
-                $paramsPas[':fecha'] = $po['fecha'];
-            }
-            $sqlPas .= " WHERE id = :id_pas";
-            $paramsPas[':id_pas'] = $pd['id'];
-            self::$db->prepare($sqlPas)->execute($paramsPas);
-            $contSemanas++;
-
-            // 3.2 Sesiones: 1↔1 (origen i -> destino i)
-            $stSesOriList->execute([$po['id']]);
-            $oriSes = $stSesOriList->fetchAll(PDO::FETCH_ASSOC);
-
-            $stSesDestList->execute([$pd['id']]);
-            $destSes = $stSesDestList->fetchAll(PDO::FETCH_ASSOC);
-
-            if (!$oriSes || !$destSes) continue;
-
-            $pairs = min(count($oriSes), count($destSes));
-            for ($i = 0; $i < $pairs; $i++) {
-                $sesOri = $oriSes[$i];
-                $sd     = $destSes[$i];
-
-                // 3.2.1 Update sesión destino con todos los campos
-                $paramsSes = [
-                    ':tipo_actividad' => $sesOri['tipo_actividad'],
-                    ':tipo_sesion'    => $sesOri['tipo_sesion'],
-                    ':denominacion'   => $sesOri['denominacion'],
-                    ':id_il_comp'     => $sesOri['id_ind_logro_competencia_vinculado'],
-                    ':id_il_cap'      => $sesOri['id_ind_logro_capacidad_vinculado'],
-                    ':logro_sesion'   => $sesOri['logro_sesion'],
-                    ':bod'            => $sesOri['bibliografia_obligatoria_docente'],
-                    ':bodop'          => $sesOri['bibliografia_opcional_docente'],
-                    ':boe'            => $sesOri['bibliografia_obligatoria_estudiante'],
-                    ':boeop'          => $sesOri['bibliografia_opcional_estudiante'],
-                    ':anexos'         => $sesOri['anexos'],
-                    ':id_ses'         => $sd['id'],
+                $sqlPas = "UPDATE acad_programacion_actividades_silabo SET {$baseSet}";
+                $paramsPas = [
+                    ':elem' => $po['elemento_capacidad'],
+                    ':acts' => $po['actividades_aprendizaje'],
+                    ':cont' => $po['contenidos_basicos'],
+                    ':tareas' => $po['tareas_previas'],
                 ];
-                if ($copiarFechas && !empty($sesOri['fecha_desarrollo'])) {
-                    $paramsSes[':fecha_desarrollo'] = $sesOri['fecha_desarrollo'];
+                if ($copiarIndicadorILC && !empty($po['id_ind_logro_aprendizaje'])) {
+                    $sqlPas .= ", id_ind_logro_aprendizaje = :id_ilc";
+                    $paramsPas[':id_ilc'] = (int)$po['id_ind_logro_aprendizaje'];
                 }
-                $stUpdSes->execute($paramsSes);
+                if ($copiarFechas) {
+                    $sqlPas .= ", fecha = :fecha";
+                    $paramsPas[':fecha'] = $po['fecha'];
+                }
+                $sqlPas .= " WHERE id = :id_pas";
+                $paramsPas[':id_pas'] = $pd['id'];
+                self::$db->prepare($sqlPas)->execute($paramsPas);
+                $contSemanas++;
 
-                // 3.2.2 HIJO: Actividades (match por 'momento', actualizar sin tocar 'momento')
-                $stActOri->execute([$sesOri['id']]);
-                $actsO = $stActOri->fetchAll(PDO::FETCH_ASSOC);
-                $stActDest->execute([$sd['id']]);
-                $actsD = $stActDest->fetchAll(PDO::FETCH_ASSOC);
+                // 3.2 Sesiones: 1↔1 (origen i -> destino i)
+                $stSesOriList->execute([$po['id']]);
+                $oriSes = $stSesOriList->fetchAll(PDO::FETCH_ASSOC);
 
-                if ($actsO && $actsD) {
-                    $byMomO = []; foreach ($actsO as $r) { $byMomO[$normMom($r['momento'])][] = $r; }
-                    $byMomD = []; foreach ($actsD as $r) { $byMomD[$normMom($r['momento'])][] = $r; }
-                    $momentos = array_intersect(array_keys($byMomO), array_keys($byMomD));
-                    foreach ($momentos as $mKey) {
-                        $lo = $byMomO[$mKey]; $ld = $byMomD[$mKey];
-                        $k  = min(count($lo), count($ld));
-                        for ($j = 0; $j < $k; $j++) {
-                            $o = $lo[$j]; $d = $ld[$j];
-                            $updAct->execute([
-                                ':ind'  => $o['indicador_logro_sesion'],
-                                ':tec'  => $o['tecnica'],
-                                ':ins'  => $o['instrumentos'],
-                                ':peso' => $o['peso'],
-                                ':id'   => $d['id'],
-                            ]);
+                $stSesDestList->execute([$pd['id']]);
+                $destSes = $stSesDestList->fetchAll(PDO::FETCH_ASSOC);
+
+                if (!$oriSes || !$destSes) continue;
+
+                $pairs = min(count($oriSes), count($destSes));
+                for ($i = 0; $i < $pairs; $i++) {
+                    $sesOri = $oriSes[$i];
+                    $sd     = $destSes[$i];
+
+                    // 3.2.1 Update sesión destino con todos los campos
+                    $paramsSes = [
+                        ':tipo_actividad' => $sesOri['tipo_actividad'],
+                        ':tipo_sesion'    => $sesOri['tipo_sesion'],
+                        ':denominacion'   => $sesOri['denominacion'],
+                        ':id_il_comp'     => $sesOri['id_ind_logro_competencia_vinculado'],
+                        ':id_il_cap'      => $sesOri['id_ind_logro_capacidad_vinculado'],
+                        ':logro_sesion'   => $sesOri['logro_sesion'],
+                        ':bod'            => $sesOri['bibliografia_obligatoria_docente'],
+                        ':bodop'          => $sesOri['bibliografia_opcional_docente'],
+                        ':boe'            => $sesOri['bibliografia_obligatoria_estudiante'],
+                        ':boeop'          => $sesOri['bibliografia_opcional_estudiante'],
+                        ':anexos'         => $sesOri['anexos'],
+                        ':id_ses'         => $sd['id'],
+                    ];
+                    if ($copiarFechas && !empty($sesOri['fecha_desarrollo'])) {
+                        $paramsSes[':fecha_desarrollo'] = $sesOri['fecha_desarrollo'];
+                    }
+                    $stUpdSes->execute($paramsSes);
+
+                    // 3.2.2 HIJO: Actividades (match por 'momento', actualizar sin tocar 'momento')
+                    $stActOri->execute([$sesOri['id']]);
+                    $actsO = $stActOri->fetchAll(PDO::FETCH_ASSOC);
+                    $stActDest->execute([$sd['id']]);
+                    $actsD = $stActDest->fetchAll(PDO::FETCH_ASSOC);
+
+                    if ($actsO && $actsD) {
+                        $byMomO = [];
+                        foreach ($actsO as $r) {
+                            $byMomO[$normMom($r['momento'])][] = $r;
+                        }
+                        $byMomD = [];
+                        foreach ($actsD as $r) {
+                            $byMomD[$normMom($r['momento'])][] = $r;
+                        }
+                        $momentos = array_intersect(array_keys($byMomO), array_keys($byMomD));
+                        foreach ($momentos as $mKey) {
+                            $lo = $byMomO[$mKey];
+                            $ld = $byMomD[$mKey];
+                            $k  = min(count($lo), count($ld));
+                            for ($j = 0; $j < $k; $j++) {
+                                $o = $lo[$j];
+                                $d = $ld[$j];
+                                $updAct->execute([
+                                    ':ind'  => $o['indicador_logro_sesion'],
+                                    ':tec'  => $o['tecnica'],
+                                    ':ins'  => $o['instrumentos'],
+                                    ':peso' => $o['peso'],
+                                    ':id'   => $d['id'],
+                                ]);
+                            }
                         }
                     }
-                }
 
-                // 3.2.3 HIJO: Momentos (match por 'momento', actualizar sin tocar 'momento')
-                $stMomOri->execute([$sesOri['id']]);
-                $momsO = $stMomOri->fetchAll(PDO::FETCH_ASSOC);
-                $stMomDest->execute([$sd['id']]);
-                $momsD = $stMomDest->fetchAll(PDO::FETCH_ASSOC);
+                    // 3.2.3 HIJO: Momentos (match por 'momento', actualizar sin tocar 'momento')
+                    $stMomOri->execute([$sesOri['id']]);
+                    $momsO = $stMomOri->fetchAll(PDO::FETCH_ASSOC);
+                    $stMomDest->execute([$sd['id']]);
+                    $momsD = $stMomDest->fetchAll(PDO::FETCH_ASSOC);
 
-                if ($momsO && $momsD) {
-                    $byMomO = []; foreach ($momsO as $r) { $byMomO[$normMom($r['momento'])][] = $r; }
-                    $byMomD = []; foreach ($momsD as $r) { $byMomD[$normMom($r['momento'])][] = $r; }
-                    $momentos = array_intersect(array_keys($byMomO), array_keys($byMomD));
-                    foreach ($momentos as $mKey) {
-                        $lo = $byMomO[$mKey]; $ld = $byMomD[$mKey];
-                        $k  = min(count($lo), count($ld));
-                        for ($j = 0; $j < $k; $j++) {
-                            $o = $lo[$j]; $d = $ld[$j];
-                            $updMom->execute([
-                                ':est'    => $o['estrategia'],
-                                ':act'    => $o['actividad'],
-                                ':rec'    => $o['recursos'],
-                                ':tiempo' => $o['tiempo'],
-                                ':id'     => $d['id'],
-                            ]);
+                    if ($momsO && $momsD) {
+                        $byMomO = [];
+                        foreach ($momsO as $r) {
+                            $byMomO[$normMom($r['momento'])][] = $r;
+                        }
+                        $byMomD = [];
+                        foreach ($momsD as $r) {
+                            $byMomD[$normMom($r['momento'])][] = $r;
+                        }
+                        $momentos = array_intersect(array_keys($byMomO), array_keys($byMomD));
+                        foreach ($momentos as $mKey) {
+                            $lo = $byMomO[$mKey];
+                            $ld = $byMomD[$mKey];
+                            $k  = min(count($lo), count($ld));
+                            for ($j = 0; $j < $k; $j++) {
+                                $o = $lo[$j];
+                                $d = $ld[$j];
+                                $updMom->execute([
+                                    ':est'    => $o['estrategia'],
+                                    ':act'    => $o['actividad'],
+                                    ':rec'    => $o['recursos'],
+                                    ':tiempo' => $o['tiempo'],
+                                    ':id'     => $d['id'],
+                                ]);
+                            }
                         }
                     }
-                }
 
-                $contSesiones++;
+                    $contSesiones++;
+                }
             }
+
+            self::$db->commit();
+
+            return [
+                'silabo_actualizado'    => true,
+                'semanas_actualizadas'  => $contSemanas,
+                'sesiones_actualizadas' => $contSesiones
+            ];
+        } catch (\Throwable $e) {
+            self::$db->rollBack();
+            throw $e;
         }
-
-        self::$db->commit();
-
-        return [
-            'silabo_actualizado'    => true,
-            'semanas_actualizadas'  => $contSemanas,
-            'sesiones_actualizadas' => $contSesiones
-        ];
-    } catch (\Throwable $e) {
-        self::$db->rollBack();
-        throw $e;
     }
-}
 }
