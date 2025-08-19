@@ -83,8 +83,6 @@ class Silabos extends Model
             pa.nombre AS periodo_lectivo,
             pa.id AS id_periodo_lectivo,
             pud.seccion AS seccion,
-            DATE_FORMAT(pa.fecha_inicio, '%d/%m/%Y') AS fecha_inicio,
-            DATE_FORMAT(pa.fecha_fin, '%d/%m/%Y') AS fecha_fin,
             pud.turno,
             pud.supervisado AS supervisado,
             pud.reg_evaluacion AS reg_evaluacion,
