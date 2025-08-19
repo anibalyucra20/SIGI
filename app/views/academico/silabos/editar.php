@@ -11,11 +11,6 @@
         <?php endif; ?>
         <a href="<?= BASE_URL ?>/academico/silabos/pdf/<?= htmlspecialchars($silabo['id']) ?>" class="btn btn-sm btn-outline-secondary col-md-1" title="Imprimir" target="_blank"><i class="fa fa-print"></i> Imprimir</a>
         <!-- I. DATOS GENERALES -->
-         <?php
-         var_dump($datosGenerales);
-
-         
-         ?>
         <h5 class="mb-3 mt-2">I. DATOS GENERALES</h5>
         <table class="table table-bordered mb-3">
             <tbody>
