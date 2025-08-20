@@ -46,15 +46,8 @@
 <script src="//cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
-<script>
-    window.addEventListener('beforeunload', function(e) {
-        //  Mensaje de confirmación (algunos navegadores pueden ignorarlo)
-        const confirmationMessage = '¿Estás seguro de que quieres salir?';
-        //  Para navegadores modernos
-        (e || window.event).returnValue = confirmationMessage; //Gecko + IE
-        return confirmationMessage; //Webkit, etc.
-    });
-</script>
+<script></script>
+
 </body>
 
 </html>
