@@ -2,7 +2,7 @@
 <?php if ($permitido): ?>
     <div class="card p-4 shadow-sm rounded-3 mt-3">
         <a class="btn btn-danger btn-sm btn-block col-sm-1 col-md-2 mb-1" href="<?= BASE_URL; ?>/academico/sesiones/ver/<?= $id_programacion; ?>">Regresar</a>
-        <a href="<?= BASE_URL ?>/academico/sesiones/pdf/${row.id}" class="btn btn-sm btn-outline-secondary col-md-2 mb-1" title="Imprimir" target="_blank"><i class="fa fa-print"></i> Imprimir</a>
+        <a href="<?= BASE_URL ?>/academico/sesiones/pdf/<?= $sesion['id']; ?>" class="btn btn-sm btn-outline-secondary col-md-2 mb-1" title="Imprimir" target="_blank"><i class="fa fa-print"></i> Imprimir</a>
         <?php if ($periodo_vigente): ?>
             <!-- Botón para abrir modal (Bootstrap 4) -->
             <button type="button"
