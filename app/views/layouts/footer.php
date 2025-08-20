@@ -46,41 +46,7 @@
 <script src="//cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
-<script>
-    (() => {
-        let porClicEnlace = false; // navegación por enlace interno
-        let porRecarga = false; // F5 / Ctrl|Cmd+R
 
-        // Detecta clic en enlaces que navegan en la misma pestaña
-        window.addEventListener('click', (e) => {
-            const a = e.target.closest('a[href]');
-            if (!a || a.target === '_blank') return;
-            porClicEnlace = true;
-            // Se limpia en el siguiente frame (no deja “ventanas” largas)
-            requestAnimationFrame(() => {
-                porClicEnlace = false;
-            });
-        }, true);
-
-        // Detecta teclas de recarga
-        window.addEventListener('keydown', (e) => {
-            const k = (e.key || '').toLowerCase();
-            if (k === 'f5' || ((e.ctrlKey || e.metaKey) && k === 'r')) {
-                porRecarga = true;
-                requestAnimationFrame(() => {
-                    porRecarga = false;
-                });
-            }
-        }, true);
-
-        // Solo avisar si NO parece navegación/recarga inmediata
-        window.addEventListener('beforeunload', (e) => {
-            if (porClicEnlace || porRecarga) return; // salir sin diálogo
-            e.preventDefault();
-            e.returnValue = ''; // fuerza el diálogo nativo
-        });
-    })();
-</script>
 
 </body>
 
