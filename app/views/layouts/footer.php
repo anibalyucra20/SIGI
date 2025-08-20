@@ -49,7 +49,7 @@
 <script>
     (() => {
         // Ventana de tiempo para considerar una acción "reciente"
-        const WINDOW_MS = 1;
+        const WINDOW_MS = 0;
 
         let porNavegar = false; // clic en enlace interno
         let porRecargar = false; // F5 / Ctrl+R / Cmd+R
