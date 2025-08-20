@@ -48,32 +48,21 @@
 <script src="//cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
 <script>
     (() => {
-        // --- Flags instantáneos (se limpian en el próximo frame) ---
-        let porClicEnlace = false; // navegación por enlace
-        let porRecarga = false; // F5 / Ctrl|Cmd + R
-        let porSubmit = false; // envío de formulario (permitir)
+        let porClicEnlace = false; // navegación por enlace interno
+        let porRecarga = false; // F5 / Ctrl|Cmd+R
 
-        // --- Detectar si hay formularios en la página (también dinámicos) ---
-        let hayForm = !!document.querySelector('form');
-        const mo = new MutationObserver(() => {
-            hayForm = !!document.querySelector('form');
-        });
-        mo.observe(document.documentElement, {
-            childList: true,
-            subtree: true
-        });
-
-        // --- Marcar clic en enlaces internos (misma pestaña) ---
+        // Detecta clic en enlaces que navegan en la misma pestaña
         window.addEventListener('click', (e) => {
             const a = e.target.closest('a[href]');
-            if (!a || a.target === '_blank') return; // nueva pestaña no descarga la actual
+            if (!a || a.target === '_blank') return;
             porClicEnlace = true;
+            // Se limpia en el siguiente frame (no deja “ventanas” largas)
             requestAnimationFrame(() => {
                 porClicEnlace = false;
             });
         }, true);
 
-        // --- Marcar recarga por teclado ---
+        // Detecta teclas de recarga
         window.addEventListener('keydown', (e) => {
             const k = (e.key || '').toLowerCase();
             if (k === 'f5' || ((e.ctrlKey || e.metaKey) && k === 'r')) {
@@ -83,32 +72,15 @@
                 });
             }
         }, true);
-        // --- No interrumpir si el usuario envía un formulario ---
-        window.addEventListener('submit', () => {
-            porSubmit = true;
-            requestAnimationFrame(() => {
-                porSubmit = false;
-            });
-        }, true);
-        // --- Regla de salida ---
+
+        // Solo avisar si NO parece navegación/recarga inmediata
         window.addEventListener('beforeunload', (e) => {
-            // 1) Si hay formulario: validar cualquier descarga (recarga o navegación),
-            //    excepto cuando se está enviando el formulario.
-            if (hayForm && !porSubmit) {
-                e.preventDefault();
-                e.returnValue = '';
-                return;
-            }
-            // 2) Si NO hay formulario: solo avisar cuando parezca "cerrar pestaña"
-            //    (no hubo clic en enlace ni recarga por teclado en este frame).
-            if (!porClicEnlace && !porRecarga) {
-                e.preventDefault();
-                e.returnValue = '';
-            }
+            if (porClicEnlace || porRecarga) return; // salir sin diálogo
+            e.preventDefault();
+            e.returnValue = ''; // fuerza el diálogo nativo
         });
     })();
 </script>
-
 
 </body>
 
