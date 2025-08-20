@@ -46,8 +46,42 @@
 <script src="//cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
-<script></script>
+<script>
+    (() => {
+        // Ventana de tiempo para considerar una acción "reciente"
+        const WINDOW_MS = 1200;
 
+        let porNavegar = false; // clic en enlace interno
+        let porRecargar = false; // F5 / Ctrl+R / Cmd+R
+
+        function armarTemporizador(flagSetter) {
+            flagSetter(true);
+            setTimeout(() => flagSetter(false), WINDOW_MS);
+        }
+
+        // Clics en enlaces dentro de la página => navegar (no cerrar)
+        document.addEventListener('click', (e) => {
+            const a = e.target.closest('a[href]');
+            if (!a) return;
+            if (a.target === '_blank') return; // nueva pestaña, no cuenta como salir
+            armarTemporizador(v => porNavegar = v);
+        }, true);
+
+        // Teclas típicas de recarga (F5, Ctrl/Cmd+R)
+        window.addEventListener('keydown', (e) => {
+            const k = (e.key || '').toLowerCase();
+            const recargaTeclado = k === 'f5' || ((e.ctrlKey || e.metaKey) && k === 'r');
+            if (recargaTeclado) armarTemporizador(v => porRecargar = v);
+        }, true);
+
+        // Confirmar SOLO si no parece navegación ni recarga recientes
+        window.addEventListener('beforeunload', (e) => {
+            if (porNavegar || porRecargar) return; // dejar salir sin diálogo
+            e.preventDefault();
+            e.returnValue = ''; // obliga a mostrar el diálogo nativo
+        });
+    })();
+</script>
 </body>
 
 </html>
