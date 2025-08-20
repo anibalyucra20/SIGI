@@ -48,40 +48,40 @@
 <script src="//cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
 <script>
     (() => {
-        // Ventana de tiempo para considerar una acción "reciente"
-        const WINDOW_MS = 0;
+        let porClicEnlace = false; // navegación por enlace interno
+        let porRecarga = false; // F5 / Ctrl|Cmd+R
 
-        let porNavegar = false; // clic en enlace interno
-        let porRecargar = false; // F5 / Ctrl+R / Cmd+R
-
-        function armarTemporizador(flagSetter) {
-            flagSetter(true);
-            setTimeout(() => flagSetter(false), WINDOW_MS);
-        }
-
-        // Clics en enlaces dentro de la página => navegar (no cerrar)
-        document.addEventListener('click', (e) => {
+        // Detecta clic en enlaces que navegan en la misma pestaña
+        window.addEventListener('click', (e) => {
             const a = e.target.closest('a[href]');
-            if (!a) return;
-            if (a.target === '_blank') return; // nueva pestaña, no cuenta como salir
-            armarTemporizador(v => porNavegar = v);
+            if (!a || a.target === '_blank') return;
+            porClicEnlace = true;
+            // Se limpia en el siguiente frame (no deja “ventanas” largas)
+            requestAnimationFrame(() => {
+                porClicEnlace = false;
+            });
         }, true);
 
-        // Teclas típicas de recarga (F5, Ctrl/Cmd+R)
+        // Detecta teclas de recarga
         window.addEventListener('keydown', (e) => {
             const k = (e.key || '').toLowerCase();
-            const recargaTeclado = k === 'f5' || ((e.ctrlKey || e.metaKey) && k === 'r');
-            if (recargaTeclado) armarTemporizador(v => porRecargar = v);
+            if (k === 'f5' || ((e.ctrlKey || e.metaKey) && k === 'r')) {
+                porRecarga = true;
+                requestAnimationFrame(() => {
+                    porRecarga = false;
+                });
+            }
         }, true);
 
-        // Confirmar SOLO si no parece navegación ni recarga recientes
+        // Solo avisar si NO parece navegación/recarga inmediata
         window.addEventListener('beforeunload', (e) => {
-            if (porNavegar || porRecargar) return; // dejar salir sin diálogo
+            if (porClicEnlace || porRecarga) return; // salir sin diálogo
             e.preventDefault();
-            e.returnValue = ''; // obliga a mostrar el diálogo nativo
+            e.returnValue = ''; // fuerza el diálogo nativo
         });
     })();
 </script>
+
 </body>
 
 </html>
