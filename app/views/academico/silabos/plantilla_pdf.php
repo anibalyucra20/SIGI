@@ -194,7 +194,7 @@ if (!$permitido) {
             <tr>
                 <td><?= htmlspecialchars($sesion['semana']) ?><br><?= htmlspecialchars($sesion['fecha']) ?></td>
                 <?php if ($contar > 0) { ?>
-                    <td rowspan="<?= $contar; ?>"><?= htmlspecialchars($sesion['codigo_ind_logro']) ?> - <?= htmlspecialchars(mb_substr($sesion['desc_ind_logro'], 0, 200)) ?></td>
+                    <td rowspan="<?= $contar; ?>"><?= htmlspecialchars($sesion['codigo_ind_logro']) ?> - <?= htmlspecialchars(mb_substr($sesion['desc_ind_logro'], 0, 1000)) ?></td>
                 <?php } ?>
                 <td style="text-align:justify;"><?= htmlspecialchars($sesion['denominacion']) ?></td>
                 <td style="text-align:justify;"><?= htmlspecialchars($sesion['contenidos_basicos']) ?></td>

@@ -37,7 +37,7 @@
         </select>
     </div>
     <div class="col-md-6 mb-2">
-        <label class="form-label">Semestre *</label>
+        <label class="form-label">Periodo Académico *</label>
         <select name="id_semestre" id="id_semestre" class="form-control" required>
             <option value="">Seleccione...</option>
             <?php if (!empty($semestres)): ?>

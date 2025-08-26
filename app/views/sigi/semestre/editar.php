@@ -1,7 +1,7 @@
 <?php require __DIR__ . '/../../layouts/header.php'; ?>
 <?php if (\Core\Auth::esAdminSigi()): ?>
     <div class="container mt-4">
-        <h4>Editar Semestre</h4>
+        <h4>Editar Periodo Académico</h4>
         <form action="<?= BASE_URL ?>/sigi/semestre/guardar" method="post" class="card p-4 shadow-sm rounded-3" autocomplete="off">
             <input type="hidden" name="id" value="<?= htmlspecialchars($semestre['id'] ?? '') ?>">
             <?php include __DIR__ . '/form_fields.php'; ?>

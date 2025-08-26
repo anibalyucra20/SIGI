@@ -181,4 +181,36 @@ class Auth
             && $_SESSION['sigi_modulo_actual'] == 2    // ACADEMICO
             && $_SESSION['sigi_rol_actual'] == 7);     // DOCENTE
     }
+
+
+    // ------------------------------------------ ROLES BIBLIOTECA -------------------------------------------------------
+    public static function tieneRolEnBiblioteca($roles = [])
+    {
+        if (!isset($_SESSION['sigi_modulo_actual'], $_SESSION['sigi_rol_actual'])) {
+            return false;
+        }
+        if ($_SESSION['sigi_modulo_actual'] != 4) {
+            return false;
+        }
+        if (empty($roles)) return true; // Cualquier rol en ACADEMICO
+        return in_array($_SESSION['sigi_rol_actual'], (array)$roles);
+    }
+    public static function esAdminBiblioteca()
+    {
+        return (isset($_SESSION['sigi_modulo_actual'], $_SESSION['sigi_rol_actual'])
+            && $_SESSION['sigi_modulo_actual'] == 4    // ACADEMICO
+            && $_SESSION['sigi_rol_actual'] == 1);     // ADMINISTRADOR
+    }
+    public static function esDocenteBiblioteca()
+    {
+        return (isset($_SESSION['sigi_modulo_actual'], $_SESSION['sigi_rol_actual'])
+            && $_SESSION['sigi_modulo_actual'] == 4    // ACADEMICO
+            && $_SESSION['sigi_rol_actual'] == 6);     // DOCENTE
+    }
+    public static function esEstudianteBiblioteca()
+    {
+        return (isset($_SESSION['sigi_modulo_actual'], $_SESSION['sigi_rol_actual'])
+            && $_SESSION['sigi_modulo_actual'] == 4    // ACADEMICO
+            && $_SESSION['sigi_rol_actual'] == 7);     // DOCENTE
+    }
 }

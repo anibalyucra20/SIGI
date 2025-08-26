@@ -1,9 +1,9 @@
 <?php require __DIR__ . '/../../layouts/header.php'; ?>
 <?php if (\Core\Auth::esAdminSigi()): ?>
     <div class="card p-2">
-        <h3 class="mb-2">Semestres</h3>
+        <h3 class="mb-2">Periodos Académicos</h3>
         <div class="col-md-3 mb-2">
-            <a href="<?= BASE_URL ?>/sigi/semestre/nuevo" class="btn btn-success mt-2">Nuevo Semestre</a>
+            <a href="<?= BASE_URL ?>/sigi/semestre/nuevo" class="btn btn-success mt-2">Nuevo +</a>
         </div>
         <div class="row mb-3">
             <div class="col-md-3">

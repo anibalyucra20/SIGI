@@ -28,7 +28,7 @@
                 </select>
             </div>
             <div class="col-md-2">
-                <label>Semestre</label>
+                <label>Periodo Académico</label>
                 <select id="filter-semestre" class="form-control">
                     <option value="">Todos</option>
                 </select>
@@ -48,7 +48,7 @@
                         <th>Programa</th>
                         <th>Plan</th>
                         <th>Módulo</th>
-                        <th>Semestre</th>
+                        <th>Periodo Académico</th>
                         <th>Nombre</th>
                         <th>C.T.</th>
                         <th>C.P.</th>
