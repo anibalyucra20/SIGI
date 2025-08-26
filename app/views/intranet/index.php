@@ -10,7 +10,7 @@
 <?php endif; ?>
 <h4 class="mb-4">Bienvenido, <?= htmlspecialchars($_SESSION['sigi_user_name']) ?></h4>
 <?php
-
+/*
 $apiKey = 'mi-clave-super'; // Reemplaza con tu clave API
 $url = API_BASE_URL.'/api/health'; // Reemplaza con la URL de la API
 
@@ -31,7 +31,7 @@ if (curl_errno($ch)) {
 }
 
 curl_close($ch);
-
+*/
 ?>
 
 <div class="row">
