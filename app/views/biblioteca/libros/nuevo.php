@@ -73,25 +73,13 @@
         </div>
         <div class="form-group col-md-3">
             <label>Tipo Libro *</label>
-            <input type="text" name="tipo_libro" class="form-control" placeholder="p.e. PDF" required>
+            <input type="text" name="tipo_libro" class="form-control" placeholder="p.e. PDF" required value="LIBRO">
         </div>
         <div class="form-group col-md-3">
             <label>Autor</label>
             <input type="text" name="autor" class="form-control">
         </div>
     </div>
-
-    <div class="form-row">
-        <div class="form-group col-md-6">
-            <label>Archivo (PDF) *</label>
-            <input type="file" name="libro" class="form-control-file" accept="application/pdf" required>
-        </div>
-        <div class="form-group col-md-6">
-            <label>Portada (JPG/PNG/WEBP)</label>
-            <input type="file" name="portada" class="form-control-file" accept="image/*">
-        </div>
-    </div>
-
     <div class="form-row">
         <div class="form-group col-md-3">
             <label>Editorial</label>
@@ -111,7 +99,7 @@
         </div>
         <div class="form-group col-md-2">
             <label>Año</label>
-            <input type="number" name="anio" class="form-control" min="0" max="2100">
+            <input type="number" name="anio" class="form-control" min="0" max="2100" placeholder="mismo valor de Edición">
         </div>
     </div>
 
@@ -121,7 +109,17 @@
     </div>
     <div class="form-group">
         <label>Tags</label>
-        <input type="text" name="tags" class="form-control" placeholder="separados por coma">
+        <input type="text" name="tags" class="form-control" placeholder="nombre completo del programa de estudios">
+    </div>
+    <div class="form-row">
+        <div class="form-group col-md-6">
+            <label>Archivo (PDF) *</label>
+            <input type="file" name="libro" class="form-control-file" accept="application/pdf" required>
+        </div>
+        <div class="form-group col-md-6">
+            <label>Portada (JPG/PNG/WEBP)</label>
+            <input type="file" name="portada" class="form-control-file" accept="image/*">
+        </div>
     </div>
 
     <div class="text-right">
