@@ -311,7 +311,7 @@
                         ].join(' ');
                         return `
             <div class="btn-group btn-group-sm" role="group">
-              <a href="<?= BASE_URL ?>/sigi/libros/editarVinculo/${r.id}" class="btn btn-primary m-1">Editar</a>  
+              
               <button class="btn btn-danger btn-unadopt m-1" ${attrs}>Desvincular</button>
             </div>`;
                     }
