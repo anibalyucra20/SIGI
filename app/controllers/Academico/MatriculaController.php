@@ -182,7 +182,7 @@ class MatriculaController extends Controller
                     if (!$usuario) throw new Exception("Estudiante no encontrado o no está en esta sede.");
 
                     // Validaciones (programa/plan corresponde a estudiante, no matrícula duplicada, etc.)
-                    $esValido = $this->model->validarMatricula($usuario['id'], $data['id_plan_estudio'], $periodo, $sede, $data['id_semestre']);
+                    $esValido = $this->model->validarMatricula($usuario['id'], $data['id_plan_estudio'], $periodo, $sede);
                     if (!$esValido['ok']) throw new Exception($esValido['msg']);
 
                     // El proceso de matrícula completo (transacción)

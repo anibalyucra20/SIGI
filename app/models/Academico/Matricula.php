@@ -272,7 +272,7 @@ class Matricula extends Model
 
 
     // === Validación de matrícula duplicada ===
-    public function validarMatricula($id_usuario, $id_plan_estudio, $periodo, $sede, $id_semestre)
+    public function validarMatricula($id_usuario, $id_plan_estudio, $periodo, $sede)
     {
         // Buscar id_estudiante_programa
         $stmt = self::$db->prepare("SELECT id FROM acad_estudiante_programa WHERE id_usuario=? AND id_plan_estudio=?");
@@ -281,9 +281,9 @@ class Matricula extends Model
         if (!$row) return ['ok' => false, 'msg' => "No existe inscripción previa a este plan y periodo."];
 
         // ¿Ya existe matrícula?
-        $stmt2 = self::$db->prepare("SELECT id FROM acad_matricula WHERE id_estudiante=? AND id_periodo_academico=? AND id_sede=? AND id_semestre=?");
-        $stmt2->execute([$row['id'], $periodo, $sede, $id_semestre]);
-        if ($stmt2->fetch()) return ['ok' => false, 'msg' => "El estudiante ya está matriculado en este semestre, sede y periodo."];
+        $stmt2 = self::$db->prepare("SELECT id FROM acad_matricula WHERE id_estudiante=? AND id_periodo_academico=? AND id_sede=?");
+        $stmt2->execute([$row['id'], $periodo, $sede]);
+        if ($stmt2->fetch()) return ['ok' => false, 'msg' => "El estudiante ya está matriculado en esta sede y periodo."];
         return ['ok' => true];
     }
 
