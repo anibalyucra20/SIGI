@@ -407,6 +407,23 @@ class Matricula extends Model
             return false;
         }
     }
+    public function eliminarMatricula($id_matricula)
+    {
+        try {
+            self::$db->beginTransaction();
+
+            // 1. Eliminar asistencias
+            $stmt = self::$db->prepare("DELETE FROM acad_matricula WHERE id = ?");
+            $stmt->execute([$id_matricula]);
+
+            self::$db->commit();
+            return true;
+        } catch (\PDOException $e) {
+            self::$db->rollBack();
+            error_log("Error al eliminar matricula: " . $e->getMessage());
+            return false;
+        }
+    }
 
 
 

@@ -136,6 +136,7 @@
                         render: function(data, type, row) {
                             return `
                         <a href="<?= BASE_URL ?>/academico/matricula/ver/${row.id}" class="btn btn-primary btn-sm">Ver</a>
+                        <a href="<?= BASE_URL ?>/academico/matricula/eliminar/${row.id}" class="btn btn-danger btn-sm">Elimnar</a>
                     `;
                         }
                     }

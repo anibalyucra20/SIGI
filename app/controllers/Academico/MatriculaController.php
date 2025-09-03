@@ -273,7 +273,39 @@ class MatriculaController extends Controller
         exit;
     }
 
+    public function eliminar($id_matricula)
+    {
+        $periodo = $this->objPeriodoAcademico->getPeriodoVigente($_SESSION['sigi_periodo_actual_id']);
+        $periodo_vigente = ($periodo && $periodo['vigente']);
+        if ($periodo_vigente) {
+            if (\Core\Auth::esAdminAcademico()):
+                // 1. Obtener el id_matricula antes de borrar
+                $stmt = $this->model->getDetalleMatricula($id_matricula);
 
+                // 2. Eliminar el detalle y registros dependientes
+                foreach ($stmt as $udp) {
+                    $id_det_mat = $udp['id'];
+                    $res = $this->model->eliminarDetalleMatricula($id_det_mat);
+                    if ($res) {
+                        $_SESSION['flash_success'] = "<br>Unidades didacticas matriculadas eliminadas correctamente.";
+                    } else {
+                        $_SESSION['flash_error'] .= "<br>Error al eliminar el detalle. Intente nuevamente o contacte soporte.";
+                    }
+                }
+                $resMat = $this->model->eliminarMatricula($id_matricula);
+                if ($resMat) {
+                    $_SESSION['flash_success'] = "<br>Matricula eliminada correctamente.";
+                } else {
+                    $_SESSION['flash_error'] .= "<br>Error al eliminar la Matricula. Intente nuevamente o contacte soporte.";
+                }
+
+
+            endif;
+        }
+        // 3. Redirige a la vista del detalle de la matrícula
+        header('Location: ' . BASE_URL . '/academico/matricula');
+        exit;
+    }
 
 
     public function eliminarDetalle($id_detalle)
