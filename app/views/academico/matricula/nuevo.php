@@ -45,7 +45,7 @@
                         <label class="form-label">Turno *</label>
                         <select name="turno" id="turno" class="form-control" required>
                             <option value="">Seleccione</option>
-                            <option value="M">Mañana</option>
+                            <option value="M" selected>Mañana</option>
                             <option value="T">Tarde</option>
                             <option value="N">Noche</option>
                         </select>
@@ -54,7 +54,7 @@
                         <label class="form-label">Sección *</label>
                         <select name="seccion" id="seccion" class="form-control" required>
                             <option value="">Seleccione</option>
-                            <option value="A">A</option>
+                            <option value="A" selected>A</option>
                             <option value="B">B</option>
                             <option value="C">C</option>
                             <option value="D">D</option>
