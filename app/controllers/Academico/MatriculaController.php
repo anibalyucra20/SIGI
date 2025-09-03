@@ -190,7 +190,8 @@ class MatriculaController extends Controller
                     if (!$exito) throw new Exception("No se pudo registrar la matrícula." . (isset($errores[0]) ? ' Motivo: ' . $errores[0] : ''));
 
                     $_SESSION['flash_success'] = "¡Matrícula registrada correctamente!";
-                    header('Location: ' . BASE_URL . '/academico/matricula');
+                    $this->nuevo();
+                    //header('Location: ' . BASE_URL . '/academico/matricula');
                     exit;
                 } catch (Exception $e) {
                     $errores[] = $e->getMessage();
