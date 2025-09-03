@@ -441,7 +441,7 @@ class Matricula extends Model
     {
         $b_det_mat = $this->buscarDetalleMatriculaByIdProgramacion($id_prog) ?? 0;
         $cantidad = count($b_det_mat);
-        var_dump($b_det_mat);
+        //var_dump($b_det_mat);
         if ($cantidad < 1) {
             // si no hay ningun matriculado regresamos 2 como los criterios de evaluacion
             return 2;
