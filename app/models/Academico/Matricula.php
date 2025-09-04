@@ -338,7 +338,7 @@ class Matricula extends Model
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getUnidadesDisponibles($id_matricula, $id_semestre)
+    public function getUnidadesDisponibles($id_matricula, $id_semestre, $periodo, $sede, $turno, $seccion)
     {
         // Busca unidades programadas para el semestre y plan, y filtra las ya seleccionadas
         $sql = "SELECT pud.id as id_programacion_ud, ud.nombre as unidad_didactica, mf.descripcion as modulo
@@ -346,13 +346,13 @@ class Matricula extends Model
         INNER JOIN sigi_unidad_didactica ud ON pud.id_unidad_didactica = ud.id
         INNER JOIN sigi_semestre s ON ud.id_semestre = s.id
         INNER JOIN sigi_modulo_formativo mf ON s.id_modulo_formativo = mf.id
-        WHERE s.id = ?
+        WHERE s.id = ? AND pud.id_periodo_academico =? AND pud.id_sede = ? AND pud.turno = ? AND pud.seccion = ?
         AND pud.id NOT IN (
             SELECT id_programacion_ud FROM acad_detalle_matricula WHERE id_matricula = ?
         )
         ORDER BY ud.nombre";
         $stmt = self::$db->prepare($sql);
-        $stmt->execute([$id_semestre, $id_matricula]);
+        $stmt->execute([$id_semestre, $periodo, $sede, $turno, $seccion, $id_matricula]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 

@@ -233,9 +233,11 @@ class MatriculaController extends Controller
     }
 
     // AJAX para cargar UDs programadas del semestre seleccionado y que no estén ya en el detalle
-    public function unidadesDisponiblesAjax($id_matricula, $id_semestre)
+    public function unidadesDisponiblesAjax($id_matricula, $id_semestre, $turno, $seccion)
     {
-        $uds = $this->model->getUnidadesDisponibles($id_matricula, $id_semestre);
+        $periodo = $_SESSION['sigi_periodo_actual_id'] ?? 0;
+        $sede = $_SESSION['sigi_sede_actual'] ?? 0;
+        $uds = $this->model->getUnidadesDisponibles($id_matricula, $id_semestre, $periodo, $sede, $turno, $seccion);
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode($uds, JSON_UNESCAPED_UNICODE);
         exit;

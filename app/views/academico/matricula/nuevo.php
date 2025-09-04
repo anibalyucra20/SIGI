@@ -166,7 +166,7 @@
                 if (!idPlan || !idSemestre || !turno || !seccion) return;
 
                 fetch('<?= BASE_URL ?>/academico/matricula/udsProgramadas?plan=' + idPlan + '&semestre=' + idSemestre + '&turno=' + turno + '&seccion=' + seccion)
-                    .then(res => res.json())
+                    .then(res => { if (!res.ok) throw new Error('Error de red'); return res.json(); })
                     .then(data => {
                         let cont = document.getElementById('ud-programadas-list');
                         cont.innerHTML = '';
@@ -174,15 +174,15 @@
                             data.forEach(ud => {
                                 let checked = udsSeleccionadas.has(String(ud.id)) ? 'checked' : '';
                                 cont.innerHTML += `
-                        <div class="col-md-12">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="ud_temp" value="${ud.id}" id="ud_${ud.id}" ${checked}>
-                                <label class="form-check-label" for="ud_${ud.id}">
-                                    <b>${ud.nombre}</b> | Docente: ${ud.docente}
-                                </label>
-                            </div>
-                        </div>
-                    `;
+                                <div class="col-md-12">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="ud_temp" value="${ud.id}" id="ud_${ud.id}" ${checked}>
+                                        <label class="form-check-label" for="ud_${ud.id}">
+                                            <b>${ud.nombre}</b> | Docente: ${ud.docente}
+                                        </label>
+                                    </div>
+                                </div>
+                                `;
                             });
 
                             // Vincula el checkbox al control global y panel visual
@@ -210,7 +210,9 @@
                         }
                         actualizarHiddenUDs();
                         actualizarPanelUDs();
-                    });
+                    })
+                    .catch(err => alert('No se pudo completar la operación. Intente nuevamente.'));
+
             }
 
             function actualizarHiddenUDs() {
@@ -271,6 +273,19 @@
 
             // Inicializa el panel vacío al cargar
             actualizarPanelUDs();
+
+            document.getElementById('form-matricula').addEventListener('submit', (e) => {
+                if (!estudianteEncontrado) {
+                    e.preventDefault();
+                    alert('Busque y seleccione un estudiante válido.');
+                    return;
+                }
+                if (udsSeleccionadas.size === 0) {
+                    e.preventDefault();
+                    alert('Seleccione al menos una Unidad Didáctica.');
+                    return;
+                }
+            });
         </script>
     <?php else: ?>
         <div class="alert alert-danger mt-4">

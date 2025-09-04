@@ -15,15 +15,25 @@
                         <input type="text" class="form-control" value="<?= htmlspecialchars($matricula['plan']) ?>" readonly>
                     </div>
                     <div class="col-md-4 mb-2">
-                        <label>Turno</label>
-                        <input type="text" class="form-control" value="<?= htmlspecialchars($matricula['turno']) ?>" readonly>
+                        <label class="form-label">Turno *</label>
+                        <select name="turno" id="turno" class="form-control" required>
+                            <option value="" disabled>Seleccione</option>
+                            <option value="M" <?= (($matricula['turno'])=="M") ? "selected" : ""; ?>>Mañana</option>
+                            <option value="T" <?= (($matricula['turno'])=="T") ? "selected" : ""; ?>>Tarde</option>
+                            <option value="N" <?= (($matricula['turno'])=="N") ? "selected" : ""; ?>>Noche</option>
+                        </select>
                     </div>
                     <div class="col-md-4 mb-2">
-                        <label>Sección</label>
-                        <input type="text" class="form-control" value="<?= htmlspecialchars($matricula['seccion']) ?>" readonly>
+                        <label class="form-label">Sección *</label>
+                        <select name="seccion" id="seccion" class="form-control" required>
+                            <option value="" disabled>Seleccione</option>
+                            <option value="A" <?= (($matricula['seccion'])=="A") ? "selected" : ""; ?>>A</option>
+                            <option value="B" <?= (($matricula['seccion'])=="B") ? "selected" : ""; ?>>B</option>
+                            <option value="C" <?= (($matricula['seccion'])=="C") ? "selected" : ""; ?>>C</option>
+                            <option value="D" <?= (($matricula['seccion'])=="D") ? "selected" : ""; ?>>D</option>
+                            <option value="E" <?= (($matricula['seccion'])=="E") ? "selected" : ""; ?>>E</option>
+                        </select>
                     </div>
-                </div>
-                <div class="row">
                     <div class="col-md-4 mb-2">
                         <label>Semestre *</label>
                         <select name="id_semestre" id="id_semestre" class="form-control" required>
@@ -36,7 +46,6 @@
                         </select>
                     </div>
                 </div>
-
                 <div class="mt-3 mb-2">
                     <label><b>Unidades Didácticas Programadas</b> <small>(marque para agregar)</small></label>
                     <div class="table-responsive">
@@ -77,9 +86,11 @@
 
         <script>
             // AJAX para cargar unidades al cambiar semestre (si lo deseas dinámico)
-            document.getElementById('id_semestre').addEventListener('change', function() {
-                let idSemestre = this.value;
-                let url = '<?= BASE_URL ?>/academico/matricula/unidadesDisponiblesAjax/<?= $matricula['id'] ?>/' + idSemestre;
+            async function cargar_uds() {
+                let idSemestre = document.getElementById('id_semestre').value;
+                let Turno = document.getElementById('turno').value;
+                let Seccion = document.getElementById('seccion').value;
+                let url = '<?= BASE_URL ?>/academico/matricula/unidadesDisponiblesAjax/<?= $matricula['id'] ?>/' + idSemestre+'/'+Turno+'/'+Seccion;
                 fetch(url)
                     .then(response => response.json())
                     .then(data => {
@@ -97,6 +108,15 @@
                             tbody.innerHTML = '<tr><td colspan="3" class="text-center text-danger">No hay unidades didácticas disponibles para este semestre.</td></tr>';
                         }
                     });
+            }
+            document.getElementById('id_semestre').addEventListener('change', function() {
+                cargar_uds();
+            });
+            document.getElementById('turno').addEventListener('change', function() {
+                cargar_uds();
+            });
+            document.getElementById('seccion').addEventListener('change', function() {
+                cargar_uds();
             });
         </script>
     <?php else: ?>
