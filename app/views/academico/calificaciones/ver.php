@@ -50,7 +50,7 @@ require __DIR__ . '/../../layouts/header.php'; ?>
                                 <?php foreach ($nros_calificacion as $k => $nro): ?>
                                     <?php $mostrar = $mostrar_calificaciones[$nro] ?? 0; ?>
                                     <th class="text-center" style="min-width:110px;">
-                                        N° <?= $nro ?> <br>
+                                        I.L.° <?= $nro ?> <br>
                                         <a href="<?= BASE_URL ?>/academico/calificaciones/evaluar/<?= $id_programacion_ud ?>/<?= $nro ?>" class="btn btn-primary btn-sm ml-2">
                                             <i></i><?= ($periodo_vigente['vigente']) ? 'Evaluar' : 'Ver' ?>
                                         </a>

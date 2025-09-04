@@ -10,7 +10,7 @@ require __DIR__ . '/../../layouts/header.php';
             <a class="btn btn-info btn-sm btn-block mb-2 col-12" target="_blank" href="<?= BASE_URL ?>/academico/calificaciones/registroAuxiliar/<?= $id_programacion_ud ?>/<?= $nro_calificacion ?>">Imprimir</a>
             </div>
             <h5 class="text-center font-weight-bold mb-4" style="color:#607d8b;">
-                Evaluación - Calificación <?= $nro_calificacion ?>
+                Evaluación - Indicador <?= $nro_calificacion ?>
                 <?php if (!empty($nombreIndicador)) : ?>
                     - <?= $nombreIndicador ?>
                 <?php endif; ?>
