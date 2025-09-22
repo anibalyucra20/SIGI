@@ -648,45 +648,83 @@ class Reportes extends Model
             $semanas[$w] = ['n' => $w, 'desde' => $dias[0], 'hasta' => end($dias), 'dias' => $dias, 'rows' => []];
         }
 
-        // Programaciones (según filtros)
+        // Trae TODAS las programaciones PUD segun filtros (programa, plan, semestre, turno, seccion)
         $puds = $this->getProgramacionesUD($periodoId, $filters);
         if (!$puds) return array_values($semanas);
 
         foreach ($puds as $p) {
+            // Silabo (para horario)
             $sil = $this->getSilabo((int)$p['id_pud']);
-            if (!$sil) continue;
+            $horario = [];
+            $temasPorSemana = [];
 
-            $horario = $this->parseHorarioSilabo((string)$sil['horario']);
-            if (empty($horario)) continue;
+            if ($sil) {
+                // Horario L-V desde el texto del silabo
+                $horario = $this->parseHorarioSilabo((string)$sil['horario']);   // [1..5] => franjas
+                // Temas por semana desde PAS -> SA.denominacion
+                $temasPorSemana = $this->getTemasPorSemana((int)$sil['id_silabo']); // [semana=>tema]
+            }
 
-            $temasPorSemana = $this->getTemasPorSemana((int)$sil['id_silabo']); // [semana => tema]
-
+            // Recorre todas las semanas y asegura al menos 1 fila por UD/semana
             foreach ($semanas as $w => &$sem) {
+                $agregoFilasConHorario = false;
+
+                // Generar filas por fechas reales si hay horario L–V
                 foreach ($sem['dias'] as $fecha) {
                     $weekday = (int)(new \DateTime($fecha))->format('N'); // 1..7
                     if (empty($horario[$weekday])) continue;
 
                     foreach ($horario[$weekday] as $franja) {
-                        $tema = $temasPorSemana[$w] ?? ''; // tema por semana (según tu requerimiento)
                         $sem['rows'][] = [
-                            'fecha'   => $fecha,
-                            'ud'      => $p['ud_nombre'],
-                            'tema'    => $tema,
-                            'docente' => $p['docente_nombre'],
-                            'firma'   => '',
-                            // Si quisieras mostrar horas en el PDF, ya las tienes:
+                            'fecha'    => $fecha,
+                            'ud'       => $p['ud_nombre'],
+                            'tema'     => $temasPorSemana[$w] ?? '',
+                            'docente'  => $p['docente_nombre'],
+                            'firma'    => '',
                             'hora_ini' => $franja['ini'],
                             'hora_fin' => $franja['fin'],
                         ];
+                        $agregoFilasConHorario = true;
                     }
                 }
-                // Ordena por fecha y UD
-                usort($sem['rows'], function ($a, $b) {
-                    return $a['fecha'] === $b['fecha'] ? strcmp($a['ud'], $b['ud']) : strcmp($a['fecha'], $b['fecha']);
-                });
+
+                // Si NO hubo ninguna fecha con horario para esta UD en esta semana,
+                // agregar una fila "resumen" marcando que NO TIENE HORARIO L–V
+                if (!$agregoFilasConHorario) {
+                    $rangosem = $sem['desde'] . '–' . $sem['hasta'];
+                    $tema = $temasPorSemana[$w] ?? '';
+                    $tema = ($tema !== '' ? $tema . ' — ' : '') . 'SIN HORARIO';
+                    $sem['rows'][] = [
+                        'fecha'    => $rangosem,   // se muestra el rango L–V de la semana
+                        'ud'       => $p['ud_nombre'],
+                        'tema'     => $tema,
+                        'docente'  => $p['docente_nombre'],
+                        'firma'    => '',
+                        'hora_ini' => null,
+                        'hora_fin' => null,
+                    ];
+                }
             }
             unset($sem);
         }
+
+        // Ordenar filas de cada semana: primero por fecha (rangos al final), luego por UD
+        foreach ($semanas as &$sem) {
+            usort($sem['rows'], function ($a, $b) {
+                $fa = $a['fecha'];
+                $fb = $b['fecha'];
+                $aEsRango = strpos($fa, '–') !== false; // fecha tipo "desde–hasta"
+                $bEsRango = strpos($fb, '–') !== false;
+
+                if ($aEsRango !== $bEsRango) {
+                    // filas con fecha real primero, luego los "SIN HORARIO" (rango)
+                    return $aEsRango ? 1 : -1;
+                }
+                if ($fa === $fb) return strcmp($a['ud'], $b['ud']);
+                return strcmp($fa, $fb);
+            });
+        }
+        unset($sem);
 
         return array_values($semanas);
     }

@@ -1,7 +1,18 @@
 <?php require __DIR__ . '/../../layouts/header.php'; ?>
 <?php
+use App\Helpers\HorarioHelper;
 
-use App\Helpers\HorarioHelper; ?>
+$horario_raw = $silabo['horario'] ?? '';
+if (class_exists(\App\Helpers\HorarioHelper::class)) {
+    try {
+        $horario_normalizado = \App\Helpers\HorarioHelper::parseText($horario_raw);
+    } catch (\Throwable $e) {
+        $horario_normalizado = $horario_raw; // fallback
+    }
+} else {
+    $horario_normalizado = $horario_raw; // fallback sin helper
+}
+?>
 <?php if ((\Core\Auth::esDocenteAcademico() || \Core\Auth::esAdminAcademico()) && $permitido): ?>
     <form action="<?= BASE_URL ?>/academico/silabos/guardarEdicion" method="post" class="card p-4 shadow-sm rounded-3" autocomplete="off">
         <input type="hidden" name="id_silabo" value="<?= htmlspecialchars($silabo['id']) ?>">
