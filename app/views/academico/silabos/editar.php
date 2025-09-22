@@ -1,4 +1,7 @@
 <?php require __DIR__ . '/../../layouts/header.php'; ?>
+<?php
+
+use App\Helpers\HorarioHelper; ?>
 <?php if ((\Core\Auth::esDocenteAcademico() || \Core\Auth::esAdminAcademico()) && $permitido): ?>
     <form action="<?= BASE_URL ?>/academico/silabos/guardarEdicion" method="post" class="card p-4 shadow-sm rounded-3" autocomplete="off">
         <input type="hidden" name="id_silabo" value="<?= htmlspecialchars($silabo['id']) ?>">
@@ -61,8 +64,55 @@
                 <tr>
                     <td width="30%"><b>Horario:</b></td>
                     <td>
-                        <?php if ($periodo_vigente): ?>
-                            <textarea name="horario" style="width:50%; resize: none; height:auto;" rows="3" maxlength="200"><?= htmlspecialchars($silabo['horario']) ?></textarea>
+                        <?php if ($periodo_vigente):
+                            $horarioPretty = HorarioHelper::pretty($silabo['horario'] ?? '');
+                        ?>
+                            <div class="mb-2 small text-muted">
+                                Formato: <code>Lunes 08:00-10:00</code> (una línea por franja)
+                            </div>
+                        <!-- Formato: <code>Lun 08:00-10:00 | Aula: B-203 | Sec: A</code> (una línea por franja) -->
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-row align-items-end">
+                                        <div class="col-5">
+                                            <label>Día</label>
+                                            <select id="h-dia" class="form-control">
+                                                <option>Lunes</option>
+                                                <option>Martes</option>
+                                                <option>Miércoles</option>
+                                                <option>Jueves</option>
+                                                <option>Viernes</option>
+                                                <option>Sábado</option>
+                                                <option>Domingo</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-3">
+                                            <label>Inicio</label>
+                                            <input id="h-inicio" type="time" class="form-control" value="08:00">
+                                        </div>
+                                        <div class="col-3">
+                                            <label>Fin</label>
+                                            <input id="h-fin" type="time" class="form-control" value="10:00">
+                                        </div>
+                                    </div>
+                                    <!--<div class="form-row mt-2">
+                                        <div class="col-6">
+                                            <label>Aula (opcional)</label>
+                                            <input id="h-aula" type="text" class="form-control">
+                                        </div>
+                                        <div class="col-6">
+                                            <label>Sección (opcional)</label>
+                                            <input id="h-sec" type="text" class="form-control">
+                                        </div>
+                                    </div>-->
+                                    <button type="button" id="h-add" class="btn btn-sm btn-outline-primary mt-2">Agregar Horario</button>
+                                </div>
+                                <div class="col-md-6">
+                                    <label>Horario </label>
+                                    <textarea id="h-text" name="horario" rows="8" class="form-control" style="white-space:pre;"><?= htmlspecialchars($horarioPretty) ?></textarea>
+                                </div>
+                            </div>
                         <?php else: ?>
                             <?= ($silabo['horario']) ?>
                         <?php endif; ?>
@@ -216,7 +266,7 @@
                             </td>
                             <td>
                                 <?php if ($periodo_vigente): ?>
-                                    <textarea name="sesiones[<?= $sesion['id_actividad'] ?>][tareas_previas]" rows="5" class="form-control" style="width:100%; resize: none; height:auto;"  maxlength="500"><?= (htmlspecialchars($sesion['tareas_previas'])) ?></textarea>
+                                    <textarea name="sesiones[<?= $sesion['id_actividad'] ?>][tareas_previas]" rows="5" class="form-control" style="width:100%; resize: none; height:auto;" maxlength="500"><?= (htmlspecialchars($sesion['tareas_previas'])) ?></textarea>
                                 <?php else: ?>
                                     <?= (htmlspecialchars($sesion['tareas_previas'])) ?>
                                 <?php endif; ?>
@@ -331,6 +381,35 @@
 
             // OPCIONAL: si quieres que cargue ya autocompletado si la primera viene con valor
             // autopoblarDesdePrimera();
+        });
+    </script>
+    <script>
+        document.getElementById('h-add').addEventListener('click', function() {
+            var dia = document.getElementById('h-dia').value.trim();
+            var ini = document.getElementById('h-inicio').value.trim();
+            var fin = document.getElementById('h-fin').value.trim();
+            //var aula = document.getElementById('h-aula').value.trim();
+            //var sec = document.getElementById('h-sec').value.trim();
+
+            if (!dia || !ini || !fin) {
+                alert('Completa día, inicio y fin');
+                return;
+            }
+            if (ini >= fin) {
+                alert('La hora de inicio debe ser menor que la de fin.');
+                return;
+            }
+
+            var line = dia + ' ' + ini + '-' + fin;
+            //if (aula) line += ' | Aula: ' + aula;
+            //if (sec) line += ' | Sec: ' + sec;
+
+            var ta = document.getElementById('h-text');
+            ta.value = (ta.value.trim() ? (ta.value.trim() + "\n") : '') + line;
+
+            // opcional: limpiar campos
+            //document.getElementById('h-aula').value = '';
+            //document.getElementById('h-sec').value = '';
         });
     </script>
 

@@ -460,7 +460,7 @@ class ReportesController extends Controller
 
 
 
-   
+
     /* ---------------- VISTA LISTADO (botones “Ver reporte”) ------------------ */
     public function buscarMatriculas()
     {
@@ -468,7 +468,7 @@ class ReportesController extends Controller
         $periodoId = $_SESSION['sigi_periodo_actual_id'];
         $sedeId    = $_SESSION['sigi_sede_actual'];
 
-       
+
         [$prog, $plan, $sem, $turn, $sec] = [
             $_POST['programa'] ?? null,
             $_POST['plan'] ?? null,
@@ -505,7 +505,7 @@ class ReportesController extends Controller
         foreach ($califs as $c) {
             $ud = $c['ud'];
             if (!isset($udOrder[$ud])) $udOrder[$ud] = $c['id_ud'];
-            if ($c['mostrar_calificacion']) {// si esta habilitado mostrar
+            if ($c['mostrar_calificacion']) { // si esta habilitado mostrar
                 $tablaCalif[$ud][$c['nro']] = $c['nota'];
                 $tablaCalif[$ud]['recuperacion'] = $c['recuperacion'];
             }
@@ -526,5 +526,71 @@ class ReportesController extends Controller
             'module' => 'academico',
             'pageTitle' => 'Reporte Individual'
         ]);
+    }
+
+    // POST desde el modal: /academico/reportes/pdfControlDiario
+    public function pdfControlDiario()
+    {
+        require_once __DIR__ . '/../../../vendor/autoload.php';
+
+        // Parámetros del modal
+        $id_programa = $_POST['programa'] ?? null;
+        $id_plan     = $_POST['plan'] ?? null;        // opcional para cabecera, útil para filtro
+        $id_semestre = $_POST['semestre'] ?? null;
+        $turno       = $_POST['turno'] ?? null;
+        $seccion     = $_POST['seccion'] ?? null;
+        $fechaInicio = $_POST['semana_inicio'] ?? null;
+
+        $periodo_id = $_SESSION['sigi_periodo_actual_id'] ?? null;
+        $sede_id    = $_SESSION['sigi_sede_actual'] ?? null;
+
+        // Validación mínima
+        if (!$id_programa || !$id_plan || !$id_semestre || !$turno || !$seccion || !$fechaInicio) {
+            $_SESSION['flash_error'] = 'Parámetros incompletos para generar el Control Diario.';
+            header('Location: ' . BASE_URL . "/academico/reportes");
+            return;
+        }
+
+        // Filtros para el modelo (se usan en las programaciones)
+        $filters = [
+            'programa' => $id_programa,
+            'plan'     => $id_plan,
+            'semestre' => $id_semestre,
+            'turno'    => $turno,
+            'seccion'  => $seccion,
+        ];
+
+        // Datos
+        $semanas = $this->model->getControlDiarioPorSemanas((int)$periodo_id, $filters, $fechaInicio, 16);
+
+        // Cabecera (programa/plan/semestre/periodo/turno/sección)
+        $cab = $this->model->getCabeceraNomina(
+            (int)$id_programa,
+            (int)$id_semestre,
+            (string)$turno,
+            (string)$seccion,
+            (int)$periodo_id,
+            (int)$sede_id
+        ) ?: [];
+
+        // Render PDF con TCPDF (una página por semana)
+        $pdf = new \TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
+        $pdf->SetTitle('Control Diario de Clases');
+        $pdf->setPrintHeader(false);
+        $pdf->setPrintFooter(false);
+        $pdf->SetMargins(10, 10, 10);
+        $pdf->SetAutoPageBreak(true, 12);
+        $pdf->SetFont('helvetica', '', 10);
+
+        foreach ($semanas as $semana) {
+            $pdf->AddPage();
+            ob_start();
+            // 👉 Vista separada para cada semana (ver archivo más abajo)
+            include __DIR__ . '/../../views/academico/reportes/pdf_control_diario_semana.php';
+            $html = ob_get_clean();
+            $pdf->writeHTML($html, true, false, true, false, '');
+        }
+
+        $pdf->Output('Control_Diario.pdf', 'I');
     }
 }

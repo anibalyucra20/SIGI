@@ -2,6 +2,7 @@
 
 namespace App\Controllers\Academico;
 
+use App\Helpers\HorarioHelper;
 use Core\Controller;
 
 require_once __DIR__ . '/../../../app/models/Academico/Silabos.php';
@@ -74,7 +75,7 @@ class SilabosController extends Controller
             // SECCION VI: SESIONES DE APRENDIZAJE
             //$sesiones = $this->model->getSesionesSilabo($silabo['id']);
             $sesiones = $this->model->getSesionesSilaboDetallado($silabo['id']); // método especial, ver abajo
-            $cant_ses = count($sesiones)-1;
+            $cant_ses = count($sesiones) - 1;
             $datosGenerales['fecha_inicio'] = $sesiones[0]['fecha'];
             $datosGenerales['fecha_fin'] = $sesiones[$cant_ses]['fecha'];
         } else {
@@ -117,10 +118,20 @@ class SilabosController extends Controller
                 $errores[] = "No tiene permisos para editar este sílabo o el periodo ya culminó.";
             }
         }
-
+        $raw = $_POST['horario'] ?? '';
+        // Si ya viene JSON válido, lo dejamos como está
+        if (!HorarioHelper::isJson($raw)) {
+            $parsed = HorarioHelper::parseText($raw);
+            if (isset($parsed['error'])) {
+                $_SESSION['flash_error'] = $parsed['error'];
+                header('Location: ' . BASE_URL . '/academico/silabos/editar/' . (int)$_POST['id_silabo']);
+                exit;
+            }
+            $raw = HorarioHelper::toJson($parsed);  // Guardamos JSON normalizado
+        }
         // Validar campos requeridos
         $data = [
-            'horario' => trim($_POST['horario'] ?? ''),
+            'horario' => $raw,
             'sumilla' => trim($_POST['sumilla'] ?? ''),
             'metodologia' => trim($_POST['metodologia'] ?? ''),
             'recursos_didacticos' => trim($_POST['recursos_didacticos'] ?? ''),
@@ -141,6 +152,7 @@ class SilabosController extends Controller
         $data['promedio_indicadores_logro'] = trim($_POST['promedio_indicadores_logro'] ?? '');*/
 
         if (!empty($errores)) {
+
             // Recargar todos los datos necesarios para el formulario
             $id_programacion = $silabo['id_prog_unidad_didactica'] ?? null;
             $datosGenerales = $this->model->getDatosGenerales($id_programacion);
@@ -167,6 +179,8 @@ class SilabosController extends Controller
             return;
         }
 
+
+
         // Guardar cambios del sílabo
         $this->model->actualizarSilabo($id_silabo, $data);
 
@@ -187,7 +201,7 @@ class SilabosController extends Controller
     {
         require_once __DIR__ . '/../../../vendor/autoload.php';
 
-        
+
         // Obtener todos los datos igual que para la vista de edición
         $silabo = $this->model->getSilaboById($id_silabo);
         $id_programacion = $silabo['id_prog_unidad_didactica'];
@@ -215,7 +229,7 @@ class SilabosController extends Controller
             // SECCION VI: SESIONES DE APRENDIZAJE
             //$sesiones = $this->model->getSesionesSilabo($silabo['id']);
             $sesiones = $this->model->getSesionesSilaboDetallado($silabo['id']); // método especial, ver abajo
-            $cant_ses = count($sesiones)-1;
+            $cant_ses = count($sesiones) - 1;
             $datosGenerales['fecha_inicio'] = $sesiones[0]['fecha'];
             $datosGenerales['fecha_fin'] = $sesiones[$cant_ses]['fecha'];
         } else {

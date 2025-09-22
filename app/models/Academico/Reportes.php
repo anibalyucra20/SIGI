@@ -4,9 +4,12 @@ namespace App\Models\Academico;
 
 use Core\Model;
 use PDO;
+use DateTime;
+use DateInterval;
 
 class Reportes extends Model
 {
+
     // 1. Obtener cabecera informativa del reporte
     public function getCabeceraNomina($id_programa, $id_semestre, $turno, $seccion, $periodo_id, $sede_id)
     {
@@ -459,5 +462,232 @@ class Reportes extends Model
         $st = self::$db->prepare($sql);
         $st->execute([':mat' => $id_matricula]);
         return $st->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /* --------------------------  CONTROL DIARIO ----------------------------- */
+    private function getProgramacionesUD(int $periodoId, array $f): array
+    {
+        $where  = ["pud.id_periodo_academico = :idp"];
+        $params = [':idp' => $periodoId];
+
+        if (!empty($f['programa'])) {
+            $where[] = "pe.id = :prog";
+            $params[':prog']   = $f['programa'];
+        }
+        if (!empty($f['plan'])) {
+            $where[] = "pl.id = :plan";
+            $params[':plan']   = $f['plan'];
+        }
+        if (!empty($f['semestre'])) {
+            $where[] = "s.id = :sem";
+            $params[':sem']    = $f['semestre'];
+        }
+        if (!empty($f['turno'])) {
+            $where[] = "pud.turno = :turn";
+            $params[':turn']   = $f['turno'];
+        }
+        if (!empty($f['seccion'])) {
+            $where[] = "pud.seccion = :sec";
+            $params[':sec']   = $f['seccion'];
+        }
+
+        $sql = "
+        SELECT
+            pud.id                                         AS id_pud,
+            ud.id                                          AS id_ud,
+            ud.nombre                                      AS ud_nombre,
+            pl.id                                          AS id_plan,
+            pl.nombre                                      AS plan_nombre,
+            s.id                                           AS id_semestre,
+            s.descripcion                                   AS semestre_nombre,
+            pe.id                                          AS id_programa,
+            pe.nombre                                      AS programa_nombre,
+            pud.turno, pud.seccion,
+            doc.id                                         AS id_docente,
+            doc.apellidos_nombres                          AS docente_nombre
+        FROM acad_programacion_unidad_didactica pud
+        INNER JOIN sigi_unidad_didactica ud ON ud.id = pud.id_unidad_didactica
+        INNER JOIN sigi_semestre s          ON s.id  = ud.id_semestre
+        INNER JOIN sigi_modulo_formativo mf ON mf.id = s.id_modulo_formativo
+        INNER JOIN sigi_planes_estudio pl   ON pl.id = mf.id_plan_estudio
+        INNER JOIN sigi_programa_estudios pe ON pe.id = pl.id_programa_estudios
+        INNER JOIN sigi_usuarios doc        ON doc.id = pud.id_docente
+        WHERE " . implode(' AND ', $where) . "
+        ORDER BY ud.nombre, docente_nombre
+    ";
+        $st = self::$db->prepare($sql);
+        $st->execute($params);
+        return $st->fetchAll(PDO::FETCH_ASSOC);
+    }
+    private function getSilabo(int $idPud): ?array
+    {
+        $st = self::$db->prepare("
+        SELECT s.id AS id_silabo, s.horario, s.fecha_inicio
+        FROM acad_silabos s
+        WHERE s.id_prog_unidad_didactica = :p
+        ORDER BY s.id DESC
+        LIMIT 1
+    ");
+        $st->execute([':p' => $idPud]);
+        $row = $st->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
+    }
+    private function getTemasPorSemana(int $idSilabo): array
+    {
+        $sql = "
+        SELECT pas.semana, sa.denominacion
+        FROM acad_programacion_actividades_silabo pas
+        LEFT JOIN acad_sesion_aprendizaje sa
+               ON sa.id_prog_actividad_silabo = pas.id
+        WHERE pas.id_silabo = :s
+        ORDER BY pas.semana, sa.id
+    ";
+        $st = self::$db->prepare($sql);
+        $st->execute([':s' => $idSilabo]);
+
+        $map = [];
+        while ($r = $st->fetch(PDO::FETCH_ASSOC)) {
+            $w   = (int)$r['semana'];
+            $den = trim((string)$r['denominacion']);
+            if ($den === '') continue;
+            if (!isset($map[$w])) {
+                $map[$w] = $den;            // primera denominación de la semana
+            } else {
+                // Si prefieres concatenar varios temas en la misma semana:
+                // $map[$w] .= ' | '.$den;
+            }
+        }
+        return $map; // [semana => "tema"]
+    }
+    private function parseHorarioSilabo(string $txt): array
+    {
+        // Mapa de días (1..7)
+        $map = [
+            'L' => 1,
+            'LUN' => 1,
+            'LUNES' => 1,
+            'M' => 2,
+            'MAR' => 2,
+            'MARTES' => 2,
+            'MI' => 3,
+            'MIE' => 3,
+            'MIER' => 3,
+            'MIERCOLES' => 3,
+            'J' => 4,
+            'JUE' => 4,
+            'JUEVES' => 4,
+            'V' => 5,
+            'VIE' => 5,
+            'VIERNES' => 5,
+            'S' => 6,
+            'SAB' => 6,
+            'SABADO' => 6,
+            'D' => 7,
+            'DOM' => 7,
+            'DOMINGO' => 7,
+        ];
+        $txt = strtr($txt, ['Á' => 'A', 'É' => 'E', 'Í' => 'I', 'Ó' => 'O', 'Ú' => 'U', 'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u']);
+        $result = [];
+
+        $chunks = preg_split('/[;\n\r]+/u', $txt);
+        foreach ($chunks as $chunk) {
+            $c = trim($chunk);
+            if ($c === '') continue;
+
+            if (!preg_match('/(\d{1,2}:\d{2})\s*(?:-|a)\s*(\d{1,2}:\d{2})/u', $c, $hm)) {
+                continue;
+            }
+            $ini = $this->normHora($hm[1]);
+            $fin = $this->normHora($hm[2]);
+
+            $partDias = trim(preg_replace('/(\d{1,2}:\d{2})\s*(?:-|a)\s*(\d{1,2}:\d{2}).*$/u', '', $c));
+            if ($partDias === '') continue;
+
+            $diasTokens = preg_split('/[\/,\-\s]+|(?:\by\b)/u', $partDias);
+            foreach ($diasTokens as $tk) {
+                $tk = strtoupper(trim($tk));
+                if (isset($map[$tk])) {
+                    $n = $map[$tk];
+                    if ($n >= 1 && $n <= 5) { // solo L-V
+                        $result[$n] = $result[$n] ?? [];
+                        $result[$n][] = ['ini' => $ini, 'fin' => $fin];
+                    }
+                }
+            }
+        }
+        foreach ($result as &$arr) {
+            usort($arr, fn($a, $b) => strcmp($a['ini'], $b['ini']));
+        }
+        return $result; // p.ej. [1=>[['ini'=>'08:00','fin'=>'10:00']], 3=>[...], 5=>[...]]
+    }
+    private function normHora(string $h): string
+    {
+        [$HH, $MM] = array_map('intval', explode(':', $h));
+        return sprintf('%02d:%02d', $HH, $MM);
+    }
+    public function getControlDiarioPorSemanas(
+        int $periodoId,
+        array $filters,
+        string $fechaInicio,   // puede no ser lunes
+        int $numSemanas = 16
+    ): array {
+        // Alinear al lunes
+        $fi = new \DateTime($fechaInicio);
+        if ((int)$fi->format('N') !== 1) {
+            $fi->modify('last monday');
+        }
+
+        // Armar semanas con sus días L–V
+        $semanas = [];
+        for ($w = 1; $w <= $numSemanas; $w++) {
+            $lunes = (clone $fi)->add(new \DateInterval('P' . ($w - 1) . 'W'));
+            $dias = [];
+            for ($i = 0; $i < 5; $i++) {
+                $dias[] = (clone $lunes)->add(new \DateInterval("P{$i}D"))->format('Y-m-d');
+            }
+            $semanas[$w] = ['n' => $w, 'desde' => $dias[0], 'hasta' => end($dias), 'dias' => $dias, 'rows' => []];
+        }
+
+        // Programaciones (según filtros)
+        $puds = $this->getProgramacionesUD($periodoId, $filters);
+        if (!$puds) return array_values($semanas);
+
+        foreach ($puds as $p) {
+            $sil = $this->getSilabo((int)$p['id_pud']);
+            if (!$sil) continue;
+
+            $horario = $this->parseHorarioSilabo((string)$sil['horario']);
+            if (empty($horario)) continue;
+
+            $temasPorSemana = $this->getTemasPorSemana((int)$sil['id_silabo']); // [semana => tema]
+
+            foreach ($semanas as $w => &$sem) {
+                foreach ($sem['dias'] as $fecha) {
+                    $weekday = (int)(new \DateTime($fecha))->format('N'); // 1..7
+                    if (empty($horario[$weekday])) continue;
+
+                    foreach ($horario[$weekday] as $franja) {
+                        $tema = $temasPorSemana[$w] ?? ''; // tema por semana (según tu requerimiento)
+                        $sem['rows'][] = [
+                            'fecha'   => $fecha,
+                            'ud'      => $p['ud_nombre'],
+                            'tema'    => $tema,
+                            'docente' => $p['docente_nombre'],
+                            'firma'   => '',
+                            // Si quisieras mostrar horas en el PDF, ya las tienes:
+                            'hora_ini' => $franja['ini'],
+                            'hora_fin' => $franja['fin'],
+                        ];
+                    }
+                }
+                // Ordena por fecha y UD
+                usort($sem['rows'], function ($a, $b) {
+                    return $a['fecha'] === $b['fecha'] ? strcmp($a['ud'], $b['ud']) : strcmp($a['fecha'], $b['fecha']);
+                });
+            }
+            unset($sem);
+        }
+
+        return array_values($semanas);
     }
 }

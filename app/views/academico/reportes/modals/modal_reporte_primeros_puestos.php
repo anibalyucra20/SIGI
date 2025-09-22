@@ -26,7 +26,7 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="semestre_reporte_primeros_puestos">Semestre</label>
+                        <label for="semestre_reporte_primeros_puestos">Periodo Académico</label>
                         <select name="semestre" id="semestre_reporte_primeros_puestos" class="form-control" required>
                             <option value="">Seleccione primero un plan de estudios</option>
                         </select>

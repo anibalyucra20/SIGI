@@ -76,5 +76,20 @@
             </div>
             <?php include_once(__DIR__ . '/modals/modal_reporte_primeros_puestos.php'); ?>
         </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <a href="" data-toggle="modal" data-target="#rep_control_diario">
+                        <div class="tile-stats">
+                            <div class="icon"><i class="fa fa-check-square-o"></i></div>
+                            <div class="count">Reporte</div>
+                            <h4>Control Diario</h4>
+                            <p>Reporte de Control Diario</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            <?php include_once(__DIR__ . '/modals/modal_reporte_control_diario.php'); ?>
+        </div>
     <?php endif; ?>
     <?php require __DIR__ . '/../../layouts/footer.php'; ?>
