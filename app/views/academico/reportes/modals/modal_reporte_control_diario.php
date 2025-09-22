@@ -54,12 +54,6 @@
                         <input type="date" name="semana_inicio" id="fi_reporte_control_diario" class="form-control" required>
                         <small class="text-muted">Se generarán 16 semanas (5 días por semana) a partir de esta fecha.</small>
                     </div>
-                    <div class="form-group form-check">
-                        <input type="checkbox" class="form-check-input" id="debug_control_diario" name="debug" value="1">
-                        <label class="form-check-label" for="debug_control_diario">Modo depuración</label>
-                    </div>
-
-
                 </div>
                 <div class="modal-footer">
                     <button type="submit" class="btn btn-primary">Generar</button>
