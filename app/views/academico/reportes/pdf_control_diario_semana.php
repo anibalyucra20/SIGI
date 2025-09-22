@@ -34,10 +34,10 @@ $periodo  = $cab['periodo']   ?? '-';
 <div class="rep-meta">
     Programa: <b><?= htmlspecialchars($programa) ?></b> &nbsp;|&nbsp;
     Plan: <b><?= htmlspecialchars($plan) ?></b> &nbsp;|&nbsp;
-    Semestre: <b><?= htmlspecialchars($semNom) ?></b> &nbsp;|&nbsp;
+    Periodo Académico: <b><?= htmlspecialchars($semNom) ?></b> &nbsp;|&nbsp;
     Turno: <b><?= htmlspecialchars($turno) ?></b> &nbsp;|&nbsp;
     Sección: <b><?= htmlspecialchars($seccion) ?></b> &nbsp;|&nbsp;
-    Periodo: <b><?= htmlspecialchars($periodo) ?></b>
+    Periodo Lectivo: <b><?= htmlspecialchars($periodo) ?></b>
 </div>
 <div class="rep-week">
     Semana <b><?= htmlspecialchars($semana['n']) ?></b> —
@@ -47,11 +47,11 @@ $periodo  = $cab['periodo']   ?? '-';
 <table class="rep">
     <thead>
         <tr>
-            <th width="18%">Fecha</th>
-            <th width="32%">Unidad Didáctica</th>
-            <th width="30%">Tema</th>
+            <th width="15%">Fecha</th>
+            <th width="20%">Unidad Didáctica</th>
+            <th width="25%">Tema</th>
             <th width="15%">Docente</th>
-            <th width="5%">Firma</th>
+            <th width="15%">Firma</th>
         </tr>
     </thead>
     <tbody>
@@ -62,17 +62,17 @@ $periodo  = $cab['periodo']   ?? '-';
     <?php else: ?>
         <?php foreach ($semana['rows'] as $r): ?>
             <tr>
-                <td class="nowrap">
+                <td class="nowrap"  width="15%">
                     <?= htmlspecialchars($r['fecha']) ?>
                     <?php /* Si deseas mostrar horas:
                     <div style="font-size:9px;">
                         <?= htmlspecialchars(($r['hora_ini'] ?? '').($r['hora_fin'] ? ' - '.$r['hora_fin'] : '')) ?>
                     </div> */ ?>
                 </td>
-                <td><?= htmlspecialchars($r['ud']) ?></td>
-                <td><?= htmlspecialchars($r['tema']) ?></td>
-                <td><?= htmlspecialchars($r['docente']) ?></td>
-                <td>&nbsp;</td>
+                <td width="20%"><?= htmlspecialchars($r['ud']) ?></td>
+                <td width="25%"><?= htmlspecialchars($r['tema']) ?></td>
+                <td width="15%"><?= htmlspecialchars($r['docente']) ?></td>
+                <td width="15%">&nbsp;</td>
             </tr>
         <?php endforeach; ?>
     <?php endif; ?>
