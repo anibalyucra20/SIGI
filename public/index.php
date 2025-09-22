@@ -11,6 +11,7 @@ session_set_cookie_params([
     'httponly' => true,
     'samesite' => 'Lax'
 ]);
+require_once __DIR__ . '/../vendor/autoload.php';
 
 
 // Configuración general
