@@ -1,18 +1,18 @@
 <?php require __DIR__ . '/../../layouts/header.php'; ?>
 <?php
-use App\Helpers\HorarioHelper;
-
 $horario_raw = $silabo['horario'] ?? '';
 if (class_exists(\App\Helpers\HorarioHelper::class)) {
     try {
-        $horario_normalizado = \App\Helpers\HorarioHelper::parseText($horario_raw);
+        // Mostrar bonito si viene JSON u objeto; si ya es texto, lo deja igual
+        $horarioPretty = \App\Helpers\HorarioHelper::pretty($horario_raw);
     } catch (\Throwable $e) {
-        $horario_normalizado = $horario_raw; // fallback
+        $horarioPretty = $horario_raw; // fallback
     }
 } else {
-    $horario_normalizado = $horario_raw; // fallback sin helper
+    $horarioPretty = $horario_raw; // fallback sin helper
 }
 ?>
+
 <?php if ((\Core\Auth::esDocenteAcademico() || \Core\Auth::esAdminAcademico()) && $permitido): ?>
     <form action="<?= BASE_URL ?>/academico/silabos/guardarEdicion" method="post" class="card p-4 shadow-sm rounded-3" autocomplete="off">
         <input type="hidden" name="id_silabo" value="<?= htmlspecialchars($silabo['id']) ?>">
@@ -76,12 +76,11 @@ if (class_exists(\App\Helpers\HorarioHelper::class)) {
                     <td width="30%"><b>Horario:</b></td>
                     <td>
                         <?php if ($periodo_vigente):
-                            $horarioPretty = HorarioHelper::pretty($silabo['horario'] ?? '');
                         ?>
                             <div class="mb-2 small text-muted">
                                 Formato: <code>Lunes 08:00-10:00</code> (una línea por franja)
                             </div>
-                        <!-- Formato: <code>Lun 08:00-10:00 | Aula: B-203 | Sec: A</code> (una línea por franja) -->
+                            <!-- Formato: <code>Lun 08:00-10:00 | Aula: B-203 | Sec: A</code> (una línea por franja) -->
 
                             <div class="row">
                                 <div class="col-md-6">
@@ -125,7 +124,7 @@ if (class_exists(\App\Helpers\HorarioHelper::class)) {
                                 </div>
                             </div>
                         <?php else: ?>
-                            <?= ($silabo['horario']) ?>
+                            <?= nl2br(htmlspecialchars($horarioPretty)) ?>
                         <?php endif; ?>
                     </td>
                 </tr>

@@ -101,100 +101,111 @@ class SilabosController extends Controller
     public function guardarEdicion()
     {
         $id_silabo = $_POST['id_silabo'] ?? null;
-        $errores = [];
+        $errores   = [];
 
+        // 1) Cargar sílabo y validar permisos
         $silabo = $this->model->getSilaboById($id_silabo);
-        $id_programacion = $silabo['id_prog_unidad_didactica'] ?? null;
         if (!$silabo) {
             $errores[] = "No se encontró el sílabo.";
         } else {
             $programacion = $this->objProgramacionUD->find($silabo['id_prog_unidad_didactica']);
-            $periodo = $this->objPeriodoAcademico->getPeriodoVigente($programacion['id_periodo_academico']);
-            $esDocenteAsignado = ($programacion['id_docente'] == ($_SESSION['sigi_user_id'] ?? -1));
-            $esAdminAcademico = (\Core\Auth::esAdminAcademico());
-            $permitido = (($esDocenteAsignado || $esAdminAcademico) && ($periodo && $periodo['vigente']));
-
+            $periodo      = $this->objPeriodoAcademico->getPeriodoVigente($programacion['id_periodo_academico']);
+            $esDocente    = ($programacion['id_docente'] == ($_SESSION['sigi_user_id'] ?? -1));
+            $esAdmin      = (\Core\Auth::esAdminAcademico());
+            $permitido    = (($esDocente || $esAdmin) && ($periodo && $periodo['vigente']));
             if (!$permitido) {
                 $errores[] = "No tiene permisos para editar este sílabo o el periodo ya culminó.";
             }
         }
-        $raw = $_POST['horario'] ?? '';
-        // Si ya viene JSON válido, lo dejamos como está
-        if (!HorarioHelper::isJson($raw)) {
-            $parsed = HorarioHelper::parseText($raw);
-            if (isset($parsed['error'])) {
-                $_SESSION['flash_error'] = $parsed['error'];
-                header('Location: ' . BASE_URL . '/academico/silabos/editar/' . (int)$_POST['id_silabo']);
-                exit;
+
+        // 2) Normalizar/validar HORARIO (se guarda en JSON uniforme si existe el helper)
+        $horarioEntrada = $_POST['horario'] ?? '';
+        $horarioGuardar = $horarioEntrada; // fallback: si no hay helper, guarda tal cual
+
+        if (class_exists(\App\Helpers\HorarioHelper::class)) {
+            // Si ya viene JSON válido lo dejamos; si no, lo parseamos desde texto
+            if (!\App\Helpers\HorarioHelper::isJson($horarioEntrada)) {
+                // Permitir horario vacío
+                if (trim($horarioEntrada) !== '') {
+                    $parsed = \App\Helpers\HorarioHelper::parseText($horarioEntrada);
+                    if (isset($parsed['error'])) {
+                        $_SESSION['flash_error'] = 'Horario inválido: ' . $parsed['error'];
+                        header('Location: ' . BASE_URL . '/academico/silabos/editar/' . (int)($_POST['id_silabo'] ?? 0));
+                        exit;
+                    }
+                    // Guardar como JSON normalizado
+                    $horarioGuardar = \App\Helpers\HorarioHelper::toJson($parsed);
+                } else {
+                    // cadena vacía -> guarda vacío
+                    $horarioGuardar = '';
+                }
+            } else {
+                // Ya es JSON; lo puedes validar mínimamente si quieres
+                $decoded = json_decode($horarioEntrada, true);
+                if (!is_array($decoded)) {
+                    $_SESSION['flash_error'] = 'El horario JSON no tiene un formato válido.';
+                    header('Location: ' . BASE_URL . '/academico/silabos/editar/' . (int)($_POST['id_silabo'] ?? 0));
+                    exit;
+                }
+                $horarioGuardar = $horarioEntrada; // dejar como vino
             }
-            $raw = HorarioHelper::toJson($parsed);  // Guardamos JSON normalizado
         }
-        // Validar campos requeridos
+
+        // 3) Recolectar campos editables del sílabo
         $data = [
-            'horario' => $raw,
-            'sumilla' => trim($_POST['sumilla'] ?? ''),
-            'metodologia' => trim($_POST['metodologia'] ?? ''),
-            'recursos_didacticos' => trim($_POST['recursos_didacticos'] ?? ''),
-            'sistema_evaluacion' => trim($_POST['sistema_evaluacion'] ?? ''),
+            'horario'                          => $horarioGuardar,
+            'sumilla'                          => trim($_POST['sumilla'] ?? ''),
+            'metodologia'                      => trim($_POST['metodologia'] ?? ''),
+            'recursos_didacticos'              => trim($_POST['recursos_didacticos'] ?? ''),
+            'sistema_evaluacion'               => trim($_POST['sistema_evaluacion'] ?? ''),
             'recursos_bibliograficos_impresos' => trim($_POST['recursos_bibliograficos_impresos'] ?? ''),
             'recursos_bibliograficos_digitales' => trim($_POST['recursos_bibliograficos_digitales'] ?? ''),
         ];
-        /*foreach ($data as $campo => $valor) {
-            if ($valor === '') {
-                $errores[] = "El campo '$campo' es obligatorio.";
-            }
-        }*/
 
-        // Guardar campos extra (puedes validar si son obligatorios o no)
-        /*$data['horario'] = trim($_POST['horario'] ?? '');
-        $data['estrategia_evaluacion_indicadores'] = trim($_POST['estrategia_evaluacion_indicadores'] ?? '');
-        $data['estrategia_evaluacion_tecnica'] = trim($_POST['estrategia_evaluacion_tecnica'] ?? '');
-        $data['promedio_indicadores_logro'] = trim($_POST['promedio_indicadores_logro'] ?? '');*/
-
+        // 4) Si hubo errores de permisos u otros, re-renderiza la vista con datos
         if (!empty($errores)) {
-
-            // Recargar todos los datos necesarios para el formulario
-            $id_programacion = $silabo['id_prog_unidad_didactica'] ?? null;
-            $datosGenerales = $this->model->getDatosGenerales($id_programacion);
-            //$competenciasModulo = $this->model->getCompetenciasModulo($id_programacion);
+            $id_programacion            = $silabo['id_prog_unidad_didactica'] ?? null;
+            $datosGenerales             = $this->model->getDatosGenerales($id_programacion);
             $competenciasUnidadDidactica = $this->objCompetencia->getCompetenciasDeUnidadDidactica($programacion['id_unidad_didactica']);
-            $capacidades = $this->objCapacidad->getCapacidadesUnidadDidactica($programacion['id_unidad_didactica']);
-            $competenciasTransversales = $this->objCompetencia->getCompetenciasTransversalesByUD($programacion['id_unidad_didactica']);
-            $indicadoresLogroCapacidad = $this->objIndicadorLogroCapacidad->getIndicadoresLogroCapacidad($programacion['id_unidad_didactica']);
-            $sesiones = $this->model->getSesionesSilaboDetallado($silabo['id']);
+            $capacidades                = $this->objCapacidad->getCapacidadesUnidadDidactica($programacion['id_unidad_didactica']);
+            $competenciasTransversales  = $this->objCompetencia->getCompetenciasTransversalesByUD($programacion['id_unidad_didactica']);
+            $indicadoresLogroCapacidad  = $this->objIndicadorLogroCapacidad->getIndicadoresLogroCapacidad($programacion['id_unidad_didactica']);
+            $sesiones                   = $this->model->getSesionesSilaboDetallado($silabo['id']);
 
             $this->view('academico/silabos/editar', [
-                'errores' => $errores,
-                'silabo' => $silabo,
-                'permitido' => true,
-                'datosGenerales' => $datosGenerales,
+                'errores'                    => $errores,
+                'silabo'                     => $silabo,
+                'permitido'                  => true,
+                'datosGenerales'             => $datosGenerales,
                 'competenciasUnidadDidactica' => $competenciasUnidadDidactica,
-                'capacidades' => $capacidades,
-                'competenciasTransversales' => $competenciasTransversales,
-                'indicadoresLogroCapacidad' => $indicadoresLogroCapacidad,
-                'sesiones' => $sesiones,
-                'module' => 'academico',
-                'pageTitle' => 'Editar Sílabo'
+                'capacidades'                => $capacidades,
+                'competenciasTransversales'  => $competenciasTransversales,
+                'indicadoresLogroCapacidad'  => $indicadoresLogroCapacidad,
+                'sesiones'                   => $sesiones,
+                'module'                     => 'academico',
+                'pageTitle'                  => 'Editar Sílabo'
             ]);
             return;
         }
 
-
-
-        // Guardar cambios del sílabo
+        // 5) Guardar cambios del SÍLABO
         $this->model->actualizarSilabo($id_silabo, $data);
 
-        // Guardar cambios en sesiones de aprendizaje (opcional, si el usuario editó sesiones)
+        // 6) Guardar cambios en SESIONES (si llegaron)
         if (!empty($_POST['sesiones']) && is_array($_POST['sesiones'])) {
             foreach ($_POST['sesiones'] as $id_actividad => $info) {
+                // Espera keys: fecha, id_ind_logro_aprendizaje, denominacion, contenido, logro_sesion, tareas_previas
                 $this->model->actualizarSesionSilaboCompleto($id_actividad, $info);
             }
         }
+
+        // 7) Listo
         $_SESSION['flash_success'] = "Sílabo actualizado correctamente.";
-        //$this->editar($id_programacion);
-        header('Location: ' . BASE_URL . '/academico/silabos/editar/' . $id_programacion);
+        $id_programacion = $silabo['id_prog_unidad_didactica'] ?? 0;
+        header('Location: ' . BASE_URL . '/academico/silabos/editar/' . (int)$id_programacion);
         exit;
     }
+
 
 
     public function pdf($id_silabo)
