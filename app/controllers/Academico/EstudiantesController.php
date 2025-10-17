@@ -227,7 +227,7 @@ class EstudiantesController extends Controller
         $idRolEstudiante = 7; // 'ESTUDIANTE'
         //registrar los permisoselegidos por sistema para nuevos docentes
         $ds = $this->objDatosSistema->buscar();
-        $idsSistemas = $this->objDatosSistema->decodePermisos($ds['permisos_inicial_docente'] ?? '');
+        $idsSistemas = $this->objDatosSistema->decodePermisos($ds['permisos_inicial_estudiante'] ?? '');
         $this->objDocente->asignarLote($id_estudiante, $idRolEstudiante, $idsSistemas);
     }
 
