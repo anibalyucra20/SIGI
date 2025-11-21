@@ -7,43 +7,45 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link <?= ($_SERVER['REQUEST_URI'] === '/caja' ? 'active' : '') ?>"
-                    href="<?= BASE_URL ?>/caja">
+                <a class="nav-link <?= ($_SERVER['REQUEST_URI'] === '/efsrt' ? 'active' : '') ?>"
+                    href="<?= BASE_URL ?>/efsrt">
                     <i class="mdi mdi-home-analytics"></i> Inicio
                 </a>
             </li>
             <!-- Menú normal solo si es administrador -->
-            <?php if (\Core\Auth::tieneRolEnCaja()): ?>
-                <?php if (\Core\Auth::esAdminCaja()): ?>
+            <?php if (\Core\Auth::tieneRolEnEfsrt()): ?>
+                <?php if (\Core\Auth::esAdminEfsrt()): ?>
                     <li class="nav-item">
                         <a class="nav-link"
-                            href="<?= BASE_URL ?>/caja/postulantes">
-                            <i class="fas fa-money-check-alt"></i> Ingresos
+                            href="<?= BASE_URL ?>/efsrt/efsrt">
+                            <i class="fas fa-bookmark"></i> Registro EFSRT
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link"
-                            href="<?= BASE_URL ?>/caja/postulantes">
-                            <i class="mdi mdi-book-minus"></i> Egresos
+                            href="<?= BASE_URL ?>/efsrt/supervisores">
+                            <i class="fas fa-user-tie"></i> Supervisores
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link"
-                            href="<?= BASE_URL ?>/caja/postulantes">
+                            href="<?= BASE_URL ?>/efsrt/programacion">
+                            <i class="fas fa-book-open"></i> Programación de EFSRT
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link"
+                            href="<?= BASE_URL ?>/efsrt/reportes">
                             <i class="fas fa-chart-line"></i> Reportes
                         </a>
                     </li>
-                    
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle arrow-none" href="#" id="nav-periodos" role="button"
                             data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <i class="fa fa-cog"></i> Gestión de Caja<div class="arrow-down"></div>
+                            <i class="fa fa-cog"></i> Gestión de EFSRT<div class="arrow-down"></div>
                         </a>
-                        <div class="dropdown-menu" aria-labelledby="nav-gestion">
-                            <a href="<?= BASE_URL ?>/caja/conceptos" class="dropdown-item">Conceptos</a>
-                            <a href="<?= BASE_URL ?>/caja/proveedores" class="dropdown-item">Proveedores</a>
-                            <a href="<?= BASE_URL ?>/caja/configuracion" class="dropdown-item">Configuracion</a>
-                            <a href="<?= BASE_URL ?>/caja/facturacion" class="dropdown-item">Facturación</a>
+                        <div class="dropdown-menu" aria-labelledby="nav-periodos">
+                            <a href="<?= BASE_URL ?>/efsrt/convenios" class="dropdown-item">Convenios</a>
                         </div>
                     </li>
                 <?php endif; ?>

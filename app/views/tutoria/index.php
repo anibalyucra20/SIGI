@@ -1,9 +1,9 @@
 <?php require __DIR__ . '/../layouts/header.php'; ?>
 
-<h3 class="mb-4">BIBLITOECA VIRTUAL</h3>
+<h3 class="mb-4">SISTEMA DE TUTORIA</h3>
 
 <div class="row">
-  <?php if (\Core\Auth::tieneRolEnBiblioteca()): ?>
+  <?php if (\Core\Auth::tieneRolEnTutoria()): ?>
     <div class="col-md-3">
       <div class="card text-center">
         <div class="card-body">
@@ -12,19 +12,19 @@
         </div>
       </div>
     </div>
-    <?php if (\Core\Auth::esAdminBiblioteca()): ?>
+    <?php if (\Core\Auth::tieneRolEnTutoria()): ?>
       <div class="col-md-3">
-        <a href="<?= BASE_URL ?>/academico/unidadesDidacticas">
+        <a href="<?= BASE_URL ?>/tutoria/miTutoria">
         <div class="card text-center">
           <div class="card-body">
-            <h5 class="card-title">Mis Unidades Didácticas</h5>
-            <p class="display-5"><?= $uds_count ?></p>
+            <h5 class="card-title">Mis Tutorandos</h5>
+            <p class="display-5">23<?= $uds_count ?></p>
           </div>
         </div>
         </a>
       </div>
     <?php endif; ?>
-    <?php if (\Core\Auth::esAdminBiblioteca()): ?>
+    <?php if (\Core\Auth::tieneRolEnTutoria()|| \Core\Auth::esDirectorAcademico()|| \Core\Auth::esJUAAcademico()|| \Core\Auth::esSecretarioAcadAcademico()|| \Core\Auth::esAdminAcademico()): ?>
       <div class="col-md-3">
         <a href="<?= BASE_URL ?>/academico/reportes">
         <div class="card text-center">
@@ -36,27 +36,11 @@
         </a>
       </div>
     <?php endif; ?>
-    <?php if (\Core\Auth::esAdminBiblioteca()): ?>
+    <?php if (\Core\Auth::tieneRolEnTutoria()): ?>
       <div class="col-md-3">
         <div class="card text-center">
           <div class="card-body">
-            <h5 class="card-title">Sedes</h5>
-            <p class="display-5"><?= $sedes_count ?></p>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="card text-center">
-          <div class="card-body">
-            <h5 class="card-title">Programas de estudio</h5>
-            <p class="display-5"><?= $programas ?></p>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="card text-center">
-          <div class="card-body">
-            <h5 class="card-title">Docentes</h5>
+            <h5 class="card-title">Tutores</h5>
             <p class="display-5"><?= $docentes ?></p>
           </div>
         </div>

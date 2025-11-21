@@ -1,4 +1,14 @@
 <?php require __DIR__ . '/../../layouts/header.php'; ?>
+
+<style>
+    /* Evita que el tema esconda los números de la paginación */
+    .dataTables_wrapper .dataTables_paginate .pagination .page-item,
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        display: inline-block !important;
+        visibility: visible !important;
+    }
+</style>
+
 <div class="card p-2">
     <div class="mr-3">
         <a href="<?= BASE_URL . '/biblioteca/libros/vincular' ?>" class="btn btn-primary mt-4">Nuevo +</a>
@@ -99,12 +109,17 @@
     const $apiBase = $('#apiBase');
     let dtAdopt = null;
 
-    // Inyecta X-Api-Key a llamadas al Maestro
+    // Inyecta X-Api-Key a llamadas al Maestro (seguirá habiendo preflight por header custom)
     $(document).ajaxSend(function(_e, xhr, opts) {
         const base = ($apiBase.val() || '').replace(/\/+$/, '');
         if (opts.url && opts.url.indexOf(base) === 0) {
             const k = ($apiKey.val() || '').trim();
-            if (k) xhr.setRequestHeader('X-Api-Key', k);
+            if (!k) {
+                console.warn('[SIGI] Falta X-Api-Key, abort:', opts.url);
+                xhr.abort();
+                return;
+            }
+            xhr.setRequestHeader('X-Api-Key', k);
         }
     });
 
@@ -112,35 +127,31 @@
         try {
             return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
                 (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
-        } catch (e) {
+        } catch {
             return 'idem-' + Date.now() + '-' + Math.random().toString(16).slice(2);
         }
     }
 
-    /* =========================
-       Diccionarios locales (Sigi)
-       ========================= */
+    // Diccionarios locales para nombres
     const dict = {
-        progName: new Map(), // id_prog -> nombre
-        planName: new Map(), // id_plan -> nombre
-        modName: new Map(), // id_mod  -> descripcion
-        semName: new Map(), // id_sem  -> descripcion
-        udName: new Map(), // id_ud   -> nombre
-        planesByProg: new Map(), // id_prog -> []
-        modsByPlan: new Map(), // id_plan -> []
-        semsByMod: new Map(), // id_mod  -> []
-        udsBySem: new Map(), // id_sem  -> []
+        progName: new Map(),
+        planName: new Map(),
+        modName: new Map(),
+        semName: new Map(),
+        udName: new Map(),
+        planesByProg: new Map(),
+        modsByPlan: new Map(),
+        semsByMod: new Map(),
+        udsBySem: new Map(),
     };
 
-    // Pre-carga programas desde PHP (si vienen en la vista)
+    // Precarga programas desde PHP
     window.PROGS_FROM_PHP = window.PROGS_FROM_PHP ||
         <?php if (!empty($programas)) {
             echo json_encode(array_map(fn($p) => ['id' => $p['id'], 'nombre' => $p['nombre']], $programas), JSON_UNESCAPED_UNICODE);
         } else {
             echo '[]';
         } ?>;
-
-    // Ya puedes usarlo:
     window.PROGS_FROM_PHP.forEach(p => dict.progName.set(String(p.id), p.nombre));
 
     function ensurePlanesForProg(idProg) {
@@ -150,9 +161,8 @@
             .then(arr => {
                 dict.planesByProg.set(idProg, arr);
                 arr.forEach(pl => dict.planName.set(String(pl.id), pl.nombre));
-            }).catch(() => {
-                /* noop */
-            });
+            })
+            .catch(err => console.warn('[SIGI] planes/porPrograma fallo', err));
     }
 
     function ensureModulosForPlan(idPlan) {
@@ -162,9 +172,8 @@
             .then(arr => {
                 dict.modsByPlan.set(idPlan, arr);
                 arr.forEach(m => dict.modName.set(String(m.id), m.descripcion));
-            }).catch(() => {
-                /* noop */
-            });
+            })
+            .catch(err => console.warn('[SIGI] moduloFormativo/porPlan fallo', err));
     }
 
     function ensureSemestresForModulo(idMod) {
@@ -174,9 +183,8 @@
             .then(arr => {
                 dict.semsByMod.set(idMod, arr);
                 arr.forEach(s => dict.semName.set(String(s.id), s.descripcion));
-            }).catch(() => {
-                /* noop */
-            });
+            })
+            .catch(err => console.warn('[SIGI] semestre/porModulo fallo', err));
     }
 
     function ensureUDsForSemestre(idSem) {
@@ -186,58 +194,40 @@
             .then(arr => {
                 dict.udsBySem.set(idSem, arr);
                 arr.forEach(u => dict.udName.set(String(u.id), u.nombre));
-            }).catch(() => {
-                /* noop */
-            });
+            })
+            .catch(err => console.warn('[SIGI] unidadDidactica/porSemestre fallo', err));
     }
 
-    // Carga en lote los diccionarios necesarios para un conjunto de filas
     function ensureDictionaries(rows) {
-        // 1) Asegurar PLANES por PROGRAMA (si falta el nombre del plan del row)
         const needProgForPlans = new Set();
         rows.forEach(r => {
             const v = r.vinculo || {};
-            if (v.id_plan && !dict.planName.has(String(v.id_plan)) && v.id_programa_estudio) {
-                needProgForPlans.add(String(v.id_programa_estudio));
-            }
+            if (v.id_plan && !dict.planName.has(String(v.id_plan)) && v.id_programa_estudio) needProgForPlans.add(String(v.id_programa_estudio));
         });
-        const p1 = Promise.all(Array.from(needProgForPlans).map(ensurePlanesForProg));
-
-        // 2) Asegurar MODULOS por PLAN (si falta el nombre del módulo del row)
-        return p1.then(() => {
+        return Promise.all(Array.from(needProgForPlans).map(ensurePlanesForProg))
+            .then(() => {
                 const needPlanForMods = new Set();
                 rows.forEach(r => {
                     const v = r.vinculo || {};
-                    if (v.id_modulo_formativo && !dict.modName.has(String(v.id_modulo_formativo)) && v.id_plan) {
-                        needPlanForMods.add(String(v.id_plan));
-                    }
+                    if (v.id_modulo_formativo && !dict.modName.has(String(v.id_modulo_formativo)) && v.id_plan) needPlanForMods.add(String(v.id_plan));
                 });
                 return Promise.all(Array.from(needPlanForMods).map(ensureModulosForPlan));
-            })
-            // 3) Asegurar SEMESTRES por MODULO (si falta el nombre del semestre del row)
-            .then(() => {
+            }).then(() => {
                 const needModForSems = new Set();
                 rows.forEach(r => {
                     const v = r.vinculo || {};
-                    if (v.id_semestre && !dict.semName.has(String(v.id_semestre)) && v.id_modulo_formativo) {
-                        needModForSems.add(String(v.id_modulo_formativo));
-                    }
+                    if (v.id_semestre && !dict.semName.has(String(v.id_semestre)) && v.id_modulo_formativo) needModForSems.add(String(v.id_modulo_formativo));
                 });
                 return Promise.all(Array.from(needModForSems).map(ensureSemestresForModulo));
-            })
-            // 4) Asegurar UDs por SEMESTRE (si falta el nombre de la UD del row)
-            .then(() => {
+            }).then(() => {
                 const needSemForUDs = new Set();
                 rows.forEach(r => {
                     const v = r.vinculo || {};
-                    if (v.id_unidad_didactica && !dict.udName.has(String(v.id_unidad_didactica)) && v.id_semestre) {
-                        needSemForUDs.add(String(v.id_semestre));
-                    }
+                    if (v.id_unidad_didactica && !dict.udName.has(String(v.id_unidad_didactica)) && v.id_semestre) needSemForUDs.add(String(v.id_semestre));
                 });
                 return Promise.all(Array.from(needSemForUDs).map(ensureUDsForSemestre));
             });
     }
-
 
     function decorateRows(rows) {
         return rows.map(r => {
@@ -247,22 +237,97 @@
                 plan_nombre: dict.planName.get(String(v.id_plan)) || '',
                 modulo_desc: dict.modName.get(String(v.id_modulo_formativo)) || '',
                 semestre_desc: dict.semName.get(String(v.id_semestre)) || '',
-                ud_nombre: dict.udName.get(String(v.id_unidad_didactica)) || '',
+                ud_nombre: dict.udName.get(String(v.id_unidad_didactica)) || ''
             });
         });
     }
 
-    /* ================
-       DataTable render
-       ================ */
-    function renderTable($table, rows) {
-        if (dtAdopt) {
-            dtAdopt.clear();
-            dtAdopt.rows.add(rows).draw(false);
-            return dtAdopt;
+    function buildQuery(obj) {
+        return Object.entries(obj)
+            .filter(([, v]) => v !== '' && v != null)
+            .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+            .join('&');
+    }
+
+    function getFilters() {
+        return {
+            id_programa_estudio: $('#id_programa_estudios').val() || '',
+            id_plan: $('#id_plan_estudio').val() || '',
+            id_modulo_formativo: $('#id_modulo_formativo').val() || '',
+            id_semestre: $('#id_semestre').val() || '',
+            id_unidad_didactica: $('#id_unidad_didactica').val() || ''
+        };
+    }
+
+    // --- DataTables serverSide: solo carga página visible ---
+    function initTable() {
+        const base = ($apiBase.val() || '').replace(/\/+$/, '');
+
+        // 1) Si ya existe, destruye antes de crear (evita estados viejos con pages=1)
+        if ($.fn.DataTable.isDataTable('#tbl-adoptados')) {
+            $('#tbl-adoptados').DataTable().destroy();
+            $('#tbl-adoptados tbody').empty();
         }
-        dtAdopt = $table.DataTable({
-            data: rows,
+
+        dtAdopt = $('#tbl-adoptados').DataTable({
+            serverSide: true,
+            processing: true,
+            searching: false,
+            ordering: false,
+            paging: true,
+            info: true,
+            deferRender: true,
+            pageLength: 10,
+            lengthMenu: [10, 25, 50, 100],
+            pagingType: 'full_numbers',
+            // 2) Asegura que el contenedor de paginación aparezca
+            dom: 'lfrtip',
+            language: {
+                url: 'https://cdn.datatables.net/plug-ins/1.13.5/i18n/es-ES.json'
+            },
+
+            ajax: async function(dtReq, callback) {
+                const page = Math.floor(dtReq.start / dtReq.length) + 1;
+                const per_page = dtReq.length;
+                const qs = buildQuery({
+                    ...getFilters(),
+                    page,
+                    per_page
+                });
+
+                try {
+                    const resp = await $.getJSON(`${base}/library/adopted${qs ? `?${qs}` : ''}`);
+                    const rows = resp?.data || [];
+                    await ensureDictionaries(rows);
+                    const decorated = decorateRows(rows);
+
+                    const total = Number(resp?.pagination?.total ?? 0);
+
+                    callback({
+                        draw: dtReq.draw, // requerido por DataTables
+                        data: decorated,
+                        // ojo: DataTables usa recordsFiltered para paginar
+                        recordsTotal: total,
+                        recordsFiltered: total
+                    });
+
+                    // Debug útil: revisa pages > 1
+                    setTimeout(() => {
+                        const info = $('#tbl-adoptados').DataTable().page.info();
+                        //console.log('page.info()', info);
+                    }, 0);
+
+                } catch (e) {
+                    console.error(e);
+                    callback({
+                        draw: dtReq.draw,
+                        data: [],
+                        recordsTotal: 0,
+                        recordsFiltered: 0
+                    });
+                }
+            },
+
             columns: [{
                     data: null,
                     orderable: false,
@@ -289,12 +354,12 @@
                 {
                     data: null,
                     orderable: false,
-                    render: r => r.portada_url ? `<a href="${r.portada_url}" target="_blank">Ver</a>` : ''
+                    render: r => r.portada_url ? `<a href="${r.portada_url}" target="_blank" rel="noopener">Ver</a>` : ''
                 },
                 {
                     data: null,
                     orderable: false,
-                    render: r => `<a href="${r.archivo_url}" target="_blank">Ver</a>`
+                    render: r => r.archivo_url ? `<a href="${r.archivo_url}" target="_blank" rel="noopener">Ver</a>` : ''
                 },
                 {
                     data: null,
@@ -309,53 +374,20 @@
                             `data-sem="${v.id_semestre||''}"`,
                             `data-ud="${v.id_unidad_didactica||''}"`
                         ].join(' ');
-                        return `
-            <div class="btn-group btn-group-sm" role="group">
-              
-              <button class="btn btn-danger btn-unadopt m-1" ${attrs}>Desvincular</button>
-            </div>`;
+                        return `<div class="btn-group btn-group-sm" role="group">
+                    <button class="btn btn-danger btn-unadopt m-1" ${attrs}>Desvincular</button>
+                  </div>`;
                     }
                 }
-            ],
-            language: {
-                url: 'https://cdn.datatables.net/plug-ins/1.13.5/i18n/es-ES.json'
-            }, // usa copia local
-            pageLength: 10,
-            ordering: true
+            ]
         });
-        return dtAdopt;
+
+        window.dtAdopt = dtAdopt;
     }
 
-    /* ============
-       Cargar datos
-       ============ */
-    function getFilters() {
-        return {
-            id_programa_estudio: $('#id_programa_estudios').val() || '',
-            id_plan: $('#id_plan_estudio').val() || '',
-            id_modulo_formativo: $('#id_modulo_formativo').val() || '',
-            id_semestre: $('#id_semestre').val() || '',
-            id_unidad_didactica: $('#id_unidad_didactica').val() || ''
-        };
-    }
 
-    async function cargarVinculados() {
-        const base = ($apiBase.val() || '').replace(/\/+$/, '');
-        const f = getFilters();
-        const qs = Object.entries(f).filter(([, v]) => v).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');
-        const url = `${base}/library/adopted` + (qs ? `?${qs}` : '');
-        const data = await $.getJSON(url);
-        const rows = data?.data || [];
 
-        // estos usan r.vinculo.*  → si el API no lo trae, nombres quedan vacíos
-        await ensureDictionaries(rows);
-        const decorated = decorateRows(rows);
-        renderTable($('#tbl-adoptados'), decorated);
-    }
-
-    /* ==========================
-       Desadoptar (con la cadena)
-       ========================== */
+    // SweetAlert util
     function ensureSweetAlert() {
         if (window.Swal) return Promise.resolve();
         return new Promise((res, rej) => {
@@ -367,16 +399,16 @@
         });
     }
 
-    // util para escapar HTML en títulos/textos
     function esc(s) {
         return String(s || '').replace(/[&<>"']/g, m => ({
             '&': '&amp;',
             '<': '&lt;',
             '>': '&gt;',
             '"': '&quot;'
-        } [m]))
+        } [m]));
     }
 
+    // Desvincular → refresca SOLO la página actual
     $(document).on('click', '.btn-unadopt', async function(e) {
         e.preventDefault();
         await ensureSweetAlert();
@@ -386,11 +418,9 @@
         const b = this.dataset;
         const libroId = b.id;
 
-        // tomar el título desde la fila (si DataTable está inicializado)
-        const row = (window.dtAdopt ? dtAdopt.row($btn.closest('tr')).data() : null);
+        const row = dtAdopt ? dtAdopt.row($btn.closest('tr')).data() : null;
         const titulo = row?.titulo || 'este libro';
 
-        // ¿tienes la cadena académica en data-*?
         const hasChain = b.prog && b.plan && b.mod && b.sem && b.ud;
         const postData = hasChain ? {
             id_programa_estudio: b.prog,
@@ -410,10 +440,8 @@
             reverseButtons: true,
             focusCancel: true
         });
-
         if (!confirm.isConfirmed) return;
 
-        // loading mientras ejecuta
         Swal.fire({
             title: 'Procesando...',
             allowOutsideClick: false,
@@ -437,13 +465,8 @@
                 showConfirmButton: false
             });
 
-            // refresca solo la fila si es posible
-            if (window.dtAdopt) {
-                dtAdopt.row($btn.closest('tr')).remove().draw(false);
-            } else {
-                cargarVinculados();
-            }
-
+            // refresca esta página de la tabla (sin ir a la primera)
+            dtAdopt?.ajax.reload(null, false);
         } catch (err) {
             const msg = err?.responseJSON?.error?.message || err.statusText || 'Error';
             Swal.fire({
@@ -453,50 +476,44 @@
             });
         }
     });
-</script>
 
-<script>
-    // Filtros dependientes (tus endpoints locales SIGI)
+    // ---- Filtros dependientes ----
+    const reloadDebounced = (() => {
+        let t;
+        return () => {
+            clearTimeout(t);
+            t = setTimeout(() => dtAdopt?.ajax.reload(null, true), 160);
+        };
+    })();
+
     $('#id_programa_estudios').on('change', function() {
         const idPrograma = $(this).val();
-        $('#id_plan_estudio').html('<option value="">Todos</option>');
-        $('#id_modulo_formativo').html('<option value="">Todos</option>');
-        $('#id_semestre').html('<option value="">Todos</option>');
-        $('#id_unidad_didactica').html('<option value="">Todos</option>');
+        $('#id_plan_estudio, #id_modulo_formativo, #id_semestre, #id_unidad_didactica').html('<option value="">Todos</option>');
         if (idPrograma) {
             $.getJSON('<?= BASE_URL ?>/sigi/planes/porPrograma/' + idPrograma, pl => {
                 pl.forEach(x => $('#id_plan_estudio').append(`<option value="${x.id}">${x.nombre}</option>`));
-            }).always(cargarVinculados);
-        } else {
-            cargarVinculados();
-        }
+            }).always(reloadDebounced);
+        } else reloadDebounced();
     });
 
     $('#id_plan_estudio').on('change', function() {
         const idPlan = $(this).val();
-        $('#id_modulo_formativo').html('<option value="">Todos</option>');
-        $('#id_semestre').html('<option value="">Todos</option>');
-        $('#id_unidad_didactica').html('<option value="">Todos</option>');
+        $('#id_modulo_formativo, #id_semestre, #id_unidad_didactica').html('<option value="">Todos</option>');
         if (idPlan) {
             $.getJSON('<?= BASE_URL ?>/sigi/moduloFormativo/porPlan/' + idPlan, ms => {
                 ms.forEach(m => $('#id_modulo_formativo').append(`<option value="${m.id}">${m.descripcion}</option>`));
-            }).always(cargarVinculados);
-        } else {
-            cargarVinculados();
-        }
+            }).always(reloadDebounced);
+        } else reloadDebounced();
     });
 
     $('#id_modulo_formativo').on('change', function() {
         const idMod = $(this).val();
-        $('#id_semestre').html('<option value="">Todos</option>');
-        $('#id_unidad_didactica').html('<option value="">Todos</option>');
+        $('#id_semestre, #id_unidad_didactica').html('<option value="">Todos</option>');
         if (idMod) {
             $.getJSON('<?= BASE_URL ?>/sigi/semestre/porModulo/' + idMod, ss => {
                 ss.forEach(s => $('#id_semestre').append(`<option value="${s.id}">${s.descripcion}</option>`));
-            }).always(cargarVinculados);
-        } else {
-            cargarVinculados();
-        }
+            }).always(reloadDebounced);
+        } else reloadDebounced();
     });
 
     $('#id_semestre').on('change', function() {
@@ -505,14 +522,12 @@
         if (idSem) {
             $.getJSON('<?= BASE_URL ?>/sigi/unidadDidactica/porSemestre/' + idSem, uds => {
                 uds.forEach(u => $('#id_unidad_didactica').append(`<option value="${u.id}">${u.nombre}</option>`));
-            }).always(cargarVinculados);
-        } else {
-            cargarVinculados();
-        }
+            }).always(reloadDebounced);
+        } else reloadDebounced();
     });
 
-    $('#id_unidad_didactica').on('change', cargarVinculados);
+    $('#id_unidad_didactica').on('change', reloadDebounced);
 
-    // carga inicial
-    window.addEventListener('load', cargarVinculados);
+    // Carga inicial
+    window.addEventListener('load', initTable);
 </script>
