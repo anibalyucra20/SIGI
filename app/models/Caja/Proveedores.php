@@ -130,7 +130,7 @@ class Proveedores extends Model
         $db = self::$db;
 
         // 1. Campos obligatorios
-        $campos_obligatorios = ['razon_social', 'ruc', 'direccion', 'telefono', 'correo', 'ref_contacto'];
+        $campos_obligatorios = ['razon_social', 'ruc', 'direccion'];
         foreach ($campos_obligatorios as $campo) {
             if (empty($data[$campo])) {
                 $errores[] = "El campo " . $campo . " es obligatorio.";
