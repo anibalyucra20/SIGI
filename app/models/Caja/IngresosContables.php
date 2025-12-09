@@ -168,8 +168,8 @@ class IngresosContables extends Model
                 ':id_tipo_documento'        => $data['id_tipo_documento'],
                 ':serie_documento'          => $data['serie_documento'],
                 ':numero_documento'         => $data['numero_documento'],
-                ':fecha_documento'          => $data['fecha_documento'] ?? '',
-                ':observacion_documento'    => $data['observacion_documento']?? ''
+                ':fecha_documento'          => $data['fecha_documento'] ?? '0000-00-00',
+                ':observacion_documento'    => $data['observacion_documento']
             ];
         }
         $stmt = self::$db->prepare($sql);
