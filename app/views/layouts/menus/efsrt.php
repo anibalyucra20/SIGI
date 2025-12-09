@@ -16,32 +16,27 @@
             <?php if (\Core\Auth::tieneRolEnEfsrt()): ?>
                 <?php if (\Core\Auth::esAdminEfsrt()): ?>
                     <li class="nav-item">
-                        <a class="nav-link"
-                            href="<?= BASE_URL ?>/efsrt/efsrt">
+                        <a class="nav-link" href="<?= BASE_URL ?>/efsrt/efsrt">
                             <i class="fas fa-bookmark"></i> Registro EFSRT
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link"
-                            href="<?= BASE_URL ?>/efsrt/supervisores">
+                        <a class="nav-link" href="<?= BASE_URL ?>/efsrt/supervisores">
                             <i class="fas fa-user-tie"></i> Supervisores
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link"
-                            href="<?= BASE_URL ?>/efsrt/programacion">
+                        <a class="nav-link" href="<?= BASE_URL ?>/efsrt/programacion">
                             <i class="fas fa-book-open"></i> Programación de EFSRT
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link"
-                            href="<?= BASE_URL ?>/efsrt/reportes">
+                        <a class="nav-link" href="<?= BASE_URL ?>/efsrt/reportes">
                             <i class="fas fa-chart-line"></i> Reportes
                         </a>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle arrow-none" href="#" id="nav-periodos" role="button"
-                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <a class="nav-link dropdown-toggle arrow-none" href="#" id="nav-periodos" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             <i class="fa fa-cog"></i> Gestión de EFSRT<div class="arrow-down"></div>
                         </a>
                         <div class="dropdown-menu" aria-labelledby="nav-periodos">

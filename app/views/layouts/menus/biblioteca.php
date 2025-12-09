@@ -23,7 +23,7 @@
                 </li>
                 <li class="nav-item">
                     <a class="nav-link"
-                        href="<?= BASE_URL ?>/biblioteca/favoritos">
+                        href="<?= BASE_URL ?>/biblioteca/libros/favoritos">
                         <i class="far fa-bookmark"></i> Mis Favoritos
                     </a>
                 </li>
