@@ -162,14 +162,14 @@ class IngresosContables extends Model
                 ':total_ingreso'             => $data['total_ingreso'],
                 ':numero'                   => $data['numero'],
                 ':observacion'              => $data['observacion'],
-                ':id_centro_costos_afectado'=> $data['id_centro_costos_afectado'],
+                ':id_centro_costos_afectado' => $data['id_centro_costos_afectado'],
                 ':id_cuenta_afectada'       => $data['id_cuenta_afectada'],
                 ':id_proveedor'             => $data['id_proveedor'],
                 ':id_tipo_documento'        => $data['id_tipo_documento'],
                 ':serie_documento'          => $data['serie_documento'],
                 ':numero_documento'         => $data['numero_documento'],
-                ':fecha_documento'          => $data['fecha_documento'],
-                ':observacion_documento'    => $data['observacion_documento']
+                ':fecha_documento'          => $data['fecha_documento'] ?? '',
+                ':observacion_documento'    => $data['observacion_documento']?? ''
             ];
         }
         $stmt = self::$db->prepare($sql);
