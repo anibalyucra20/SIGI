@@ -121,7 +121,7 @@ class RubrosIngresosContables extends Model
         $db = self::$db;
 
         // 1. Campos obligatorios
-        $campos_obligatorios = ['codigo', 'descripcion', 'clasificador'];
+        $campos_obligatorios = ['codigo', 'descripcion'];
         foreach ($campos_obligatorios as $campo) {
             if (empty($data[$campo])) {
                 $errores[] = "El campo " . $campo . " es obligatorio.";
