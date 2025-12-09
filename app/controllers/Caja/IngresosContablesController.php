@@ -163,7 +163,7 @@ class IngresosContablesController extends Controller
                 'id_tipo_documento'         => ($_POST['id_tipo_documento']),
                 'serie_documento'           => trim($_POST['serie_documento']),
                 'numero_documento'          => trim($_POST['numero_documento']),
-                'fecha_documento'           => $_POST['fecha_documento'],
+                'fecha_documento'           => $_POST['fecha_documento'] ?? NULL,
                 'observacion_documento'     => $_POST['observacion_documento'],
             ];
             $id = $_POST['id'] ?? null;
