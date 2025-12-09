@@ -5,6 +5,6 @@
   </div>
   <div class="mb-2 col-md-6">
     <label class="form-label">Saldo Inicial *</label>
-    <textarea name="saldo_inicial" class="form-control" maxlength="13" required rows="3"><?= htmlspecialchars($data['saldo_inicial'] ?? '') ?></textarea>
+    <input type="number" name="saldo_inicial" class="form-control" maxlength="13" required rows="3" value="<?= htmlspecialchars($data['saldo_inicial'] ?? '') ?>">
   </div>
 </div>

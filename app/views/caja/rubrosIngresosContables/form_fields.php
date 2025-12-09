@@ -9,7 +9,7 @@
   </div>
   <div class="mb-2 col-md-4">
     <label class="form-label">Clasificador *</label>
-    <input type="text" name="clasificador" class="form-control" maxlength="30" required value="<?= htmlspecialchars($data['clasificador'] ?? '') ?>">
+    <input type="text" name="clasificador" class="form-control" maxlength="30" value="<?= htmlspecialchars($data['clasificador'] ?? '') ?>">
   </div>
   <?php if ($isEdit): /* Solo al editar */ ?>
     <!-- Estado (Activo/Inactivo) -->
