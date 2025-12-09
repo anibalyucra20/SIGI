@@ -148,6 +148,7 @@ class IngresosContablesController extends Controller
             $TiposDocumentos = $this->ObjTiposDocumentos->listar();
             $n_correlativo = ($this->model->utlimo_correlativo()) ?? 0;
             $correlativo = $n_correlativo->correlativo + 1;
+            $fecha_doc = (!empty($_POST['fecha_documento'])) ? $_POST['fecha_documento'] : '0000-00-00';
             $data = [
                 'id'                        => $_POST['id'] ?? null,
                 'correlativo'               => $correlativo,
@@ -163,7 +164,7 @@ class IngresosContablesController extends Controller
                 'id_tipo_documento'         => ($_POST['id_tipo_documento']),
                 'serie_documento'           => trim($_POST['serie_documento']),
                 'numero_documento'          => trim($_POST['numero_documento']),
-                'fecha_documento'           => $_POST['fecha_documento'] ?? '0000-00-00',
+                'fecha_documento'           => $fecha_doc,
                 'observacion_documento'     => $_POST['observacion_documento'],
             ];
             $id = $_POST['id'] ?? null;
