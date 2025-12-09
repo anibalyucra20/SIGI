@@ -12,17 +12,17 @@
     <input type="text" name="direccion" class="form-control" maxlength="300" required value="<?= htmlspecialchars($data['direccion'] ?? '') ?>">
   </div>
   <div class="col-md-2 p-2">
-    <label class="form-label">Telefono *</label>
-    <input type="text" name="telefono" class="form-control" maxlength="20" required value="<?= ($data['telefono'] ?? '') ?>">
+    <label class="form-label">Telefono</label>
+    <input type="text" name="telefono" class="form-control" maxlength="20" value="<?= ($data['telefono'] ?? '') ?>">
   </div>
   <div class="col-md-5 p-2">
-    <label class="form-label">Correo Electrónico *</label>
-    <input type="text" name="correo" class="form-control" maxlength="100" required value="<?= htmlspecialchars($data['correo'] ?? '') ?>">
+    <label class="form-label">Correo Electrónico</label>
+    <input type="text" name="correo" class="form-control" maxlength="100" value="<?= htmlspecialchars($data['correo'] ?? '') ?>">
   </div>
 </div>
 <div class="mb-2">
-  <label class="form-label">Referencia de Contacto *</label>
-  <textarea name="ref_contacto" class="form-control" maxlength="200" required rows="3"><?= htmlspecialchars($data['ref_contacto'] ?? '') ?></textarea>
+  <label class="form-label">Referencia de Contacto</label>
+  <textarea name="ref_contacto" class="form-control" maxlength="200" rows="3"><?= htmlspecialchars($data['ref_contacto'] ?? '') ?></textarea>
 </div>
 <?php if ($isEdit): /* Solo al editar */ ?>
   <!-- Estado (Activo/Inactivo) -->
