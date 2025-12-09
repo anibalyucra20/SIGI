@@ -2,12 +2,12 @@
   <div class="col-md-2 p-1">
     <label class="form-label">Correlativo</label>
     <input type="text" name="correlativo" class="form-control" maxlength="11"
-      required value="<?= htmlspecialchars($data['correlativo'] ?? '') ?>" readonly>
+      required value="<?= htmlspecialchars($data['correlativo'] ?? '') ?>" readonly >
   </div>
   <div class="col-md-3 p-1">
     <label class="form-label">Fecha *</label>
     <input type="date" name="fecha" class="form-control" maxlength="200"
-      required value="<?= htmlspecialchars($data['fecha'] ?? '') ?>">
+      required value="<?= htmlspecialchars($data['fecha'] ?? '') ?>" max="<?= date('Y-m-d'); ?>">
   </div>
 </div>
 
@@ -223,7 +223,7 @@
   </div>
   <div class="col-md-4 p-1">
     <label class="form-label">Fecha del Dcto de Sustento (Opcional)</label>
-    <input type="date" name="fecha_documento" class="form-control" maxlength="100" value="<?= htmlspecialchars($data['fecha_documento'] ?? '') ?>">
+    <input type="date" name="fecha_documento" class="form-control" maxlength="100" value="<?= htmlspecialchars($data['fecha_documento'] ?? '') ?>" max="<?= date('Y-m-d'); ?>">
   </div>
   <div class="col-md-8 p-1">
     <label class="form-label">Observaciones del Dcto de Sustento</label>
