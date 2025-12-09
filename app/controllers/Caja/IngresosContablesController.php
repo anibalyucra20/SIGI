@@ -106,8 +106,8 @@ class IngresosContablesController extends Controller
     {
         $data = array();
         if (\Core\Auth::esAdminCaja()):
-            $n_correlativo = ($this->model->utlimo_correlativo()) ?? 0;
-            $correlativo = $n_correlativo->correlativo + 1;
+            $n_correlativo = ($this->model->utlimo_correlativo());
+            $correlativo = $n_correlativo['correlativo'] + 1;
             $RubrosIngreso = $this->ObjRubrosIngresosContables->listar();
             $MediosPago = $this->ObjMediosPago->listar();
             $CentrosCostos = $this->ObjCentroCostos->listar();
@@ -146,8 +146,8 @@ class IngresosContablesController extends Controller
             $Cuentas = $this->ObjPlanCuentas->listar();
             $Proveedores = $this->ObjProveedores->listar();
             $TiposDocumentos = $this->ObjTiposDocumentos->listar();
-            $n_correlativo = ($this->model->utlimo_correlativo()) ?? 0;
-            $correlativo = $n_correlativo->correlativo + 1;
+            $n_correlativo = $this->model->utlimo_correlativo();
+            $correlativo = $n_correlativo['correlativo'] + 1;
             $fecha_doc = (!empty($_POST['fecha_documento'])) ? $_POST['fecha_documento'] : '0000-00-00';
             $data = [
                 'id'                        => $_POST['id'] ?? null,

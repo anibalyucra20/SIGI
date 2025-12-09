@@ -106,8 +106,9 @@ class EgresosGastosController extends Controller
     {
         $data = array();
         if (\Core\Auth::esAdminCaja()):
-            $n_correlativo = ($this->model->utlimo_correlativo()) ?? 0;
-            $correlativo = $n_correlativo->correlativo + 1;
+            $n_correlativo = $this->model->utlimo_correlativo();
+            $correlativo = $n_correlativo['correlativo'] + 1;
+            
             $RubrosEgreso = $this->ObjRubrosEgresosContables->listar();
             $MediosPago = $this->ObjMediosPago->listar();
             $CentrosCostos = $this->ObjCentroCostos->listar();
@@ -115,8 +116,10 @@ class EgresosGastosController extends Controller
             $Proveedores = $this->ObjProveedores->listar();
             $TiposDocumentos = $this->ObjTiposDocumentos->listar();
 
-            $data['correlativo'] = $correlativo;
-            $data['fecha'] = date('Y-m-d');
+            $data = [
+                'correlativo'               => $correlativo,
+                'fecha'                     =>  date('Y-m-d'),
+            ];
         endif;
         $this->view('caja/egresosGastos/nuevo', [
             //'programas' => $programas,
@@ -146,8 +149,9 @@ class EgresosGastosController extends Controller
             $Cuentas = $this->ObjPlanCuentas->listar();
             $Proveedores = $this->ObjProveedores->listar();
             $TiposDocumentos = $this->ObjTiposDocumentos->listar();
-            $n_correlativo = ($this->model->utlimo_correlativo()) ?? 0;
-            $correlativo = $n_correlativo->correlativo + 1;
+            $n_correlativo = $this->model->utlimo_correlativo();
+            $correlativo = $n_correlativo['correlativo'] + 1;
+            $fecha_doc = (!empty($_POST['fecha_documento'])) ? $_POST['fecha_documento'] : '0000-00-00';
             $data = [
                 'id'                        => $_POST['id'] ?? null,
                 'correlativo'               => $correlativo,
@@ -163,7 +167,7 @@ class EgresosGastosController extends Controller
                 'id_tipo_documento'         => ($_POST['id_tipo_documento']),
                 'serie_documento'           => trim($_POST['serie_documento']),
                 'numero_documento'          => trim($_POST['numero_documento']),
-                'fecha_documento'           => $_POST['fecha_documento'],
+                'fecha_documento'           => $fecha_doc,
                 'observacion_documento'     => $_POST['observacion_documento'],
             ];
             $id = $_POST['id'] ?? null;

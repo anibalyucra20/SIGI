@@ -2,7 +2,7 @@
   <div class="col-md-2 p-1">
     <label class="form-label">Correlativo</label>
     <input type="text" name="correlativo" class="form-control" maxlength="11"
-      required value="<?= htmlspecialchars($data['correlativo'] ?? '') ?>" readonly>
+      required value="<?= ($data['correlativo'] ?? '') ?>" readonly>
   </div>
   <div class="col-md-3 p-1">
     <label class="form-label">Fecha *</label>
