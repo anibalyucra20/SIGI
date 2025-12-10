@@ -30,6 +30,7 @@ endif;
   <title><?= $pageTitle ?? 'SIGI' ?></title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="<?= BASE_URL ?>/assets/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="<?= BASE_URL ?>/assets/css/sweetalert2.min.css" rel="stylesheet" />
   <link href="<?= BASE_URL ?>/assets/css/icons.min.css" rel="stylesheet" />
   <link href="<?= BASE_URL ?>/assets/css/theme.min.css" rel="stylesheet" type="text/css" />
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap4.min.css">

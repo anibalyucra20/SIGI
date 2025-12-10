@@ -122,4 +122,10 @@ class UnidadDidactica extends Model
         $stmt->execute([$id_semestre]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+    public function getAll()
+    {
+        $stmt = self::$db->prepare("SELECT id, nombre FROM sigi_unidad_didactica ORDER BY id");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }

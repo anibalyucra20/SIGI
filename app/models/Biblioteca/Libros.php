@@ -45,7 +45,7 @@ class Libros extends Model
     public function contarFavoritos(int $idUsuario): int
     {
         $sql = "SELECT COUNT(*) FROM biblioteca_favoritos WHERE id_usuario = :u";
-        $st  = $this->db()->prepare($sql);
+        $st  = self::$db->prepare($sql);
         $st->execute([':u' => $idUsuario]);
         return (int)$st->fetchColumn();
     }
@@ -57,7 +57,7 @@ class Libros extends Model
             WHERE id_usuario = :u
             ORDER BY fecha_registro DESC
             LIMIT :o, :l";
-        $st = $this->db()->prepare($sql);
+        $st = self::$db->prepare($sql);
         $st->bindValue(':u', $idUsuario, \PDO::PARAM_INT);
         $st->bindValue(':o', $offset,    \PDO::PARAM_INT);
         $st->bindValue(':l', $limit,     \PDO::PARAM_INT);

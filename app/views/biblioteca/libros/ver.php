@@ -20,11 +20,34 @@ $esFavorito = !empty($libro['_es_favorito']); // pon esto desde el controlador a
 ?>
 
 <style>
-  .book-hero{background:#fff;border-radius:.5rem;box-shadow:0 6px 16px rgba(33,37,41,.08)}
-  .book-cover-wrap{background:#f6f7f9;border:1px solid #eef0f2;border-radius:.5rem;overflow:hidden}
-  .book-cover-wrap img{width:100%;height:auto;display:block}
-  .meta dt{font-weight:600;color:#6c757d;width:140px}
-  .meta dd{margin-bottom:.5rem}
+  .book-hero {
+    background: #fff;
+    border-radius: .5rem;
+    box-shadow: 0 6px 16px rgba(33, 37, 41, .08)
+  }
+
+  .book-cover-wrap {
+    background: #f6f7f9;
+    border: 1px solid #eef0f2;
+    border-radius: .5rem;
+    overflow: hidden
+  }
+
+  .book-cover-wrap img {
+    width: 100%;
+    height: auto;
+    display: block
+  }
+
+  .meta dt {
+    font-weight: 600;
+    color: #6c757d;
+    width: 140px
+  }
+
+  .meta dd {
+    margin-bottom: .5rem
+  }
 </style>
 
 <div class="">
@@ -39,8 +62,7 @@ $esFavorito = !empty($libro['_es_favorito']); // pon esto desde el controlador a
           id="btnFav"
           class="btn <?= $esFavorito ? 'btn-primary' : 'btn-outline-primary' ?>"
           data-id="<?= $id ?>"
-          type="button"
-        >
+          type="button">
           <span class="ico"><?= $esFavorito ? '♥' : '♡' ?></span>
           <span class="txt"><?= $esFavorito ? 'En favoritos' : 'Añadir a Favoritos' ?></span>
         </button>
@@ -53,7 +75,9 @@ $esFavorito = !empty($libro['_es_favorito']); // pon esto desde el controlador a
       </div>
 
       <div class="col-3">
-        <img src="<?= $cover ?>" alt="imagen del libro <?= $titulo ?>" style="width:100%;">
+        <a href="<?= BASE_URL ?>/biblioteca/libros/leer/<?= $id; ?>">
+          <img src="<?= $cover ?>" alt="imagen del libro <?= $titulo ?>" style="width:100%;">
+        </a>
       </div>
 
       <div class="col-md-9">
@@ -61,12 +85,18 @@ $esFavorito = !empty($libro['_es_favorito']); // pon esto desde el controlador a
         <p class="text-muted mb-4"><?= $autor !== '' ? $autor : '—' ?></p>
 
         <dl class="row meta">
-          <dt class="col-sm-3 col-md-4">ISBN</dt><dd class="col-sm-9 col-md-8"><?= $isbn ?: '—' ?></dd>
-          <dt class="col-sm-3 col-md-4">Editorial</dt><dd class="col-sm-9 col-md-8"><?= $editorial ?: '—' ?></dd>
-          <dt class="col-sm-3 col-md-4">Edición</dt><dd class="col-sm-9 col-md-8"><?= $edicion ?: '—' ?></dd>
-          <dt class="col-sm-3 col-md-4">Tipo</dt><dd class="col-sm-9 col-md-8"><?= $tipo ?: '—' ?></dd>
-          <dt class="col-sm-3 col-md-4">Año</dt><dd class="col-sm-9 col-md-8"><?= $anio ?: '—' ?></dd>
-          <dt class="col-sm-3 col-md-4">Temas Relacionados</dt><dd class="col-sm-9 col-md-8"><?= $temas_relacionados ?: '—' ?></dd>
+          <dt class="col-sm-3 col-md-4">ISBN</dt>
+          <dd class="col-sm-9 col-md-8"><?= $isbn ?: '—' ?></dd>
+          <dt class="col-sm-3 col-md-4">Editorial</dt>
+          <dd class="col-sm-9 col-md-8"><?= $editorial ?: '—' ?></dd>
+          <dt class="col-sm-3 col-md-4">Edición</dt>
+          <dd class="col-sm-9 col-md-8"><?= $edicion ?: '—' ?></dd>
+          <dt class="col-sm-3 col-md-4">Tipo</dt>
+          <dd class="col-sm-9 col-md-8"><?= $tipo ?: '—' ?></dd>
+          <dt class="col-sm-3 col-md-4">Año</dt>
+          <dd class="col-sm-9 col-md-8"><?= $anio ?: '—' ?></dd>
+          <dt class="col-sm-3 col-md-4">Temas Relacionados</dt>
+          <dd class="col-sm-9 col-md-8"><?= $temas_relacionados ?: '—' ?></dd>
         </dl>
       </div>
     </div>
@@ -80,51 +110,53 @@ $esFavorito = !empty($libro['_es_favorito']); // pon esto desde el controlador a
 <?php require __DIR__ . '/../../layouts/footer.php'; ?>
 
 <script>
-(function(){
-  const btn = document.getElementById('btnFav');
-  if(!btn) return;
+  (function() {
+    const btn = document.getElementById('btnFav');
+    if (!btn) return;
 
-  const base = '<?= rtrim(BASE_URL, "/") ?>';
-  let loading = false;
+    const base = '<?= rtrim(BASE_URL, "/") ?>';
+    let loading = false;
 
-  function setState(isFav){
-    btn.classList.toggle('btn-primary', isFav);
-    btn.classList.toggle('btn-outline-primary', !isFav);
-    btn.querySelector('.ico').textContent = isFav ? '♥' : '♡';
-    btn.querySelector('.txt').textContent = isFav ? 'En favoritos' : 'Añadir a Favoritos';
-  }
+    function setState(isFav) {
+      btn.classList.toggle('btn-primary', isFav);
+      btn.classList.toggle('btn-outline-primary', !isFav);
+      btn.querySelector('.ico').textContent = isFav ? '♥' : '♡';
+      btn.querySelector('.txt').textContent = isFav ? 'En favoritos' : 'Añadir a Favoritos';
+    }
 
-  btn.addEventListener('click', async function(){
-    if(loading) return;
-    const id = this.dataset.id;
-    loading = true;
-    btn.disabled = true;
+    btn.addEventListener('click', async function() {
+      if (loading) return;
+      const id = this.dataset.id;
+      loading = true;
+      btn.disabled = true;
 
-    try{
-      const res = await fetch(`${base}/biblioteca/libros/ActualizarFavorito/${encodeURIComponent(id)}`, {
-        method: 'POST',
-        headers: { 'X-Requested-With': 'XMLHttpRequest' }, // para detectar AJAX del lado PHP
-        credentials: 'same-origin'
-      });
+      try {
+        const res = await fetch(`${base}/biblioteca/libros/ActualizarFavorito/${encodeURIComponent(id)}`, {
+          method: 'POST',
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+          }, // para detectar AJAX del lado PHP
+          credentials: 'same-origin'
+        });
 
-      const data = await res.json().catch(()=> ({}));
-      if(!res.ok || !data.ok){
-        // si no está logueado o error de permiso
-        if(data?.error === 'AUTH'){
-          window.location.href = `${base}/auth/login`;
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.ok) {
+          // si no está logueado o error de permiso
+          if (data?.error === 'AUTH') {
+            window.location.href = `${base}/auth/login`;
+            return;
+          }
+          alert(data?.message || 'No se pudo actualizar favorito.');
           return;
         }
-        alert(data?.message || 'No se pudo actualizar favorito.');
-        return;
+        setState(!!data.is_favorite);
+      } catch (e) {
+        console.error(e);
+        alert('Error de red al actualizar favorito.');
+      } finally {
+        btn.disabled = false;
+        loading = false;
       }
-      setState(!!data.is_favorite);
-    }catch(e){
-      console.error(e);
-      alert('Error de red al actualizar favorito.');
-    }finally{
-      btn.disabled = false;
-      loading = false;
-    }
-  });
-})();
+    });
+  })();
 </script>

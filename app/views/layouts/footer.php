@@ -58,6 +58,7 @@
 <script src="<?= BASE_URL ?>/assets/js/simplebar.min.js"></script>
 <script src="<?= BASE_URL ?>/assets/js/waves.js"></script>
 <script src="<?= BASE_URL ?>/assets/js/theme.js"></script>
+<script src="<?= BASE_URL ?>/assets/js/sweetalert2.min.js"></script>
 
 
 
