@@ -118,7 +118,7 @@
                                     <tr>
                                         <td>
                                             <?php if ($periodo_vigente): ?>
-                                                <textarea name="logros_obtenidos" style="width:100%; resize: none; height:auto;" rows="3"><?= $datosGenerales['logros_obtenidos'] ?></textarea>
+                                                <textarea name="logros_obtenidos" style="width:100%; resize: none; height:auto;" rows="3" maxlength="500"><?= $datosGenerales['logros_obtenidos'] ?></textarea>
                                             <?php else: ?>
                                                 <?= htmlspecialchars($datosGenerales['logros_obtenidos']) ?>
                                             <?php endif; ?>
@@ -140,7 +140,7 @@
                                     <tr>
                                         <td>
                                             <?php if ($periodo_vigente): ?>
-                                                <textarea name="dificultades" style="width:100%; resize: none; height:auto;" rows="3"><?= $datosGenerales['dificultades'] ?></textarea>
+                                                <textarea name="dificultades" style="width:100%; resize: none; height:auto;" rows="3"  maxlength="500"><?= $datosGenerales['dificultades'] ?></textarea>
                                             <?php else: ?>
                                                 <?= htmlspecialchars($datosGenerales['dificultades']) ?>
                                             <?php endif; ?>
@@ -162,7 +162,7 @@
                                     <tr>
                                         <td>
                                             <?php if ($periodo_vigente): ?>
-                                                <textarea name="sugerencias" style="width:100%; resize: none; height:auto;" rows="3"><?= $datosGenerales['sugerencias'] ?></textarea>
+                                                <textarea name="sugerencias" style="width:100%; resize: none; height:auto;" rows="3"  maxlength="500"><?= $datosGenerales['sugerencias'] ?></textarea>
                                             <?php else: ?>
                                                 <?= htmlspecialchars($datosGenerales['sugerencias']) ?>
                                             <?php endif; ?>

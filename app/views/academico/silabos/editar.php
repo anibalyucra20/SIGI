@@ -120,7 +120,7 @@ if (class_exists(\App\Helpers\HorarioHelper::class)) {
                                 </div>
                                 <div class="col-md-6">
                                     <label>Horario </label>
-                                    <textarea id="h-text" name="horario" rows="8" class="form-control" style="white-space:pre;"><?= htmlspecialchars($horarioPretty) ?></textarea>
+                                    <textarea id="h-text" name="horario" rows="8" class="form-control" style="white-space:pre;"  maxlength="200"><?= htmlspecialchars($horarioPretty) ?></textarea>
                                 </div>
                             </div>
                         <?php else: ?>

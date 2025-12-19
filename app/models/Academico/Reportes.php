@@ -67,34 +67,39 @@ class Reportes extends Model
     public function getEstudiantesMatriculados($id_programa, $id_semestre, $turno, $seccion, $periodo_id, $sede_id)
     {
         $sql = "
-       SELECT dm.id AS id_detalle_matricula,
-                u.id        AS id_usuario,
-                   u.dni,
-                   u.apellidos_nombres,
-                   pud.id_unidad_didactica AS id_ud
-            FROM acad_detalle_matricula dm
-            INNER JOIN acad_matricula m        ON dm.id_matricula = m.id
-            INNER JOIN acad_programacion_unidad_didactica pud
-                                               ON dm.id_programacion_ud   = pud.id
-            INNER JOIN acad_estudiante_programa ep ON m.id_estudiante = ep.id
-            INNER JOIN sigi_usuarios u         ON ep.id_usuario   = u.id
-            /* Validar programa por el plan/semestre */
-            INNER JOIN sigi_semestre  s        ON m.id_semestre   = s.id
-            INNER JOIN sigi_modulo_formativo mf ON s.id_modulo_formativo = mf.id
-            INNER JOIN sigi_planes_estudio pl  ON mf.id_plan_estudio    = pl.id
-            WHERE pl.id_programa_estudios = ?
-              AND s.id              = ?
-              AND m.turno           = ?
-              AND m.seccion         = ?
-              AND m.id_periodo_academico = ?
-              AND m.id_sede         = ?
-            ORDER BY u.apellidos_nombres
+        SELECT
+            dm.id AS id_detalle_matricula,
+            u.id  AS id_usuario,
+            u.dni,
+            u.apellidos_nombres,
+            pud.id_unidad_didactica AS id_ud
+        FROM acad_detalle_matricula dm
+        INNER JOIN acad_programacion_unidad_didactica pud ON pud.id = dm.id_programacion_ud
+        INNER JOIN acad_matricula m ON m.id = dm.id_matricula
+        INNER JOIN acad_estudiante_programa ep ON ep.id = m.id_estudiante
+        INNER JOIN sigi_usuarios u ON u.id = ep.id_usuario
 
+        -- Semestre REAL de la UD
+        INNER JOIN sigi_unidad_didactica ud ON ud.id = pud.id_unidad_didactica
+        INNER JOIN sigi_semestre s ON s.id = ud.id_semestre
+        INNER JOIN sigi_modulo_formativo mf ON mf.id = s.id_modulo_formativo
+        INNER JOIN sigi_planes_estudio pl ON pl.id = mf.id_plan_estudio
+
+        WHERE pl.id_programa_estudios = ?
+          AND s.id = ?                      -- semestre de la UD
+          AND pud.turno = ?                 -- mejor filtrar por la programación
+          AND pud.seccion = ?
+          AND pud.id_periodo_academico = ?
+          AND pud.id_sede = ?
+
+        ORDER BY u.apellidos_nombres
     ";
+
         $stmt = self::$db->prepare($sql);
         $stmt->execute([$id_programa, $id_semestre, $turno, $seccion, $periodo_id, $sede_id]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
 
 
     // 4. Verificar si un estudiante está matriculado en una unidad

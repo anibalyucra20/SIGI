@@ -60,30 +60,30 @@ class ReportesController extends Controller
         if (!$id_programa || !$id_semestre || !$turno || !$seccion) {
             $_SESSION['flash_error'] = 'Parámetros incompletos para generar el reporte.';
             header('Location: ' . BASE_URL . "/academico/reportes");
+            return;
         }
 
         // Obtener los datos del modelo
         $info   = $this->model->getCabeceraNomina($id_programa, $id_semestre, $turno, $seccion, $periodo_id, $sede_id);
         $unidades   = $this->model->getUnidadesDidacticas($id_programa, $id_semestre);
-        $estudiantes = $this->model->getEstudiantesMatriculados($id_programa, $id_semestre, $turno, $seccion, $periodo_id, $sede_id);
+        $rows = $this->model->getEstudiantesMatriculados($id_programa, $id_semestre, $turno, $seccion, $periodo_id, $sede_id);
         //var_dump($estudiantes);
-        $map = [];                // clave = id_usuario   (o DNI)
-        foreach ($estudiantes as $fila) {
-            $uid = $fila['id_usuario'];          // ← añade a SELECT
+        $map = [];
+        foreach ($rows as $fila) {
+            $uid = (int)$fila['id_usuario'];
+
             if (!isset($map[$uid])) {
                 $map[$uid] = [
-                    'dni'  => $fila['dni'],
+                    'dni' => $fila['dni'],
                     'apellidos_nombres' => $fila['apellidos_nombres'],
-                    'uds'  => []
+                    'uds' => []
                 ];
             }
-            // añadimos las UDs de ESTE detalle
-            $uds = $this->model->getUnidadesPorEstudiante($fila['id_detalle_matricula']);
-            foreach ($uds as $ud) {
-                $map[$uid]['uds'][$ud] = true;
-            }
+
+            $map[$uid]['uds'][(int)$fila['id_ud']] = true;
         }
-        $estudiantes = array_values($map);   // lista final SIN duplicados
+
+        $estudiantes = array_values($map);
 
         // Crear PDF
         $pdf = new TCPDF('L', 'mm', 'A4', true, 'UTF-8', false);
