@@ -192,49 +192,74 @@ class Reportes extends Model
  *      estudiante × UD × nro_calificacion
  * --------------------------------------------------------- */
     public function getCalifDetalladas(
-        int    $id_programa,
-        int    $id_sem,
-        string $turno,
-        string $secc,
-        int    $periodo_id,
-        int    $sede_id
-    ) {
-        $sql = "
-      SELECT u.id               AS id_usuario,
-             u.dni,
-             u.apellidos_nombres,
-             pud.id_unidad_didactica  AS id_ud,
-             c.nro_calificacion,
-             c.id                     AS id_calif            -- 🔑
-      FROM   acad_detalle_matricula dm
-      JOIN   acad_calificacion            c   ON c.id_detalle_matricula   = dm.id
-      JOIN   acad_matricula               m   ON dm.id_matricula          = m.id
-      JOIN   acad_estudiante_programa     ep  ON m.id_estudiante          = ep.id
-      JOIN   sigi_usuarios                u   ON ep.id_usuario            = u.id
-      JOIN   acad_programacion_unidad_didactica pud
-                                   ON dm.id_programacion_ud    = pud.id
-      JOIN   sigi_semestre                s   ON m.id_semestre            = s.id
-      JOIN   sigi_modulo_formativo        mf  ON s.id_modulo_formativo    = mf.id
-      JOIN   sigi_planes_estudio          pl  ON mf.id_plan_estudio       = pl.id
-      WHERE  pl.id_programa_estudios = ?
-        AND  s.id                  = ?
-        AND  m.turno               = ?
-        AND  m.seccion             = ?
-        AND  m.id_periodo_academico= ?
-        AND  m.id_sede             = ?
-      ORDER  BY u.apellidos_nombres, id_ud, nro_calificacion";
+    int    $id_programa,
+    int    $id_sem,
+    string $turno,
+    string $secc,
+    int    $periodo_id,
+    int    $sede_id
+) {
+    $sql = "
+        SELECT
+            u.id                     AS id_usuario,
+            u.dni,
+            u.apellidos_nombres,
+            pud.id_unidad_didactica  AS id_ud,
 
-        $st = self::$db->prepare($sql);
-        $st->execute([
-            $id_programa,
-            $id_sem,
-            $turno,
-            $secc,
-            $periodo_id,
-            $sede_id
-        ]);
-        return $st->fetchAll(PDO::FETCH_ASSOC);
-    }
+            c.nro_calificacion,
+            c.id                     AS id_calif
+
+        FROM   acad_detalle_matricula dm
+
+        -- contexto de la UD programada
+        JOIN   acad_programacion_unidad_didactica pud
+                 ON pud.id = dm.id_programacion_ud
+
+        -- matrícula y estudiante
+        JOIN   acad_matricula m
+                 ON m.id = dm.id_matricula
+        JOIN   acad_estudiante_programa ep
+                 ON ep.id = m.id_estudiante
+        JOIN   sigi_usuarios u
+                 ON u.id = ep.id_usuario
+
+        -- 🔥 Semestre real por UD (no por matrícula)
+        JOIN   sigi_unidad_didactica ud
+                 ON ud.id = pud.id_unidad_didactica
+        JOIN   sigi_semestre s
+                 ON s.id = ud.id_semestre
+        JOIN   sigi_modulo_formativo mf
+                 ON mf.id = s.id_modulo_formativo
+        JOIN   sigi_planes_estudio pl
+                 ON pl.id = mf.id_plan_estudio
+
+        -- ✅ Calificaciones (pueden no existir aún)
+        LEFT JOIN acad_calificacion c
+                 ON c.id_detalle_matricula = dm.id
+
+        WHERE  pl.id_programa_estudios = ?
+          AND  s.id                    = ?
+          AND  pud.turno               = ?
+          AND  pud.seccion             = ?
+          AND  pud.id_periodo_academico= ?
+          AND  pud.id_sede             = ?
+
+        ORDER BY u.apellidos_nombres, id_ud, nro_calificacion
+    ";
+
+    $st = self::$db->prepare($sql);
+    $st->execute([
+        $id_programa,
+        $id_sem,
+        $turno,
+        $secc,
+        $periodo_id,
+        $sede_id
+    ]);
+
+    return $st->fetchAll(PDO::FETCH_ASSOC);
+}
+
 
 
 
