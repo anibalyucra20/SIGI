@@ -237,7 +237,7 @@ function num_letra($num)
         <?php foreach ($estudiantes as $idx => $est):
             $id_detalle = $est['id_detalle_matricula'];
             $inhabilitado = $estudiantes_inhabilitados[$id_detalle] ?? false;
-
+            $obs = "";
             $promedio_final = $promedios[$id_detalle];
             if ($inhabilitado) {
                 if (is_array($nota_inasistencia)) {
