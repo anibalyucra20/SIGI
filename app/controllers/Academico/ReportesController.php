@@ -212,7 +212,7 @@ class ReportesController extends Controller
 {
     require_once __DIR__ . '/../../../vendor/autoload.php';
 
-    /* 1️⃣  Filtros recibidos del modal */
+    /*  Filtros recibidos del modal */
     [$id_programa, $id_semestre, $turno, $seccion] = [
         $_POST['programa'] ?? null,
         $_POST['semestre'] ?? null,
@@ -237,7 +237,7 @@ class ReportesController extends Controller
 
     $datosSistema = $this->objDatosSistema->buscar();
 
-    /* 2️⃣  Cabecera y Unidades Didácticas */
+    /* Cabecera y Unidades Didácticas */
     $info = $this->model->getCabeceraNomina(
         $id_programa,
         $id_semestre,
@@ -255,7 +255,7 @@ class ReportesController extends Controller
 
     $uds = $this->model->getUnidadesDidacticas($id_programa, $id_semestre);
 
-    /* 3️⃣  Para cada UD averiguamos cuántas C-n calificaciones tiene */
+    /* Para cada UD averiguamos cuántas C-n calificaciones tiene */
     foreach ($uds as &$u) {
         $progUdId = $this->model->idProgramacionUd(
             $u['id'],
@@ -272,7 +272,7 @@ class ReportesController extends Controller
     unset($u);
 
     /**
-     * ✅ 3.5 Traer base de estudiantes matriculados (para que NO falte nadie)
+     * 3.5 Traer base de estudiantes matriculados (para que NO falte nadie)
      * OJO: este método ya lo corregimos antes para filtrar por semestre de la UD.
      */
     $matriculados = $this->model->getEstudiantesMatriculados(
@@ -284,7 +284,7 @@ class ReportesController extends Controller
         $sede_id
     );
 
-    /* 4️⃣  Traemos todas las calificaciones ya procesadas (nota final) */
+    /* Traemos todas las calificaciones ya procesadas (nota final) */
     $rows = $this->model->getCalifDetalladas(
         $id_programa,
         $id_semestre,
@@ -294,10 +294,10 @@ class ReportesController extends Controller
         $sede_id
     );
 
-    /* 5️⃣  Re-mapeamos a estructura → $estudiantes[id]['notas'][id_ud][nro] */
+    /*  Re-mapeamos a estructura → $estudiantes[id]['notas'][id_ud][nro] */
     $est = [];
 
-    // ✅ Inicializa con todos los matriculados (aunque no tengan calificaciones)
+    // Inicializa con todos los matriculados (aunque no tengan calificaciones)
     foreach ($matriculados as $m) {
         $uid = (int)$m['id_usuario'];
         if (!isset($est[$uid])) {
@@ -309,7 +309,7 @@ class ReportesController extends Controller
         }
     }
 
-    // ✅ Completa notas con las filas que sí tienen calificación
+    // Completa notas con las filas que sí tienen calificación
     foreach ($rows as $r) {
         $uid = (int)$r['id_usuario'];
         $ud  = (int)$r['id_ud'];
@@ -334,7 +334,7 @@ class ReportesController extends Controller
 
     $estudiantes = array_values($est);
 
-    /* 6️⃣  PDF */
+    /* PDF */
     $pdf = new \TCPDF('L', 'mm', 'A4', true, 'UTF-8', false);
     $pdf->SetTitle('Detallado ' . $info['programa']);
     $pdf->setPrintHeader(false);
@@ -641,7 +641,7 @@ class ReportesController extends Controller
         foreach ($semanas as $semana) {
             $pdf->AddPage();
             ob_start();
-            // 👉 Vista separada para cada semana (ver archivo más abajo)
+            // Vista separada para cada semana (ver archivo más abajo)
             include __DIR__ . '/../../views/academico/reportes/pdf_control_diario_semana.php';
             $html = ob_get_clean();
             $pdf->writeHTML($html, true, false, true, false, '');
