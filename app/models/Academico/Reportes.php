@@ -223,7 +223,7 @@ class Reportes extends Model
         JOIN   sigi_usuarios u
                  ON u.id = ep.id_usuario
 
-        -- 🔥 Semestre real por UD (no por matrícula)
+        -- Semestre real por UD (no por matrícula)
         JOIN   sigi_unidad_didactica ud
                  ON ud.id = pud.id_unidad_didactica
         JOIN   sigi_semestre s
@@ -233,7 +233,7 @@ class Reportes extends Model
         JOIN   sigi_planes_estudio pl
                  ON pl.id = mf.id_plan_estudio
 
-        -- ✅ Calificaciones (pueden no existir aún)
+        -- Calificaciones (pueden no existir aún)
         LEFT JOIN acad_calificacion c
                  ON c.id_detalle_matricula = dm.id
 
