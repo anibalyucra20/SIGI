@@ -343,7 +343,7 @@ if (!$permitido) {
             <td>
                 <table class="notas-table">
                     <tr>
-                        <th colspan="17">CALIFICACIONES DE COMUNICACIÓN ORAL</th>
+                        <th colspan="17">CALIFICACIONES DE <?= htmlspecialchars($datosGenerales['unidad']) ?></th>
                     </tr>
                     <tr>
                         <th rowspan="2" width="4%" style="font-size:6px;">No<br>de Orden</th>
