@@ -209,99 +209,147 @@ class ReportesController extends Controller
     }
 
     public function pdfCalifDetallado()
-    {
-        require_once __DIR__ . '/../../../vendor/autoload.php';
+{
+    require_once __DIR__ . '/../../../vendor/autoload.php';
 
-        /* 1️⃣  Filtros recibidos del modal */
-        [$id_programa, $id_semestre, $turno, $seccion] = [
-            $_POST['programa'] ?? null,
-            $_POST['semestre'] ?? null,
-            $_POST['turno']    ?? null,
-            $_POST['seccion']  ?? null
-        ];
+    /* 1️⃣  Filtros recibidos del modal */
+    [$id_programa, $id_semestre, $turno, $seccion] = [
+        $_POST['programa'] ?? null,
+        $_POST['semestre'] ?? null,
+        $_POST['turno']    ?? null,
+        $_POST['seccion']  ?? null
+    ];
 
-        $periodo_id = $_SESSION['sigi_periodo_actual_id'];
-        $sede_id    = $_SESSION['sigi_sede_actual'];
+    $periodo_id = $_SESSION['sigi_periodo_actual_id'] ?? null;
+    $sede_id    = $_SESSION['sigi_sede_actual'] ?? null;
 
-        if (!$id_programa || !$id_semestre || !$turno || !$seccion) {
-            $_SESSION['flash_error'] = 'Complete todos los filtros.';
-            header('Location: ' . BASE_URL . '/academico/reportes');
-            exit;
-        }
-
-        $datosSistema = $this->objDatosSistema->buscar();
-        /* 2️⃣  Cabecera y Unidades Didácticas */
-        $info = $this->model->getCabeceraNomina(
-            $id_programa,
-            $id_semestre,
-            $turno,
-            $seccion,
-            $periodo_id,
-            $sede_id
-        );
-
-        $uds = $this->model->getUnidadesDidacticas($id_programa, $id_semestre);
-
-        /* 3️⃣  Para cada UD averiguamos cuántas C-n calificaciones tiene */
-        foreach ($uds as &$u) {
-            $progUdId        = $this->model->idProgramacionUd(
-                $u['id'],
-                $periodo_id,
-                $sede_id,
-                $turno,
-                $seccion
-            );
-            $u['nros_calif'] = $progUdId
-                ? $this->model->getNrosEvaluacionPorUd($progUdId)
-                : [];
-        }
-        unset($u);  // rompe referencia
-
-        /* 4️⃣  Traemos todas las calificaciones ya procesadas (nota final) */
-        $rows = $this->model->getCalifDetalladas(
-            $id_programa,
-            $id_semestre,
-            $turno,
-            $seccion,
-            $periodo_id,
-            $sede_id
-        );
-
-        /* 5️⃣  Re-mapeamos a estructura → $estudiantes[id]['notas'][id_ud][nro] */
-        $est = [];
-        foreach ($rows as $r) {
-            $uid = $r['id_usuario'];
-            $ud  = $r['id_ud'];
-            $nc  = $r['nro_calificacion'];
-
-            if (!isset($est[$uid])) {
-                $est[$uid] = [
-                    'dni'               => $r['dni'],
-                    'apellidos_nombres' => $r['apellidos_nombres'],
-                    'notas'             => []
-                ];
-            }
-
-            $nota = $this->objCalificacion->notaCalificacion($r['id_calif']);
-            $est[$uid]['notas'][$ud][$nc] = ($nota === '') ? '' : $nota;
-        }
-        $estudiantes = array_values($est);
-        // limpia índices
-
-        /* 6️⃣  PDF */
-        $pdf = new \TCPDF('L', 'mm', 'A4', true, 'UTF-8', false);
-        $pdf->SetTitle('Detallado ' . $info['programa']);
-        $pdf->setPrintHeader(false);
-        $pdf->SetMargins(10, 10, 10);
-        $pdf->AddPage();
-
-        ob_start();
-        include __DIR__ . '/../../views/academico/reportes/pdf_calif_detallado.php';
-        $html = ob_get_clean();
-
-        $pdf->writeHTML($html, true, false, true, false, '');
-        $pdf->Output('Detallado.pdf', 'I');
+    if (!$id_programa || !$id_semestre || !$turno || !$seccion || !$periodo_id || !$sede_id) {
+        $_SESSION['flash_error'] = 'Complete todos los filtros.';
+        header('Location: ' . BASE_URL . '/academico/reportes');
+        exit;
     }
+
+    // Normaliza
+    $id_programa = (int)$id_programa;
+    $id_semestre = (int)$id_semestre;
+    $turno   = substr(strtoupper(trim($turno)), 0, 1);
+    $seccion = substr(strtoupper(trim($seccion)), 0, 1);
+
+    $datosSistema = $this->objDatosSistema->buscar();
+
+    /* 2️⃣  Cabecera y Unidades Didácticas */
+    $info = $this->model->getCabeceraNomina(
+        $id_programa,
+        $id_semestre,
+        $turno,
+        $seccion,
+        $periodo_id,
+        $sede_id
+    );
+
+    if (empty($info)) {
+        $_SESSION['flash_error'] = 'No se encontró información para el reporte con los filtros seleccionados.';
+        header('Location: ' . BASE_URL . '/academico/reportes');
+        exit;
+    }
+
+    $uds = $this->model->getUnidadesDidacticas($id_programa, $id_semestre);
+
+    /* 3️⃣  Para cada UD averiguamos cuántas C-n calificaciones tiene */
+    foreach ($uds as &$u) {
+        $progUdId = $this->model->idProgramacionUd(
+            $u['id'],
+            $periodo_id,
+            $sede_id,
+            $turno,
+            $seccion
+        );
+
+        $u['nros_calif'] = $progUdId
+            ? $this->model->getNrosEvaluacionPorUd($progUdId)
+            : [];
+    }
+    unset($u);
+
+    /**
+     * ✅ 3.5 Traer base de estudiantes matriculados (para que NO falte nadie)
+     * OJO: este método ya lo corregimos antes para filtrar por semestre de la UD.
+     */
+    $matriculados = $this->model->getEstudiantesMatriculados(
+        $id_programa,
+        $id_semestre,
+        $turno,
+        $seccion,
+        $periodo_id,
+        $sede_id
+    );
+
+    /* 4️⃣  Traemos todas las calificaciones ya procesadas (nota final) */
+    $rows = $this->model->getCalifDetalladas(
+        $id_programa,
+        $id_semestre,
+        $turno,
+        $seccion,
+        $periodo_id,
+        $sede_id
+    );
+
+    /* 5️⃣  Re-mapeamos a estructura → $estudiantes[id]['notas'][id_ud][nro] */
+    $est = [];
+
+    // ✅ Inicializa con todos los matriculados (aunque no tengan calificaciones)
+    foreach ($matriculados as $m) {
+        $uid = (int)$m['id_usuario'];
+        if (!isset($est[$uid])) {
+            $est[$uid] = [
+                'dni'               => $m['dni'],
+                'apellidos_nombres' => $m['apellidos_nombres'],
+                'notas'             => []
+            ];
+        }
+    }
+
+    // ✅ Completa notas con las filas que sí tienen calificación
+    foreach ($rows as $r) {
+        $uid = (int)$r['id_usuario'];
+        $ud  = (int)$r['id_ud'];
+        $nc  = (int)$r['nro_calificacion'];
+
+        if (!isset($est[$uid])) {
+            // respaldo, por si llega alguien que no estaba en matrícula base
+            $est[$uid] = [
+                'dni'               => $r['dni'],
+                'apellidos_nombres' => $r['apellidos_nombres'],
+                'notas'             => []
+            ];
+        }
+
+        $nota = '';
+        if (!empty($r['id_calif'])) {
+            $nota = $this->objCalificacion->notaCalificacion($r['id_calif']);
+        }
+
+        $est[$uid]['notas'][$ud][$nc] = ($nota === '') ? '' : $nota;
+    }
+
+    $estudiantes = array_values($est);
+
+    /* 6️⃣  PDF */
+    $pdf = new \TCPDF('L', 'mm', 'A4', true, 'UTF-8', false);
+    $pdf->SetTitle('Detallado ' . $info['programa']);
+    $pdf->setPrintHeader(false);
+    $pdf->SetMargins(10, 10, 10);
+    $pdf->AddPage();
+
+    ob_start();
+    include __DIR__ . '/../../views/academico/reportes/pdf_calif_detallado.php';
+    $html = ob_get_clean();
+
+    $pdf->writeHTML($html, true, false, true, false, '');
+    $pdf->Output('Detallado.pdf', 'I');
+    exit;
+}
+
 
 
 
