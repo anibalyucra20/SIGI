@@ -8,11 +8,13 @@ require_once __DIR__ . '/../../../app/models/Academico/Reportes.php';
 require_once __DIR__ . '/../../../app/models/Academico/Calificaciones.php';
 require_once __DIR__ . '/../../../app/models/Sigi/CoordinadorPeriodo.php';
 require_once __DIR__ . '/../../../app/models/Sigi/Semestre.php';
+require_once __DIR__ . '/../../../app/models/Sigi/DatosSistema.php';
 
 use App\Models\Academico\Reportes;
 use App\Models\Academico\Calificaciones;
 use App\Models\Sigi\CoordinadorPeriodo;
 use App\Models\Sigi\Semestre;
+use App\Models\Sigi\DatosSistema;
 use TCPDF;
 
 class ReportesController extends Controller
@@ -21,6 +23,7 @@ class ReportesController extends Controller
     protected $objCalificacion;
     protected $objCoordinador;
     protected $objSemestre;
+    protected $objDatosSistema;
 
     public function __construct()
     {
@@ -29,6 +32,7 @@ class ReportesController extends Controller
         $this->objCalificacion = new Calificaciones();
         $this->objCoordinador = new CoordinadorPeriodo();
         $this->objSemestre = new Semestre();
+        $this->objDatosSistema = new DatosSistema();
     }
 
     public function index()
@@ -64,6 +68,7 @@ class ReportesController extends Controller
         }
 
         // Obtener los datos del modelo
+        $datosSistema = $this->objDatosSistema->buscar();
         $info   = $this->model->getCabeceraNomina($id_programa, $id_semestre, $turno, $seccion, $periodo_id, $sede_id);
         $unidades   = $this->model->getUnidadesDidacticas($id_programa, $id_semestre);
         $rows = $this->model->getEstudiantesMatriculados($id_programa, $id_semestre, $turno, $seccion, $periodo_id, $sede_id);
@@ -122,6 +127,7 @@ class ReportesController extends Controller
         }
 
         //-- datos de cabecera y listas
+        $datosSistema = $this->objDatosSistema->buscar();
         $info       = $this->model->getCabeceraNomina($id_programa, $id_semestre, $turno, $seccion, $periodo_id, $sede_id);
         $uds        = $this->model->getUnidadesDidacticas($id_programa, $id_semestre);
         $estudiantes = $this->model->getEstudiantesMatriculados($id_programa, $id_semestre, $turno, $seccion, $periodo_id, $sede_id);
@@ -223,6 +229,7 @@ class ReportesController extends Controller
             exit;
         }
 
+        $datosSistema = $this->objDatosSistema->buscar();
         /* 2️⃣  Cabecera y Unidades Didácticas */
         $info = $this->model->getCabeceraNomina(
             $id_programa,
@@ -328,6 +335,7 @@ class ReportesController extends Controller
             $sede_id
         );
         $uds  = $this->model->getUnidadesDidacticas($id_programa, $id_semestre);
+        $datosSistema = $this->objDatosSistema->buscar();
 
         /* ③ Estudiantes matriculados (1 fila por UD) */
         $rows = $this->model->getEstudiantesMatriculados(
