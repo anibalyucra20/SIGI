@@ -59,7 +59,7 @@ if (!$permitido) {
         <tr>
             <td width="25%"><b>1. INSTITUCIÓN EDUCATIVA</b></td>
             <td width="5%">:</td>
-            <td width="70%"><?= $institucion ?></td>
+            <td width="70%"><?= htmlspecialchars($datosSistema['nombre_completo']) ?></td>
         </tr>
         <tr>
             <td><b>2. PROGRAMA DE ESTUDIOS</b></td>
