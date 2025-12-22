@@ -211,11 +211,11 @@ if (!$permitido) {
     <br>
     <br>
     <span class="section-title">III. LOGROS OBTENIDOS:</span><br>
-    <span class="info-table"><?= $datosGenerales['logros_obtenidos'] ?></span><br>
+    <span class="info-table" style="text-align: justify;"><?= $datosGenerales['logros_obtenidos'] ?></span><br>
     <span class="section-title">IV. DIFICULTADES:</span><br>
-    <span class="info-table"><?= $datosGenerales['dificultades'] ?></span><br>
+    <span class="info-table" style="text-align: justify;"><?= $datosGenerales['dificultades'] ?></span><br>
     <span class="section-title">V. SUGERENCIAS:</span><br>
-    <span class="info-table"><?= $datosGenerales['sugerencias'] ?></span>
+    <span class="info-table" style="text-align: justify;"><?= $datosGenerales['sugerencias'] ?></span>
     <?php
 
     $mes = date('n');
@@ -263,9 +263,9 @@ if (!$permitido) {
     <br>
     <br>
     <span style="text-align: right;"> Huanta, <?= $dia . ' de ' . $mes . ' del ' . $anio; ?></span><br><br><br><br>
-    <span style="text-align: center;">...........................................</span>
+    <span style="text-align: center;  width:100%;">...........................................</span>
     <br>
-    <span style="text-align: center;">Docente</span>
+    <span style="text-align: center;  width:100%;">Docente</span>
     <?php
     $html = ob_get_clean();
     $pdf->writeHTML($html, true, false, true, false, '');
