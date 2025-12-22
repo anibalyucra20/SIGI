@@ -162,7 +162,7 @@ class UnidadesDidacticasController extends Controller
         $datosGenerales = $this->objSilabo->getDatosGenerales($id_programacion);
 
         $periodo_nombre = $datosGenerales['periodo_lectivo'];
-        $institucion = 'INSTITUTO DE EDUCACIÓN SUPERIOR “NOMBRE”'; // Puedes reemplazar por $objDatosInstitucionales->buscar()['nombre_institucion'];
+        
         $programa = $datosGenerales['programa'];
         $modulo = $datosGenerales['modulo'];
         $unidad = $datosGenerales['unidad'];
