@@ -262,6 +262,17 @@ if (!$permitido) {
     ?>
     <br>
     <br>
+    <table width="100%" style="border: none;" cellspacing="5">
+        <tr>
+            <td width="100%" style="text-align: right;">Huanta, <?= $dia . ' de ' . $mes . ' del ' . $anio; ?></td>
+        </tr>
+        <tr>
+            <td style="text-align: center;  width:100%;">...........................................</td>
+        </tr>
+        <tr>
+            <td style="text-align: center;  width:100%;">Docente</td>
+        </tr>
+    </table>
     <span style="text-align: right;"> Huanta, <?= $dia . ' de ' . $mes . ' del ' . $anio; ?></span><br><br><br><br>
     <span style="text-align: center;  width:100%;">...........................................</span>
     <br>
