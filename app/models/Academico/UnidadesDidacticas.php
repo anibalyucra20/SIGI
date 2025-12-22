@@ -173,8 +173,9 @@ class UnidadesDidacticas extends Model
     }
 
     public function getResumenEstadisticoFinal($id_programacion, $objCalificacion)
-    {
-        $stmt = self::$db->prepare("
+{
+    // 1) Estudiantes matriculados en la programación
+    $stmt = self::$db->prepare("
         SELECT 
             dm.id AS id_detalle_matricula,
             u.apellidos_nombres AS apellidos_nombres,
@@ -187,64 +188,123 @@ class UnidadesDidacticas extends Model
         INNER JOIN sigi_usuarios u ON aep.id_usuario = u.id
         WHERE dm.id_programacion_ud = ?
     ");
-        $stmt->execute([$id_programacion]);
-        $estudiantes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $stmt->execute([$id_programacion]);
+    $estudiantes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Configura aquí los valores que usas como nro_calificacion
-        $nros_calificacion = [1, 2, 3]; // ejemplo: tres evaluaciones
+    // 2) Nros de calificación dinámicos (para no asumir [1,2,3])
+    //    Si no hay calificaciones registradas aún, cae a [1,2,3] como backup.
+    $st2 = self::$db->prepare("
+        SELECT DISTINCT c.nro_calificacion
+        FROM acad_calificacion c
+        INNER JOIN acad_detalle_matricula dm ON dm.id = c.id_detalle_matricula
+        WHERE dm.id_programacion_ud = ?
+        ORDER BY c.nro_calificacion
+    ");
+    $st2->execute([$id_programacion]);
+    $nros_calificacion = $st2->fetchAll(PDO::FETCH_COLUMN);
 
-        $resumen = [
-            'total_hombres' => 0,
-            'total_mujeres' => 0,
-            'total_todos' => 0,
-            'retirados_h' => 0,
-            'retirados_m' => 0,
-            'retirados_t' => 0,
-            'aprobados_h' => 0,
-            'aprobados_m' => 0,
-            'aprobados_t' => 0,
-            'desaprobados_h' => 0,
-            'desaprobados_m' => 0,
-            'desaprobados_t' => 0,
-        ];
-        //var_dump($estudiantes);
-        foreach ($estudiantes as $e) {
-            $genero = $e['genero']; // M o F
-            $resumen['total_todos']++;
-
-            if ($genero == 'M') $resumen['total_hombres']++;
-            if ($genero == 'F') $resumen['total_mujeres']++;
-
-            // Verifica si está retirado (licencia no vacía)
-            if (trim($e['licencia']) !== '') {
-                $resumen['retirados_t']++;
-                if ($genero == 'M') $resumen['retirados_h']++;
-                if ($genero == 'F') $resumen['retirados_m']++;
-                continue; // no calcular nota
-            }
-            $promedio_final = $objCalificacion->promedioFinalEstudiante($e['id_detalle_matricula'], $nros_calificacion);
-            if ($promedio_final >= 13) {
-                $resumen['aprobados_t']++;
-                if ($genero == 'M') $resumen['aprobados_h']++;
-                if ($genero == 'F') $resumen['aprobados_m']++;
-            } else {
-                $resumen['desaprobados_t']++;
-                if ($genero == 'M') $resumen['desaprobados_h']++;
-                if ($genero == 'F') $resumen['desaprobados_m']++;
-            }
-        }
-
-        // Cálculos de porcentajes
-        $tt = $resumen['total_todos'];
-        foreach (['h', 'm', 't'] as $sx) {
-            $resumen["porc_hombres"]     = $tt ? round($resumen['total_hombres'] * 100 / $tt, 1) : 0;
-            $resumen["porc_mujeres"]     = $tt ? round($resumen['total_mujeres'] * 100 / $tt, 1) : 0;
-
-            $resumen["retirados_p$sx"]   = $tt ? round($resumen["retirados_$sx"] * 100 / $tt, 1) : 0;
-            $resumen["aprobados_p$sx"]   = $tt ? round($resumen["aprobados_$sx"] * 100 / $tt, 1) : 0;
-            $resumen["desaprobados_p$sx"] = $tt ? round($resumen["desaprobados_$sx"] * 100 / $tt, 1) : 0;
-        }
-
-        return $resumen;
+    if (empty($nros_calificacion)) {
+        $nros_calificacion = [1, 2, 3]; // fallback
+    } else {
+        $nros_calificacion = array_map('intval', $nros_calificacion);
     }
+
+    // 3) Estructura resumen (mantengo tus mismos nombres)
+    $resumen = [
+        'total_hombres' => 0,
+        'total_mujeres' => 0,
+        'total_todos' => 0,
+        'retirados_h' => 0,
+        'retirados_m' => 0,
+        'retirados_t' => 0,
+        'aprobados_h' => 0,
+        'aprobados_m' => 0,
+        'aprobados_t' => 0,
+        'desaprobados_h' => 0,
+        'desaprobados_m' => 0,
+        'desaprobados_t' => 0,
+
+        // opcional: para que el informe no “mienta”
+        'sin_nota_h' => 0,
+        'sin_nota_m' => 0,
+        'sin_nota_t' => 0,
+    ];
+
+    foreach ($estudiantes as $e) {
+        $genero = $e['genero']; // 'M' o 'F'
+        $resumen['total_todos']++;
+
+        if ($genero == 'M') $resumen['total_hombres']++;
+        if ($genero == 'F') $resumen['total_mujeres']++;
+
+        // Retirado/licencia: no evalúa
+        if (trim((string)$e['licencia']) !== '') {
+            $resumen['retirados_t']++;
+            if ($genero == 'M') $resumen['retirados_h']++;
+            if ($genero == 'F') $resumen['retirados_m']++;
+            continue;
+        }
+
+        // Promedio final (según tu objeto)
+        $promedio_final = $objCalificacion->promedioFinalEstudiante(
+            (int)$e['id_detalle_matricula'],
+            $nros_calificacion
+        );
+
+        /**
+         * Ajuste clave:
+         * Si no hay notas, NO debe contarse como desaprobado.
+         * Dependiendo de tu implementación, puede devolver:
+         *  - null
+         *  - '' (cadena vacía)
+         *  - 0 (cuando no encuentra nada)
+         *
+         * Aquí lo tratamos como "sin nota" si no es numérico o si es 0 y no hay calificaciones.
+         */
+        if ($promedio_final === null || $promedio_final === '' || !is_numeric($promedio_final)) {
+            $resumen['sin_nota_t']++;
+            if ($genero == 'M') $resumen['sin_nota_h']++;
+            if ($genero == 'F') $resumen['sin_nota_m']++;
+            continue;
+        }
+
+        $promedio_final = (float)$promedio_final;
+
+        // Si tu sistema devuelve 0 cuando no hay notas, lo tratamos como sin nota
+        if ($promedio_final == 0.0) {
+            $resumen['sin_nota_t']++;
+            if ($genero == 'M') $resumen['sin_nota_h']++;
+            if ($genero == 'F') $resumen['sin_nota_m']++;
+            continue;
+        }
+
+        if ($promedio_final >= 13) {
+            $resumen['aprobados_t']++;
+            if ($genero == 'M') $resumen['aprobados_h']++;
+            if ($genero == 'F') $resumen['aprobados_m']++;
+        } else {
+            $resumen['desaprobados_t']++;
+            if ($genero == 'M') $resumen['desaprobados_h']++;
+            if ($genero == 'F') $resumen['desaprobados_m']++;
+        }
+    }
+
+    // 4) Porcentajes (mantengo tus keys, pero bien calculadas)
+    $tt = $resumen['total_todos'];
+
+    $resumen["porc_hombres"] = $tt ? round($resumen['total_hombres'] * 100 / $tt, 1) : 0;
+    $resumen["porc_mujeres"] = $tt ? round($resumen['total_mujeres'] * 100 / $tt, 1) : 0;
+
+    foreach (['h', 'm', 't'] as $sx) {
+        $resumen["retirados_p$sx"]    = $tt ? round($resumen["retirados_$sx"] * 100 / $tt, 1) : 0;
+        $resumen["aprobados_p$sx"]    = $tt ? round($resumen["aprobados_$sx"] * 100 / $tt, 1) : 0;
+        $resumen["desaprobados_p$sx"] = $tt ? round($resumen["desaprobados_$sx"] * 100 / $tt, 1) : 0;
+
+        // opcional
+        $resumen["sin_nota_p$sx"]     = $tt ? round($resumen["sin_nota_$sx"] * 100 / $tt, 1) : 0;
+    }
+
+    return $resumen;
+}
+
 }
