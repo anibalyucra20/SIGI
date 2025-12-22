@@ -263,7 +263,9 @@ if (!$permitido) {
     <br>
     <br>
     <span style="text-align: right;"> Huanta, <?= $dia . ' de ' . $mes . ' del ' . $anio; ?></span><br><br><br><br>
-    <span style="text-align: center;">...........................................<br>Docente</span>
+    <span style="text-align: center;">...........................................</span>
+    <br>
+    <span style="text-align: center;">Docente</span>
     <?php
     $html = ob_get_clean();
     $pdf->writeHTML($html, true, false, true, false, '');
