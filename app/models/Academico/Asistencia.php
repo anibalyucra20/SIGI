@@ -35,7 +35,7 @@ class Asistencia extends Model
             INNER JOIN acad_estudiante_programa ep ON ep.id = m.id_estudiante
             INNER JOIN sigi_usuarios u ON ep.id_usuario = u.id
             WHERE dm.id_programacion_ud = ?
-            ORDER BY u.apellidos_nombres");
+            ORDER BY TRIM(CONVERT(u.apellidos_nombres USING utf8mb4)) COLLATE utf8mb4_spanish_ci ASC");
         $stmt->execute([$id_programacion_ud]);
         $estudiantes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
