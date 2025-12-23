@@ -54,7 +54,7 @@ class Licencias extends Model
             $params[':seccion'] = $filters['seccion'];
         }
         $sqlTotal = "SELECT COUNT(*) FROM (" . $sql . ") as tmp";
-        $sql .= " ORDER BY u.apellidos_nombres ASC LIMIT :limit OFFSET :offset";
+        $sql .= " ORDER BY TRIM(CONVERT(u.apellidos_nombres USING utf8mb4)) COLLATE utf8mb4_spanish_ci ASC LIMIT :limit OFFSET :offset";
 
         $stmt = self::$db->prepare($sql);
         foreach ($params as $k => $v) {
