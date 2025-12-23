@@ -118,7 +118,10 @@ class Calificaciones extends Model
             INNER JOIN acad_estudiante_programa ep ON ep.id = m.id_estudiante
             INNER JOIN sigi_usuarios u ON ep.id_usuario = u.id
             WHERE dm.id_programacion_ud = ?
-            ORDER BY u.apellidos_nombres");
+            ORDER BY
+            TRIM(SUBSTRING_INDEX(REPLACE(u.apellidos_nombres, '  ', ' '), ',', 1)) ASC,
+            TRIM(SUBSTRING_INDEX(REPLACE(u.apellidos_nombres, '  ', ' '), ',', -1)) ASC,
+            TRIM(REPLACE(u.apellidos_nombres, '  ', ' ')) ASC");
         $stmt->execute([$id_programacion_ud]);
         $estudiantes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
