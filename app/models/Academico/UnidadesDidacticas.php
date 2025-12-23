@@ -174,14 +174,14 @@ class UnidadesDidacticas extends Model
 
     public function getResumenEstadisticoFinal($id_programacion, $objCalificacion)
 {
-    // 1) Estudiantes matriculados en la programación
     $stmt = self::$db->prepare("
         SELECT 
             dm.id AS id_detalle_matricula,
             u.apellidos_nombres AS apellidos_nombres,
             u.genero AS genero,
             dm.id_programacion_ud,
-            m.licencia
+            m.licencia,
+            dm.recuperacion
         FROM acad_detalle_matricula dm
         INNER JOIN acad_matricula m ON dm.id_matricula = m.id
         INNER JOIN acad_estudiante_programa aep ON m.id_estudiante = aep.id
@@ -191,8 +191,7 @@ class UnidadesDidacticas extends Model
     $stmt->execute([$id_programacion]);
     $estudiantes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // 2) Nros de calificación dinámicos (para no asumir [1,2,3])
-    //    Si no hay calificaciones registradas aún, cae a [1,2,3] como backup.
+    // ✅ nros de calificación dinámicos (mejor que [1,2,3] fijo)
     $st2 = self::$db->prepare("
         SELECT DISTINCT c.nro_calificacion
         FROM acad_calificacion c
@@ -202,14 +201,12 @@ class UnidadesDidacticas extends Model
     ");
     $st2->execute([$id_programacion]);
     $nros_calificacion = $st2->fetchAll(PDO::FETCH_COLUMN);
-
     if (empty($nros_calificacion)) {
         $nros_calificacion = [1, 2, 3]; // fallback
     } else {
         $nros_calificacion = array_map('intval', $nros_calificacion);
     }
 
-    // 3) Estructura resumen (mantengo tus mismos nombres)
     $resumen = [
         'total_hombres' => 0,
         'total_mujeres' => 0,
@@ -224,20 +221,20 @@ class UnidadesDidacticas extends Model
         'desaprobados_m' => 0,
         'desaprobados_t' => 0,
 
-        // opcional: para que el informe no “mienta”
+        // (opcional, no rompe nada si no lo usas)
         'sin_nota_h' => 0,
         'sin_nota_m' => 0,
         'sin_nota_t' => 0,
     ];
 
     foreach ($estudiantes as $e) {
-        $genero = $e['genero']; // 'M' o 'F'
+        $genero = $e['genero']; // M o F
         $resumen['total_todos']++;
 
         if ($genero == 'M') $resumen['total_hombres']++;
         if ($genero == 'F') $resumen['total_mujeres']++;
 
-        // Retirado/licencia: no evalúa
+        // Retirado/licencia
         if (trim((string)$e['licencia']) !== '') {
             $resumen['retirados_t']++;
             if ($genero == 'M') $resumen['retirados_h']++;
@@ -245,22 +242,13 @@ class UnidadesDidacticas extends Model
             continue;
         }
 
-        // Promedio final (según tu objeto)
+        // Promedio (sin recuperación)
         $promedio_final = $objCalificacion->promedioFinalEstudiante(
             (int)$e['id_detalle_matricula'],
             $nros_calificacion
         );
 
-        /**
-         * Ajuste clave:
-         * Si no hay notas, NO debe contarse como desaprobado.
-         * Dependiendo de tu implementación, puede devolver:
-         *  - null
-         *  - '' (cadena vacía)
-         *  - 0 (cuando no encuentra nada)
-         *
-         * Aquí lo tratamos como "sin nota" si no es numérico o si es 0 y no hay calificaciones.
-         */
+        // Si no hay notas, no lo cuentes como desaprobado
         if ($promedio_final === null || $promedio_final === '' || !is_numeric($promedio_final)) {
             $resumen['sin_nota_t']++;
             if ($genero == 'M') $resumen['sin_nota_h']++;
@@ -270,15 +258,23 @@ class UnidadesDidacticas extends Model
 
         $promedio_final = (float)$promedio_final;
 
-        // Si tu sistema devuelve 0 cuando no hay notas, lo tratamos como sin nota
-        if ($promedio_final == 0.0) {
-            $resumen['sin_nota_t']++;
-            if ($genero == 'M') $resumen['sin_nota_h']++;
-            if ($genero == 'F') $resumen['sin_nota_m']++;
-            continue;
+        //APLICAR RECUPERACIÓN
+        $rec = trim((string)($e['recuperacion'] ?? ''));
+        $nota_final = $promedio_final;
+
+        if ($rec !== '' && is_numeric($rec)) {
+            $rec = (float)$rec;
+
+            // Regla típica: recuperación solo si jaló
+            if ($promedio_final < 13) {
+                $nota_final = $rec;
+            }
+
+            // Si tu regla es: "final = max(promedio, recuperacion)" usa esta línea en su lugar:
+            // $nota_final = max($promedio_final, $rec);
         }
 
-        if ($promedio_final >= 13) {
+        if ($nota_final >= 13) {
             $resumen['aprobados_t']++;
             if ($genero == 'M') $resumen['aprobados_h']++;
             if ($genero == 'F') $resumen['aprobados_m']++;
@@ -289,19 +285,19 @@ class UnidadesDidacticas extends Model
         }
     }
 
-    // 4) Porcentajes (mantengo tus keys, pero bien calculadas)
+    // Porcentajes
     $tt = $resumen['total_todos'];
 
     $resumen["porc_hombres"] = $tt ? round($resumen['total_hombres'] * 100 / $tt, 1) : 0;
     $resumen["porc_mujeres"] = $tt ? round($resumen['total_mujeres'] * 100 / $tt, 1) : 0;
 
     foreach (['h', 'm', 't'] as $sx) {
-        $resumen["retirados_p$sx"]    = $tt ? round($resumen["retirados_$sx"] * 100 / $tt, 1) : 0;
-        $resumen["aprobados_p$sx"]    = $tt ? round($resumen["aprobados_$sx"] * 100 / $tt, 1) : 0;
-        $resumen["desaprobados_p$sx"] = $tt ? round($resumen["desaprobados_$sx"] * 100 / $tt, 1) : 0;
+        $resumen["retirados_p$sx"]     = $tt ? round($resumen["retirados_$sx"] * 100 / $tt, 1) : 0;
+        $resumen["aprobados_p$sx"]     = $tt ? round($resumen["aprobados_$sx"] * 100 / $tt, 1) : 0;
+        $resumen["desaprobados_p$sx"]  = $tt ? round($resumen["desaprobados_$sx"] * 100 / $tt, 1) : 0;
 
         // opcional
-        $resumen["sin_nota_p$sx"]     = $tt ? round($resumen["sin_nota_$sx"] * 100 / $tt, 1) : 0;
+        $resumen["sin_nota_p$sx"]      = $tt ? round($resumen["sin_nota_$sx"] * 100 / $tt, 1) : 0;
     }
 
     return $resumen;
