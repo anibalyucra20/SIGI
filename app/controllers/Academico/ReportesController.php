@@ -109,104 +109,143 @@ class ReportesController extends Controller
 
 
     public function pdfCalifConsolidado()
-    {
-        require_once __DIR__ . '/../../../vendor/autoload.php';
+{
+    require_once __DIR__ . '/../../../vendor/autoload.php';
 
-        $id_programa = $_POST['programa'] ?? null;
-        $id_semestre = $_POST['semestre'] ?? null;
-        $turno       = $_POST['turno'] ?? null;
-        $seccion     = $_POST['seccion'] ?? null;
+    $id_programa = $_POST['programa'] ?? null;
+    $id_semestre = $_POST['semestre'] ?? null;
+    $turno       = $_POST['turno'] ?? null;
+    $seccion     = $_POST['seccion'] ?? null;
 
-        $periodo_id  = $_SESSION['sigi_periodo_actual_id'];
-        $sede_id     = $_SESSION['sigi_sede_actual'];
+    $periodo_id  = $_SESSION['sigi_periodo_actual_id'];
+    $sede_id     = $_SESSION['sigi_sede_actual'];
 
-        if (!$id_programa || !$id_semestre || !$turno || !$seccion) {
-            $_SESSION['flash_error'] = "Complete todos los filtros para el consolidado.";
-            header('Location: ' . BASE_URL . '/academico/reportes');
-            exit;
-        }
-
-        //-- datos de cabecera y listas
-        $datosSistema = $this->objDatosSistema->buscar();
-        $info       = $this->model->getCabeceraNomina($id_programa, $id_semestre, $turno, $seccion, $periodo_id, $sede_id);
-        $uds        = $this->model->getUnidadesDidacticas($id_programa, $id_semestre);
-        $estudiantes = $this->model->getEstudiantesMatriculados($id_programa, $id_semestre, $turno, $seccion, $periodo_id, $sede_id);
-        /* ---------- 1.  Construir un caché de nros_calif por UD ---------- */
-        $nrosPorUd = [];
-        foreach ($uds as $u) {
-            $nrosPorUd[$u['id']] = $this->model->getNrosCalificacionPorUd($u['id']);
-            if (!$nrosPorUd[$u['id']]) {               // si no hay califs aún
-                $nrosPorUd[$u['id']] = [];             // evita null
-            }
-        }
-
-        /* ---------- 2.  Armar la matriz de estudiantes sin duplicados ---- */
-        $map = [];
-        foreach ($estudiantes as $fila) {
-            $uid = $fila['id_usuario'];
-            $ud  = $fila['id_ud'];
-            if (!isset($map[$uid])) {
-                $map[$uid] = [
-                    'dni'               => $fila['dni'],
-                    'apellidos_nombres' => $fila['apellidos_nombres'],
-                    'promedios'         => []
-                ];
-            }
-            /* ---------- 3.  Calcular promedio final con los nros de ESA UD */
-            $nota = $this->objCalificacion->promedioFinalEstudiante(
-                (int)$fila['id_detalle_matricula'],
-                $nrosPorUd[$ud]                 // <-- aquí la lista dinámica
-            );
-
-            $map[$uid]['promedios'][$ud] = $nota !== '' ? $nota : '';
-        }
-        foreach ($map as &$e) {
-            $ptotal   = 0;    // puntaje sin ponderar
-            $pcredito = 0;    // puntaje × crédito
-            $desap    = 0;    // UDs desaprobadas (<13)
-
-            foreach ($uds as $u) {
-                $nota = $e['promedios'][$u['id']] ?? null;
-
-                if ($nota !== null && $nota !== '') {
-                    $ptotal   += $nota;
-                    $pcredito += $nota * $u['creditos'];
-                    if ($nota < 13) $desap++;
-                }
-            }
-            $totalUd = count($uds);
-
-            // Condición
-            if ($desap === 0) {
-                $cond = 'Promovido';
-            } elseif ($desap / $totalUd < 0.5) {
-                $cond = 'Repite U.D. del Módulo Profesional';
-            } else {
-                $cond = 'Repite el Módulo Profesional';
-            }
-
-            $e['puntaje_total']   = $ptotal;
-            $e['puntaje_credito'] = $pcredito;
-            $e['condicion']       = $cond;
-        }
-        unset($e);           // salimos por seguridad
-
-        $estudiantes = array_values($map);
-
-        /* ---------- PDF ---------- */
-        $pdf = new \TCPDF('L', 'mm', 'A4', true, 'UTF-8', false);
-        $pdf->SetTitle('Consolidado ' . $info['programa']);
-        $pdf->setPrintHeader(false);
-        $pdf->SetMargins(10, 10, 10);
-        $pdf->AddPage();
-
-        ob_start();
-        include __DIR__ . '/../../views/academico/reportes/pdf_calif_consolidado.php';
-        $html = ob_get_clean();
-
-        $pdf->writeHTML($html, true, false, true, false, '');
-        $pdf->Output('Consolidado.pdf', 'I');
+    if (!$id_programa || !$id_semestre || !$turno || !$seccion) {
+        $_SESSION['flash_error'] = "Complete todos los filtros para el consolidado.";
+        header('Location: ' . BASE_URL . '/academico/reportes');
+        exit;
     }
+
+    //-- datos de cabecera y listas
+    $datosSistema = $this->objDatosSistema->buscar();
+    $info       = $this->model->getCabeceraNomina($id_programa, $id_semestre, $turno, $seccion, $periodo_id, $sede_id);
+    $uds        = $this->model->getUnidadesDidacticas($id_programa, $id_semestre);
+    $estudiantes = $this->model->getEstudiantesMatriculados($id_programa, $id_semestre, $turno, $seccion, $periodo_id, $sede_id);
+
+    /* ---------- 1.  Construir un caché de nros_calif por UD ---------- */
+    $nrosPorUd = [];
+    foreach ($uds as $u) {
+        $nrosPorUd[$u['id']] = $this->model->getNrosCalificacionPorUd($u['id']);
+        if (!$nrosPorUd[$u['id']]) {               // si no hay califs aún
+            $nrosPorUd[$u['id']] = [];             // evita null
+        }
+    }
+
+    /* ---------- 1.5  Recuperaciones (en bloque) por id_detalle_matricula ---------- */
+    $ids_detalle = [];
+    foreach ($estudiantes as $fila) {
+        if (!empty($fila['id_detalle_matricula'])) {
+            $ids_detalle[] = (int)$fila['id_detalle_matricula'];
+        }
+    }
+    $recuperaciones = $this->model->getRecuperacionesPorDetalles($ids_detalle);
+
+    /* ---------- 2.  Armar la matriz de estudiantes sin duplicados ---- */
+    $map = [];
+    foreach ($estudiantes as $fila) {
+        $uid = $fila['id_usuario'];
+        $ud  = $fila['id_ud'];
+
+        if (!isset($map[$uid])) {
+            $map[$uid] = [
+                'dni'               => $fila['dni'],
+                'apellidos_nombres' => $fila['apellidos_nombres'],
+                'promedios'         => []
+            ];
+        }
+
+        /* ---------- 3.  Calcular promedio final con los nros de ESA UD */
+        $nota = $this->objCalificacion->promedioFinalEstudiante(
+            (int)$fila['id_detalle_matricula'],
+            $nrosPorUd[$ud]
+        );
+
+        // ✅ Recuperación igual que Acta Final: reemplaza si jaló
+        $rec = $recuperaciones[(int)$fila['id_detalle_matricula']] ?? '';
+        $rec = trim((string)$rec);
+
+        $nota_num = (is_numeric($nota)) ? (float)$nota : null;
+        $rec_num  = ($rec !== '' && is_numeric($rec)) ? (float)$rec : null;
+
+        /**
+         * Regla:
+         * - Si no hay nota pero hay recuperación => usar recuperación
+         * - Si jaló (nota < 13) y hay recuperación => recuperación reemplaza la nota
+         * - Si aprobó o no hay recuperación => se queda con la nota
+         */
+        if ($nota_num === null) {
+            $nota = ($rec_num !== null) ? $rec_num : '';
+        } else {
+            if ($nota_num < 13 && $rec_num !== null) {
+                $nota = $rec_num;     // ✅ reemplaza si jaló
+            } else {
+                $nota = $nota_num;
+            }
+        }
+
+        $map[$uid]['promedios'][$ud] = $nota !== '' ? $nota : '';
+    }
+
+    /* ---------- 4. Puntajes y condición ---------- */
+    foreach ($map as &$e) {
+        $ptotal   = 0;    // puntaje sin ponderar
+        $pcredito = 0;    // puntaje × crédito
+        $desap    = 0;    // UDs desaprobadas (<13)
+
+        foreach ($uds as $u) {
+            $nota = $e['promedios'][$u['id']] ?? null;
+
+            if ($nota !== null && $nota !== '') {
+                $ptotal   += $nota;
+                $pcredito += $nota * $u['creditos'];
+                if ($nota < 13) $desap++;
+            }
+        }
+
+        $totalUd = count($uds);
+
+        // Condición
+        if ($desap === 0) {
+            $cond = 'Promovido';
+        } elseif ($totalUd > 0 && ($desap / $totalUd) < 0.5) {
+            $cond = 'Repite U.D. del Módulo Profesional';
+        } else {
+            $cond = 'Repite el Módulo Profesional';
+        }
+
+        $e['puntaje_total']   = $ptotal;
+        $e['puntaje_credito'] = $pcredito;
+        $e['condicion']       = $cond;
+    }
+    unset($e);
+
+    $estudiantes = array_values($map);
+
+    /* ---------- PDF ---------- */
+    $pdf = new \TCPDF('L', 'mm', 'A4', true, 'UTF-8', false);
+    $pdf->SetTitle('Consolidado ' . $info['programa']);
+    $pdf->setPrintHeader(false);
+    $pdf->SetMargins(10, 10, 10);
+    $pdf->AddPage();
+
+    ob_start();
+    include __DIR__ . '/../../views/academico/reportes/pdf_calif_consolidado.php';
+    $html = ob_get_clean();
+
+    $pdf->writeHTML($html, true, false, true, false, '');
+    $pdf->Output('Consolidado.pdf', 'I');
+}
+
 
     public function pdfCalifDetallado()
 {
