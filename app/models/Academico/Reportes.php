@@ -304,6 +304,26 @@ class Reportes extends Model
         return strtoupper(($st->fetchColumn() ?? 'NO')) === 'SI';
     }
 
+public function getRecuperacionesPorDetalles(array $ids_detalle): array
+{
+    $ids_detalle = array_values(array_unique(array_filter($ids_detalle, fn($v) => (int)$v > 0)));
+    if (!$ids_detalle) return [];
+
+    $placeholders = implode(',', array_fill(0, count($ids_detalle), '?'));
+
+    $sql = "SELECT id, recuperacion
+            FROM acad_detalle_matricula
+            WHERE id IN ($placeholders)";
+
+    $st = self::$db->prepare($sql);
+    $st->execute($ids_detalle);
+
+    $map = [];
+    while ($r = $st->fetch(PDO::FETCH_ASSOC)) {
+        $map[(int)$r['id']] = $r['recuperacion'];
+    }
+    return $map;
+}
 
 
 
