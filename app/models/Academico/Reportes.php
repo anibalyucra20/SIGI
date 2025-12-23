@@ -92,7 +92,7 @@ class Reportes extends Model
           AND pud.id_periodo_academico = ?
           AND pud.id_sede = ?
 
-        ORDER BY u.apellidos_nombres
+        ORDER BY TRIM(CONVERT(u.apellidos_nombres USING utf8mb4)) COLLATE utf8mb4_spanish_ci ASC
     ";
 
         $stmt = self::$db->prepare($sql);
@@ -244,7 +244,7 @@ class Reportes extends Model
           AND  pud.id_periodo_academico= ?
           AND  pud.id_sede             = ?
 
-        ORDER BY u.apellidos_nombres, id_ud, nro_calificacion
+        ORDER BY TRIM(CONVERT(u.apellidos_nombres USING utf8mb4)) COLLATE utf8mb4_spanish_ci ASC, id_ud, nro_calificacion
     ";
 
     $st = self::$db->prepare($sql);
@@ -376,7 +376,7 @@ class Reportes extends Model
             $params[':seccion'] = $seccion;
         }
 
-        $sql .= " ORDER BY u.apellidos_nombres";
+        $sql .= " ORDER BY TRIM(CONVERT(u.apellidos_nombres USING utf8mb4)) COLLATE utf8mb4_spanish_ci ASC";
         $st = self::$db->prepare($sql);
         $st->execute($params);
         return $st->fetchAll(PDO::FETCH_ASSOC);
