@@ -52,4 +52,25 @@ class Model
             ':ip_usuario' => $_SERVER['REMOTE_ADDR'] ?? null,
         ]);
     }
+    protected function registrarAuditoria($tabla, $id_registro, $campo, $anterior, $nuevo)
+    {
+        // Ignorar si no hubo cambios reales (optimización)
+        if ($anterior === $nuevo) return;
+
+        $sql = "INSERT INTO auditoria_acad_logs 
+            (id_usuario, tabla_afectada, id_registro, campo_afectado, valor_anterior, valor_nuevo, ip_origen, user_agent)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
+        $stmt = self::$db->prepare($sql);
+        $stmt->execute([
+            $_SESSION['sigi_user_id'] ?? 0,
+            $tabla,
+            $id_registro,
+            $campo,
+            (string)$anterior,
+            (string)$nuevo,
+            $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0',
+            $_SERVER['HTTP_USER_AGENT'] ?? 'System'
+        ]);
+    }
 }

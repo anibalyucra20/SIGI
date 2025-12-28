@@ -1,6 +1,24 @@
 <?php require __DIR__ . '/../../layouts/header.php'; ?>
-<?php if (\Core\Auth::esCoordinadorPEAcademico()): ?>
-    <div class="row">
+<div class="row">
+    <?php if (\Core\Auth::esAdminAcademico()): ?>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <a href="<?= BASE_URL ?>/academico/reportes/auditoria">
+                        <div class="tile-stats">
+                            <div class="icon"><i class="fa fa-plus"></i></div>
+                            <div class="count">Reporte</div>
+                            <h4>Auditoría de Cambios</h4>
+                            <p>Reporte de Auditoría de Cambios</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            <?php include_once(__DIR__ . '/modals/modal_reporte_auditoria.php'); ?>
+        </div>
+    <?php endif; ?>
+    <?php if (\Core\Auth::esCoordinadorPEAcademico()): ?>
+
         <div class="col-md-3">
             <div class="card text-center">
                 <div class="card-body">
@@ -92,4 +110,5 @@
             <?php include_once(__DIR__ . '/modals/modal_reporte_control_diario.php'); ?>
         </div>
     <?php endif; ?>
-    <?php require __DIR__ . '/../../layouts/footer.php'; ?>
+</div>
+<?php require __DIR__ . '/../../layouts/footer.php'; ?>

@@ -53,10 +53,10 @@ class Controller
     }
     public function modelo($modelo)
     {
-        var_dump($modelo);
+        //var_dump($modelo);
         $modelo = str_replace('/', '\\', $modelo);
         $clase = "App\\Models\\" . $modelo;
-        var_dump($clase);
+        //var_dump($clase);
         return new $clase();
     }
 

@@ -10,6 +10,54 @@ use DateInterval;
 class Reportes extends Model
 {
 
+    public function getLogsAuditoria($start, $length, $search)
+    {
+        $params = [];
+
+        // 1. Construcción de la Consulta Base
+        $sqlBase = "FROM auditoria_acad_logs log
+                LEFT JOIN sigi_usuarios u ON log.id_usuario = u.id ";
+
+        // 2. Filtro de Búsqueda Global
+        $sqlWhere = "";
+        if (!empty($search)) {
+            $sqlWhere = "WHERE (u.apellidos_nombres LIKE ? 
+                        OR log.tabla_afectada LIKE ? 
+                        OR log.campo_afectado LIKE ? 
+                        OR log.valor_nuevo LIKE ?)";
+            $searchParam = "%$search%";
+            $params = [$searchParam, $searchParam, $searchParam, $searchParam];
+        }
+
+        // 3. Contadores (Total vs Filtrados)
+        // Total Real
+        $stmtTotal = self::$db->query("SELECT COUNT(*) " . $sqlBase);
+        $recordsTotal = $stmtTotal->fetchColumn();
+
+        // Total Filtrado
+        $stmtFiltered = self::$db->prepare("SELECT COUNT(*) " . $sqlBase . $sqlWhere);
+        $stmtFiltered->execute($params);
+        $recordsFiltered = $stmtFiltered->fetchColumn();
+
+        // 4. Obtención de Datos (Paginados)
+        // Ordenamos siempre por fecha descendente por defecto
+        $sqlData = "SELECT log.*, u.apellidos_nombres, u.dni " .
+            $sqlBase . $sqlWhere .
+            " ORDER BY log.fecha DESC LIMIT $length OFFSET $start";
+
+        $stmtData = self::$db->prepare($sqlData);
+        $stmtData->execute($params);
+        $data = $stmtData->fetchAll(\PDO::FETCH_ASSOC);
+
+        // 5. Estructura requerida por DataTables
+        return [
+            "draw" => intval($_GET['draw'] ?? 1),
+            "recordsTotal" => intval($recordsTotal),
+            "recordsFiltered" => intval($recordsFiltered),
+            "data" => $data
+        ];
+    }
+
     // 1. Obtener cabecera informativa del reporte
     public function getCabeceraNomina($id_programa, $id_semestre, $turno, $seccion, $periodo_id, $sede_id)
     {
@@ -192,14 +240,14 @@ class Reportes extends Model
  *      estudiante × UD × nro_calificacion
  * --------------------------------------------------------- */
     public function getCalifDetalladas(
-    int    $id_programa,
-    int    $id_sem,
-    string $turno,
-    string $secc,
-    int    $periodo_id,
-    int    $sede_id
-) {
-    $sql = "
+        int    $id_programa,
+        int    $id_sem,
+        string $turno,
+        string $secc,
+        int    $periodo_id,
+        int    $sede_id
+    ) {
+        $sql = "
         SELECT
             u.id                     AS id_usuario,
             u.dni,
@@ -247,18 +295,18 @@ class Reportes extends Model
         ORDER BY TRIM(CONVERT(u.apellidos_nombres USING utf8mb4)) COLLATE utf8mb4_spanish_ci ASC, id_ud, nro_calificacion
     ";
 
-    $st = self::$db->prepare($sql);
-    $st->execute([
-        $id_programa,
-        $id_sem,
-        $turno,
-        $secc,
-        $periodo_id,
-        $sede_id
-    ]);
+        $st = self::$db->prepare($sql);
+        $st->execute([
+            $id_programa,
+            $id_sem,
+            $turno,
+            $secc,
+            $periodo_id,
+            $sede_id
+        ]);
 
-    return $st->fetchAll(PDO::FETCH_ASSOC);
-}
+        return $st->fetchAll(PDO::FETCH_ASSOC);
+    }
 
 
 
@@ -304,26 +352,26 @@ class Reportes extends Model
         return strtoupper(($st->fetchColumn() ?? 'NO')) === 'SI';
     }
 
-public function getRecuperacionesPorDetalles(array $ids_detalle): array
-{
-    $ids_detalle = array_values(array_unique(array_filter($ids_detalle, fn($v) => (int)$v > 0)));
-    if (!$ids_detalle) return [];
+    public function getRecuperacionesPorDetalles(array $ids_detalle): array
+    {
+        $ids_detalle = array_values(array_unique(array_filter($ids_detalle, fn($v) => (int)$v > 0)));
+        if (!$ids_detalle) return [];
 
-    $placeholders = implode(',', array_fill(0, count($ids_detalle), '?'));
+        $placeholders = implode(',', array_fill(0, count($ids_detalle), '?'));
 
-    $sql = "SELECT id, recuperacion
+        $sql = "SELECT id, recuperacion
             FROM acad_detalle_matricula
             WHERE id IN ($placeholders)";
 
-    $st = self::$db->prepare($sql);
-    $st->execute($ids_detalle);
+        $st = self::$db->prepare($sql);
+        $st->execute($ids_detalle);
 
-    $map = [];
-    while ($r = $st->fetch(PDO::FETCH_ASSOC)) {
-        $map[(int)$r['id']] = $r['recuperacion'];
+        $map = [];
+        while ($r = $st->fetch(PDO::FETCH_ASSOC)) {
+            $map[(int)$r['id']] = $r['recuperacion'];
+        }
+        return $map;
     }
-    return $map;
-}
 
 
 

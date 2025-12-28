@@ -85,8 +85,31 @@ class Calificaciones extends Model
     }
     public function guardarRecuperacion($id_detalle_mat, $valor)
     {
+        // 1. Obtener el valor actual (Snapshot)
+        // Es vital hacer esto ANTES del update
+        $stmtGet = self::$db->prepare("SELECT recuperacion FROM acad_detalle_matricula WHERE id = ?");
+        $stmtGet->execute([$id_detalle_mat]);
+        $valor_anterior = $stmtGet->fetchColumn();
+        // Normalización para comparación (evitar que "10" sea diferente de 10)
+        if ((string)$valor_anterior === (string)$valor) {
+            return true; // No gastamos recursos en update ni log
+        }
+        // 2. Ejecutar la actualización
         $stmt = self::$db->prepare("UPDATE acad_detalle_matricula SET recuperacion = ? WHERE id = ?");
-        return $stmt->execute([$valor, $id_detalle_mat]);
+        $resultado = $stmt->execute([$valor, $id_detalle_mat]);
+
+        // 3. Auditoría (Solo si el update fue exitoso)
+        if ($resultado) {
+            // Usamos el método del padre (o el helper local si no modificaste Core)
+            $this->registrarAuditoria(
+                'acad_detalle_matricula',
+                $id_detalle_mat,
+                'recuperacion',
+                $valor_anterior,
+                $valor
+            );
+        }
+        return $resultado;
     }
 
 
@@ -313,8 +336,33 @@ class Calificaciones extends Model
     // Guardar criterio individual
     public function guardarCriterioEvaluacion($id_criterio, $valor)
     {
+        // 1. Obtener el valor actual (Snapshot)
+        // Es vital hacer esto ANTES del update
+        $stmtGet = self::$db->prepare("SELECT calificacion FROM acad_criterio_evaluacion WHERE id = ?");
+        $stmtGet->execute([$id_criterio]);
+        $valor_anterior = $stmtGet->fetchColumn();
+
+        // Normalización para comparación (evitar que "10" sea diferente de 10)
+        if ((string)$valor_anterior === (string)$valor) {
+            return true; // No gastamos recursos en update ni log
+        }
+        // 2. Ejecutar la actualización
         $stmt = self::$db->prepare("UPDATE acad_criterio_evaluacion SET calificacion = ? WHERE id = ?");
-        return $stmt->execute([$valor, $id_criterio]);
+        $resultado = $stmt->execute([$valor, $id_criterio]);
+
+        // 3. Auditoría (Solo si el update fue exitoso)
+        if ($resultado) {
+            // Usamos el método del padre (o el helper local si no modificaste Core)
+            $this->registrarAuditoria(
+                'acad_criterio_evaluacion',
+                $id_criterio,
+                'calificacion',
+                $valor_anterior,
+                $valor
+            );
+        }
+
+        return $resultado;
     }
 
     public function guardarDetalleCriterioMasivo($ids_criterio, $detalle)
