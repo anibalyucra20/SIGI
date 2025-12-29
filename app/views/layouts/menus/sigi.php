@@ -49,6 +49,7 @@
                         <a href="<?= BASE_URL ?>/sigi/competencias" class="dropdown-item">Competencias</a>
                         <a href="<?= BASE_URL ?>/sigi/capacidades" class="dropdown-item">Capacidades</a>
                         <a href="<?= BASE_URL ?>/sigi/rol" class="dropdown-item">Roles</a>
+                        <a href="<?= BASE_URL ?>/sigi/ambientes" class="dropdown-item">Ambientes</a>
                         <a href="<?= BASE_URL ?>/sigi/datosSistema" class="dropdown-item">Datos de Sistema</a>
                         <a href="<?= BASE_URL ?>/sigi/sistemasIntegrados" class="dropdown-item">Sistemas Integrados</a>
                         <a href="<?= BASE_URL ?>/sigi/logs" class="dropdown-item">Logs</a>
