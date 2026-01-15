@@ -254,17 +254,17 @@ ob_start();
                 </tr>
             </table>
         </td>
-        <td width="50%" align="center" valign="bottom">
+        <td width="35%" align="right" valign="bottom">
             <div style="height: 50px;">
             </div>
             <br>
             <br>
             <br>
             <div style="font-size: 8pt; color:#000; left: 5%;">
-                ______________________<br>Firma del Postulante
+                _________________<br>Firma del Postulante
             </div>
         </td>
-        <td width="25%" align="right" valign="bottom" style="font-size: 9pt;">
+        <td width="40%" align="right" valign="bottom" style="font-size: 9pt;">
             <?php
             if ($inscripcion['update_at']) {
                 $fecha = new DateTime($inscripcion['update_at']);
