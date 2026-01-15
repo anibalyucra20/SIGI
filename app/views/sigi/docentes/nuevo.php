@@ -1,7 +1,7 @@
 <?php require __DIR__ . '/../../layouts/header.php'; ?>
 <?php if (\Core\Auth::esAdminSigi()): ?>
   <div class="container mt-4">
-    <h1>Nuevo Docente</h1>
+    <h2>Nuevo Docente</h2>
     <div class="card p-2">
       <form action="<?= BASE_URL ?>/sigi/docentes/guardar" method="post">
         <?php require __DIR__ . '/form_fields.php'; ?>

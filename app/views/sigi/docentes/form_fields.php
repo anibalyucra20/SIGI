@@ -10,7 +10,6 @@ $isEdit = $isEdit ?? false;
       maxlength="8" pattern="\d{8}"
       value="<?= $docente['dni'] ?? '' ?>" required>
   </div>
-
   <!-- Apellidos y Nombres -->
   <div class="col-md-3 mb-3">
     <label class="form-label">Apellido Paterno</label>
@@ -30,6 +29,12 @@ $isEdit = $isEdit ?? false;
       maxlength="120"
       value="<?= $docente['Nombres'] ?? '' ?>" required>
   </div>
+  <div class="col-md-3 mb-3">
+    <label class="form-label">Grado Académico</label>
+    <input type="text" name="grado_academico" class="form-control"
+      maxlength="120"
+      value="<?= $docente['grado_academico'] ?? '' ?>" required>
+  </div>
   <!-- Género -->
   <div class="col-md-3 mb-3">
     <label class="form-label">Género</label>
@@ -47,30 +52,28 @@ $isEdit = $isEdit ?? false;
       value="<?= $docente['fecha_nacimiento'] ?? '' ?>" required>
   </div>
 
-  <!-- Dirección -->
-  <div class="col-md-6 mb-3">
-    <label class="form-label">Dirección</label>
-    <input type="text" name="direccion" class="form-control"
-      maxlength="150"
-      value="<?= $docente['direccion'] ?? '' ?>">
-  </div>
-
-  <!-- Correo -->
-  <div class="col-md-6 mb-3">
-    <label class="form-label">Correo electrónico</label>
-    <input type="email" name="correo" class="form-control"
-      maxlength="120"
-      value="<?= $docente['correo'] ?? '' ?>" required>
-  </div>
-
   <!-- Teléfono -->
-  <div class="col-md-6 mb-3">
+  <div class="col-md-3 mb-3">
     <label class="form-label">Teléfono</label>
     <input type="text" name="telefono" class="form-control"
       maxlength="15"
       value="<?= $docente['telefono'] ?? '' ?>">
   </div>
 
+  <!-- Correo -->
+  <div class="col-md-4 mb-3">
+    <label class="form-label">Correo electrónico</label>
+    <input type="email" name="correo" class="form-control"
+      maxlength="120"
+      value="<?= $docente['correo'] ?? '' ?>" required>
+  </div>
+  <!-- Dirección -->
+  <div class="col-md-5 mb-3">
+    <label class="form-label">Dirección</label>
+    <input type="text" name="direccion" class="form-control"
+      maxlength="150"
+      value="<?= $docente['direccion'] ?? '' ?>">
+  </div>
   <!-- Discapacidad -->
   <div class="col-md-3 mb-3">
     <label class="form-label">Discapacidad</label>
@@ -80,17 +83,6 @@ $isEdit = $isEdit ?? false;
     </select>
   </div>
 
-  <!-- Estado -->
-  <?php if ($isEdit): /* Solo al editar */ ?>
-    <!-- Estado (Activo/Inactivo) -->
-    <div class="col-md-3 mb-3">
-      <label class="form-label">Estado</label>
-      <select name="estado" class="form-control" required>
-        <option value="1" <?= ($docente['estado'] ?? 1) == 1 ? 'selected' : '' ?>>Activo</option>
-        <option value="0" <?= ($docente['estado'] ?? 1) == 0 ? 'selected' : '' ?>>Inactivo</option>
-      </select>
-    </div>
-  <?php endif; ?>
   <!-- Rol -->
   <div class="col-md-3 mb-3">
     <label class="form-label">Rol</label>
@@ -132,4 +124,15 @@ $isEdit = $isEdit ?? false;
       <?php endforeach; ?>
     </select>
   </div>
+  <!-- Estado -->
+  <?php if ($isEdit): /* Solo al editar */ ?>
+    <!-- Estado (Activo/Inactivo) -->
+    <div class="col-md-3 mb-3">
+      <label class="form-label">Estado</label>
+      <select name="estado" class="form-control" required>
+        <option value="1" <?= ($docente['estado'] ?? 1) == 1 ? 'selected' : '' ?>>Activo</option>
+        <option value="0" <?= ($docente['estado'] ?? 1) == 0 ? 'selected' : '' ?>>Inactivo</option>
+      </select>
+    </div>
+  <?php endif; ?>
 </div>
