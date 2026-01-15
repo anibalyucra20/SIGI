@@ -69,6 +69,7 @@ class Logs extends Model
         $sqlTotal = str_replace("SELECT l.*, u.apellidos_nombres AS usuario", "SELECT COUNT(*)", $sql);
         $stmtTotal = self::$db->prepare($sqlTotal);
         $stmtTotal->execute($params);
+
         $total = $stmtTotal->fetchColumn();
 
         // Orden y paginación
@@ -79,7 +80,10 @@ class Logs extends Model
         $stmt->bindValue(':offset', (int)$start, PDO::PARAM_INT);
         $stmt->execute();
         $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
+        foreach ($data as $key => $value) {
+            $apellidos_nombres = explode('_', trim($value['usuario']));
+            $data[$key]['usuario'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ' ' . $apellidos_nombres[2];
+        }
         return ['data' => $data, 'total' => $total];
     }
 
@@ -93,7 +97,12 @@ class Logs extends Model
     public function getUsuarios()
     {
         $stmt = self::$db->query("SELECT DISTINCT u.id, u.apellidos_nombres FROM sigi_logs l LEFT JOIN sigi_usuarios u ON u.id = l.id_usuario ORDER BY u.apellidos_nombres");
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($data as $key => $value) {
+            $apellidos_nombres = explode('_', trim($value['apellidos_nombres']));
+            $data[$key]['apellidos_nombres'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ' ' . $apellidos_nombres[2];
+        }
+        return $data;
     }
 
     public function getAcciones()
