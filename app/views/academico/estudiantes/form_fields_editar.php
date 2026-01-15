@@ -19,31 +19,31 @@
         <label class="form-label">Género *</label>
         <select name="genero" class="form-control" required>
             <option value="">Seleccione...</option>
-            <option value="M" <?= (($genero ?? $estudiante['genero'] ?? '') == 'M') ? 'selected' : '' ?>>Masculino</option>
-            <option value="F" <?= (($genero ?? $estudiante['genero'] ?? '') == 'F') ? 'selected' : '' ?>>Femenino</option>
+            <option value="M" <?= (($estudiante['genero'] ?? '') == 'M') ? 'selected' : '' ?>>Masculino</option>
+            <option value="F" <?= (($estudiante['genero'] ?? '') == 'F') ? 'selected' : '' ?>>Femenino</option>
         </select>
     </div>
     <div class="col-md-2 mb-2">
         <label class="form-label">Fecha Nacimiento</label>
-        <input type="date" name="fecha_nacimiento" class="form-control" value="<?= htmlspecialchars($fecha_nacimiento ?? $estudiante['fecha_nacimiento'] ?? '') ?>">
+        <input type="date" name="fecha_nacimiento" class="form-control" value="<?= $estudiante['fecha_nacimiento'] ?? '' ?>">
     </div>
     <div class="col-md-8 mb-2">
         <label class="form-label">Dirección</label>
-        <input type="text" name="direccion" class="form-control" maxlength="200" value="<?= htmlspecialchars($direccion ?? $estudiante['direccion'] ?? '') ?>">
+        <input type="text" name="direccion" class="form-control" maxlength="200" value="<?= $estudiante['direccion'] ?? '' ?>">
     </div>
     <div class="col-md-4 mb-2">
         <label class="form-label">Correo</label>
-        <input type="email" name="correo" class="form-control" maxlength="100" value="<?= htmlspecialchars($correo ?? $estudiante['correo'] ?? '') ?>">
+        <input type="email" name="correo" class="form-control" maxlength="100" value="<?= $estudiante['correo'] ?? '' ?>">
     </div>
     <div class="col-md-4 mb-2">
         <label class="form-label">Teléfono</label>
-        <input type="text" name="telefono" class="form-control" maxlength="15" value="<?= htmlspecialchars($telefono ?? $estudiante['telefono'] ?? '') ?>">
+        <input type="text" name="telefono" class="form-control" maxlength="15" value="<?= $estudiante['telefono'] ?? '' ?>">
     </div>
     <div class="col-md-4 mb-2">
         <label class="form-label">Discapacidad</label>
         <select name="discapacidad" class="form-control">
-            <option value="NO" <?= (($discapacidad ?? $estudiante['discapacidad'] ?? '') == 'NO') ? 'selected' : '' ?>>No</option>
-            <option value="SI" <?= (($discapacidad ?? $estudiante['discapacidad'] ?? '') == 'SI') ? 'selected' : '' ?>>Sí</option>
+            <option value="NO" <?= (($estudiante['discapacidad'] ?? '') == 'NO') ? 'selected' : '' ?>>No</option>
+            <option value="SI" <?= (($estudiante['discapacidad'] ?? '') == 'SI') ? 'selected' : '' ?>>Sí</option>
         </select>
     </div>
     <div class="col-md-4 mb-2">
