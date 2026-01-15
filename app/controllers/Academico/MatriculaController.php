@@ -197,6 +197,7 @@ class MatriculaController extends Controller
                     $errores[] = $e->getMessage();
                     $nombre_sede_actual = $_SESSION['sigi_sede_nombre'] ?? '';
                     $this->view('academico/matricula/nuevo', [
+                        'periodo_vigente' => $periodo_vigente,
                         'nombre_sede_actual' => $nombre_sede_actual,
                         'errores' => $errores,
                         'module' => 'academico',

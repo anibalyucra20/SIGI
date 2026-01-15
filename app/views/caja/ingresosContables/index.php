@@ -209,7 +209,7 @@
             $('#correlativo').on('keyup', function() {
                 tabla.ajax.reload();
             });
-            
+
 
             const tabla = $('#tabla-ingresosContables').DataTable({
                 processing: true,

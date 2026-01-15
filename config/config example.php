@@ -8,3 +8,9 @@ const DB_HOST = 'localhost';
 const DB_NAME = 'sigis';
 const DB_USER = 'root';
 const DB_PASS = 'root';
+
+
+// Configuración de Integración Moodle
+const MOODLE_URL   = 'https://campus.tuinstituto.edu.pe'; // Sin slash al final
+const MOODLE_TOKEN = 'a1b2c3d4e5...'; // Token generado en Moodle > Admin > Plugins > Web Services
+const MOODLE_ENABLED = true; // Interruptor general para apagar la sincro si Moodle se cae

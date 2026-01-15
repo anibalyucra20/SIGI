@@ -30,7 +30,15 @@ class Docente extends Model
         ";
         $stmt = self::$db->prepare($sql);
         $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($data as $key => $value) {
+            $apellidos_nombres = explode('_', trim($value['apellidos_nombres']));
+            $data[$key]['ApellidoPaterno'] = $apellidos_nombres[0];
+            $data[$key]['ApellidoMaterno'] = $apellidos_nombres[1];
+            $data[$key]['Nombres'] = $apellidos_nombres[2];
+            $data[$key]['apellidos_nombres'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ' ' . $apellidos_nombres[2];
+        }
+        return $data;
     }
     // Lista de docentes para asignar (SELECT)
     public function getDocentesAsignar()
@@ -42,7 +50,15 @@ class Docente extends Model
              ORDER BY u.apellidos_nombres ASC";
         $stmt = self::$db->prepare($sql);
         $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($data as $key => $value) {
+            $apellidos_nombres = explode('_', trim($value['apellidos_nombres']));
+            $data[$key]['ApellidoPaterno'] = $apellidos_nombres[0];
+            $data[$key]['ApellidoMaterno'] = $apellidos_nombres[1];
+            $data[$key]['Nombres'] = $apellidos_nombres[2];
+            $data[$key]['apellidos_nombres'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ' ' . $apellidos_nombres[2];
+        }
+        return $data;
     }
     public function getDocentesPorSede($id_sede)
     {
@@ -54,13 +70,29 @@ class Docente extends Model
             ORDER BY apellidos_nombres";
         $stmt = self::$db->prepare($sql);
         $stmt->execute([$id_sede]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($data as $key => $value) {
+            $apellidos_nombres = explode('_', trim($value['apellidos_nombres']));
+            $data[$key]['ApellidoPaterno'] = $apellidos_nombres[0];
+            $data[$key]['ApellidoMaterno'] = $apellidos_nombres[1];
+            $data[$key]['Nombres'] = $apellidos_nombres[2];
+            $data[$key]['apellidos_nombres'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ' ' . $apellidos_nombres[2];
+        }
+        return $data;
     }
     // Para el select de directores (usuarios activos, solo rol Director)
     public function getDirectores()
     {
         $stmt = self::$db->query("SELECT id, apellidos_nombres FROM sigi_usuarios WHERE id_rol = 2 AND estado = 1 ORDER BY apellidos_nombres");
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($data as $key => $value) {
+            $apellidos_nombres = explode('_', trim($value['apellidos_nombres']));
+            $data[$key]['ApellidoPaterno'] = $apellidos_nombres[0];
+            $data[$key]['ApellidoMaterno'] = $apellidos_nombres[1];
+            $data[$key]['Nombres'] = $apellidos_nombres[2];
+            $data[$key]['apellidos_nombres'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ' ' . $apellidos_nombres[2];
+        }
+        return $data;
     }
 
     // Obtener un docente por ID
@@ -79,7 +111,13 @@ class Docente extends Model
         $stmt = self::$db->prepare($sql);
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
+        $apellidos_nombres = explode('_', trim($data['apellidos_nombres']));
+        $data['ApellidoPaterno'] = $apellidos_nombres[0];
+        $data['ApellidoMaterno'] = $apellidos_nombres[1];
+        $data['Nombres'] = $apellidos_nombres[2];
+        $data['apellidos_nombres'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ' ' . $apellidos_nombres[2];
+        return $data;
     }
     public function obtenerPermisos($id_usuario)
     {
@@ -100,14 +138,14 @@ class Docente extends Model
     {
         $sql = "INSERT INTO sigi_usuarios
         (dni, apellidos_nombres, correo, password,
-         discapacidad, genero, fecha_nacimiento, direccion, telefono,
+         discapacidad, genero, fecha_nacimiento,distrito_nacimiento, direccion, telefono,
          id_rol, id_sede, id_programa_estudios, id_periodo_registro,
-         reset_password, token_password)
+         reset_password, token_password, estado)
         VALUES
         (:dni, :apellidos_nombres, :correo, :password,
-         :discapacidad, :genero, :fecha_nacimiento, :direccion, :telefono,
+         :discapacidad, :genero, :fecha_nacimiento,:distrito_nacimiento, :direccion, :telefono,
          :id_rol, :id_sede, :id_programa_estudios, :id_periodo_registro,
-         :reset_password, :token_password)";
+         :reset_password, :token_password, :estado)";
         $stmt = self::$db->prepare($sql);
         if ($stmt->execute($data)) {
             return self::$db->lastInsertId(); // Retorna el ID del nuevo usuario
@@ -126,6 +164,7 @@ class Docente extends Model
           discapacidad = :discapacidad,
           genero = :genero,
           fecha_nacimiento = :fecha_nacimiento,
+          distrito_nacimiento = :distrito_nacimiento,
           direccion = :direccion,
           telefono = :telefono,
           estado = :estado,                         -- ← aquí
@@ -138,6 +177,27 @@ class Docente extends Model
         $data['id'] = $id;
         return $stmt->execute($data);
     }
+    public function updateInAdmision($id, $data)
+    {
+        $sql = "UPDATE sigi_usuarios SET
+          dni = :dni,
+          apellidos_nombres = :apellidos_nombres,
+          correo = :correo,
+          discapacidad = :discapacidad,
+          genero = :genero,
+          fecha_nacimiento = :fecha_nacimiento,
+          distrito_nacimiento = :distrito_nacimiento,
+          direccion = :direccion,
+          telefono = :telefono,
+          id_sede = :id_sede
+        WHERE id = :id";
+
+        $stmt = self::$db->prepare($sql);
+        $data['id'] = $id;
+        return $stmt->execute($data);
+    }
+
+
 
     public function getPaginated(array $filters, int $limit, int $offset, string $orderCol, string $orderDir)
     {
@@ -209,8 +269,16 @@ class Docente extends Model
         $stmt->bindValue(':limit',  $limit,  PDO::PARAM_INT);
         $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
         $stmt->execute();
+        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($data as $key => $value) {
+            $apellidos_nombres = explode('_', trim($value['apellidos_nombres']));
+            $data[$key]['ApellidoPaterno'] = $apellidos_nombres[0];
+            $data[$key]['ApellidoMaterno'] = $apellidos_nombres[1];
+            $data[$key]['Nombres'] = $apellidos_nombres[2];
+            $data[$key]['apellidos_nombres'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ' ' . $apellidos_nombres[2];
+        }
 
-        return ['data' => $stmt->fetchAll(PDO::FETCH_ASSOC), 'total' => $total];
+        return ['data' => $data, 'total' => $total];
     }
 
 
@@ -366,7 +434,10 @@ class Docente extends Model
     {
         $stmt = self::$db->prepare("SELECT u.id as id_director, u.apellidos_nombres as director FROM sigi_usuarios u LEFT JOIN sigi_periodo_academico pa ON pa.director = u.id WHERE pa.id = ?");
         $stmt->execute([$id_periodo]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);;
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
+        $apellidos_nombres = explode('_', trim($data['director']));
+        $data['director'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ' ' . $apellidos_nombres[2];
+        return $data;
     }
 
 
@@ -380,7 +451,10 @@ class Docente extends Model
         $sql = "SELECT * FROM sigi_usuarios WHERE LOWER(correo) = ? AND dni = ? AND estado = 1 LIMIT 1";
         $st = self::$db->prepare($sql);
         $st->execute([$email, $dni]);
-        return $st->fetch(PDO::FETCH_ASSOC);
+        $data = $st->fetch(PDO::FETCH_ASSOC);
+        $apellidos_nombres = explode('_', trim($data['apellidos_nombres']));
+        $data['apellidos_nombres'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ' ' . $apellidos_nombres[2];
+        return $data;
     }
 
     public function setResetToken(int $idUsuario, string $token): bool
@@ -396,7 +470,10 @@ class Docente extends Model
         $sql = "SELECT * FROM sigi_usuarios WHERE token_password = ? AND reset_password = 1  AND estado = 1 AND id = ? LIMIT 1";
         $st = self::$db->prepare($sql);
         $st->execute([$token, $id_user]);
-        return $st->fetch(PDO::FETCH_ASSOC);
+        $data = $st->fetch(PDO::FETCH_ASSOC);
+        $apellidos_nombres = explode('_', trim($data['apellidos_nombres']));
+        $data['apellidos_nombres'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ' ' . $apellidos_nombres[2];
+        return $data;
     }
 
     public function updatePassword(int $idUsuario, string $hash): bool
@@ -404,5 +481,120 @@ class Docente extends Model
         $sql = "UPDATE sigi_usuarios SET password = ?, reset_password = 0, token_password = '' WHERE id = ?";
         $st = self::$db->prepare($sql);
         return $st->execute([$hash, $idUsuario]);
+    }
+
+    public function getAllUsuarios()
+    {
+        $sql = "SELECT * FROM sigi_usuarios";
+        $st = self::$db->prepare($sql);
+        $st->execute();
+        return $st->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+
+
+
+    //-------------- HELPER PARA CAMBIO DE NOMBRE  DE USUARIOS-----------------------------
+    function parsePersona4($usuario): array
+    {
+        $raw = $usuario['apellidos_nombres'];
+        $raw = trim(preg_replace('/\s+/', ' ', $raw));
+
+        // 1) Grado/Título al inicio
+        $grado = '';
+        $grados = ['Tec.', 'Tec', 'Téc.', 'Téc', 'CPC.', 'CPC', 'CP.', 'CP', 'Ing.', 'Ing', 'Lic.', 'Lic', 'Dr.', 'Dr', 'Dra.', 'Dra', 'Mag.', 'Mag', 'Obst.', 'Obst'];
+
+        foreach ($grados as $g) {
+            if (preg_match('/^' . preg_quote($g, '/') . '\s+/i', $raw)) {
+                $grado = rtrim($g, '.'); // guarda sin punto (opcional)
+                $raw = preg_replace('/^' . preg_quote($g, '/') . '\s+/i', '', $raw);
+                $raw = trim($raw);
+                break;
+            }
+        }
+
+        $apPat = '';
+        $apMat = '';
+        $nombres = '';
+
+        // Partículas comunes en apellidos compuestos
+        $particulas = ['DE', 'DEL', 'LA', 'LAS', 'LOS', 'Y'];
+
+        // 2) Caso con coma: "APELLIDOS, NOMBRES"
+        if (strpos($raw, ',') !== false) {
+            [$apellidosStr, $nombresStr] = array_map('trim', explode(',', $raw, 2));
+            $nombres = $nombresStr;
+
+            $aTokens = preg_split('/\s+/', $apellidosStr, -1, PREG_SPLIT_NO_EMPTY);
+            $aN = count($aTokens);
+
+            if ($aN === 1) {
+                $apPat = $aTokens[0];
+                $apMat = '';
+            } elseif ($aN >= 2) {
+                // Heurística simple: 1er token = paterno, resto = materno (para casos como "LOPEZ DE YUCRA")
+                $apPat = $aTokens[0];
+                $apMat = implode(' ', array_slice($aTokens, 1));
+            }
+        } else {
+            // 3) Sin coma: asumimos últimos 2 tokens como nombres (si hay suficientes)
+            $tokens = preg_split('/\s+/', $raw, -1, PREG_SPLIT_NO_EMPTY);
+            $n = count($tokens);
+
+            if ($n === 0) {
+                return ['grado' => $grado, 'apellido_paterno' => '', 'apellido_materno' => '', 'nombres' => ''];
+            }
+
+            if ($n >= 4) {
+                $nombresTokens = array_slice($tokens, -2);
+                $apellidosTokens = array_slice($tokens, 0, -2);
+            } else {
+                // pocos tokens: último = nombre, resto = apellidos
+                $nombresTokens = [end($tokens)];
+                $apellidosTokens = array_slice($tokens, 0, -1);
+            }
+
+            $nombres = implode(' ', $nombresTokens);
+
+            // Separar apellidosTokens en paterno y materno
+            $aN = count($apellidosTokens);
+
+            if ($aN === 1) {
+                $apPat = $apellidosTokens[0];
+                $apMat = '';
+            } elseif ($aN === 2) {
+                $apPat = $apellidosTokens[0];
+                $apMat = $apellidosTokens[1];
+            } else {
+                // Heurística:
+                // - Paterno = primer token
+                // - Materno = resto, pero si el segundo token es partícula (DE/DEL/LA/...), lo pegamos al paterno.
+                $apPatTokens = [$apellidosTokens[0]];
+                $idx = 1;
+
+                // Si hay partículas inmediatamente después del paterno, se agregan al paterno
+                while ($idx < $aN && in_array(mb_strtoupper($apellidosTokens[$idx]), $particulas, true)) {
+                    $apPatTokens[] = $apellidosTokens[$idx];
+                    $idx++;
+                    if ($idx < $aN) {
+                        // si después de la partícula viene palabra, también podría ser parte del paterno compuesto (ej: "DE LA")
+                        // pero esto es opcional; aquí solo pegamos la partícula.
+                    }
+                }
+
+                $apPat = implode(' ', $apPatTokens);
+                $apMat = implode(' ', array_slice($apellidosTokens, $idx));
+            }
+        }
+        $sql = "UPDATE sigi_usuarios SET apellidos_nombres = ?, grado_academico = ? WHERE id = ?";
+        $st = self::$db->prepare($sql);
+        $st->execute([$apPat . '_' . $apMat . '_' . $nombres, $grado, $usuario['id']]);
+        return [
+            'grado'            => $grado,
+            'apellido_paterno' => trim($apPat),
+            'apellido_materno' => trim($apMat),
+            'nombres'          => trim($nombres),
+            'apellidos_nombres' => trim($apPat . '_' . $apMat . '_' . $nombres),
+        ];
     }
 }

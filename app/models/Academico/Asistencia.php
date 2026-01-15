@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models\Academico;
 
 use Core\Model;
@@ -38,6 +39,10 @@ class Asistencia extends Model
             ORDER BY TRIM(CONVERT(u.apellidos_nombres USING utf8mb4)) COLLATE utf8mb4_spanish_ci ASC");
         $stmt->execute([$id_programacion_ud]);
         $estudiantes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($estudiantes as $key => $value) {
+            $apellidos_nombres = explode('_', trim($value['apellidos_nombres']));
+            $estudiantes[$key]['apellidos_nombres'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ' ' . $apellidos_nombres[2];
+        }
 
         // 4. Asistencias
         $asistencias = [];

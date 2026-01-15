@@ -120,7 +120,13 @@ class ProgramacionUnidadDidactica extends Model
         }
         $stmtTotal->execute();
         $total = $stmtTotal->fetchColumn();
-
+        foreach ($data as $key => $value) {
+            $apellidos_nombres = explode('_', trim($value['docente_nombre']));
+            $data[$key]['ApellidoPaterno'] = $apellidos_nombres[0];
+            $data[$key]['ApellidoMaterno'] = $apellidos_nombres[1];
+            $data[$key]['Nombres'] = $apellidos_nombres[2];
+            $data[$key]['docente_nombre'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ' ' . $apellidos_nombres[2];
+        }
         return ['data' => $data, 'total' => $total];
     }
 
@@ -310,7 +316,15 @@ class ProgramacionUnidadDidactica extends Model
             ':sede' => $id_sede_actual,
             ':ud_nombre' => $info['unidad_nombre'],
         ]);
-        return $st->fetchAll(PDO::FETCH_ASSOC);
+        $st = $st->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($st as $key => $value) {
+            $apellidos_nombres = explode('_', trim($value['docente']));
+            $st[$key]['ApellidoPaterno'] = $apellidos_nombres[0];
+            $st[$key]['ApellidoMaterno'] = $apellidos_nombres[1];
+            $st[$key]['Nombres'] = $apellidos_nombres[2];
+            $st[$key]['docente'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ' ' . $apellidos_nombres[2];
+        }
+        return $st;
     }
 
     private function candidatasOrderableColumns(): array
@@ -436,6 +450,10 @@ class ProgramacionUnidadDidactica extends Model
         $st->bindValue(':length', $length, PDO::PARAM_INT);
         $st->execute();
         $rows = $st->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($rows as $key => $value) {
+            $apellidos_nombres = explode('_', trim($value['docente']));
+            $rows[$key]['docente'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ' ' . $apellidos_nombres[2];
+        }
 
         // Adaptar algunos campos para DataTables (checkbox/radio se arma en la vista)
         foreach ($rows as &$r) {

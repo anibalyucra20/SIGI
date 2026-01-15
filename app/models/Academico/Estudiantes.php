@@ -85,6 +85,7 @@ class Estudiantes extends Model
         $stmt->execute();
         $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+
         // Conteo total
         $sqlTotal = "SELECT COUNT(*) 
                 FROM sigi_usuarios u
@@ -105,7 +106,13 @@ class Estudiantes extends Model
 
         $stmtTotal->execute();
         $total = $stmtTotal->fetchColumn();
-
+        foreach ($data as $key => $value) {
+            $apellidos_nombres = explode('_', trim($value['apellidos_nombres']));
+            $data[$key]['ApellidoPaterno'] = $apellidos_nombres[0];
+            $data[$key]['ApellidoMaterno'] = $apellidos_nombres[1];
+            $data[$key]['Nombres'] = $apellidos_nombres[2];
+            $data[$key]['apellidos_nombres'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ' ' . $apellidos_nombres[2];
+        }
         return ['data' => $data, 'total' => $total];
     }
     // Validaciones duplicados
@@ -143,7 +150,13 @@ class Estudiantes extends Model
                 WHERE u.id = ?";
         $stmt = self::$db->prepare($sql);
         $stmt->execute([$id]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
+        $apellidos_nombres = explode('_', trim($data['apellidos_nombres']));
+        $data['ApellidoPaterno'] = $apellidos_nombres[0];
+        $data['ApellidoMaterno'] = $apellidos_nombres[1];
+        $data['Nombres'] = $apellidos_nombres[2];
+        $data['apellidos_nombres'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ' ' . $apellidos_nombres[2];
+        return $data;
     }
     public function guardar($data)
     {
@@ -232,5 +245,21 @@ class Estudiantes extends Model
             }
             return $id_usuario;
         }
+    }
+
+    public function buscarUsuarioPorDni($dni)
+    {
+        $stmt = self::$db->prepare("SELECT * FROM sigi_usuarios WHERE dni = ?");
+        $stmt->execute([$dni]);
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (empty($data)) {
+            return null;
+        }
+        $apellidos_nombres = explode('_', trim($data['apellidos_nombres']));
+        $data['ApellidoPaterno'] = $apellidos_nombres[0];
+        $data['ApellidoMaterno'] = $apellidos_nombres[1];
+        $data['Nombres'] = $apellidos_nombres[2];
+        $data['apellidos_nombres'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ' ' . $apellidos_nombres[2];
+        return $data;
     }
 }

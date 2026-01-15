@@ -158,7 +158,7 @@ class EstudiantesController extends Controller
                 $data = [
                     'id'                  => $_POST['id'] ?? null,
                     'dni'                 => trim($_POST['dni']),
-                    'apellidos_nombres'   => trim($_POST['apellidos_nombres']),
+                    'apellidos_nombres'   => trim($_POST['ApellidoPaterno']) . '_' . trim($_POST['ApellidoMaterno']) . '_' . trim($_POST['Nombres']),
                     'genero'              => $_POST['genero'],
                     'fecha_nacimiento'    => $_POST['fecha_nacimiento'],
                     'direccion'           => trim($_POST['direccion']),
@@ -195,16 +195,26 @@ class EstudiantesController extends Controller
                     $planes = $this->objPlan->getPlanesByPrograma($data['id_programa_estudios']);
                     $periodos = $this->objPeriodoAcademico->getPeriodos();
                     $sedes = $this->objSede->getSedes();
+                    $estudiante = $data;
+                    $estudiante['ApellidoPaterno'] = $_POST['ApellidoPaterno'];
+                    $estudiante['ApellidoMaterno'] = $_POST['ApellidoMaterno'];
+                    $estudiante['Nombres'] = $_POST['Nombres'];
                     $vars = [
                         'errores' => $errores,
                         'programas' => $programas,
                         'planes' => $planes,
-                    ] + $data;
+                        'periodos' => $periodos,
+                        'sedes' => $sedes,
+                        'estudiante' => $estudiante,
+                        'periodos' => $periodos,
+                        'sedes' => $sedes,
+                        'module' => 'academico',
+                        'pageTitle' => 'Nuevo Estudiante',
+                        'periodo_vigente' => $periodo_vigente,
+                    ];
                     if ($isNuevo) {
                         $this->view('academico/estudiantes/nuevo', $vars);
                     } else {
-                        $vars['periodos'] = $periodos;
-                        $vars['sedes'] = $sedes;
                         $this->view('academico/estudiantes/editar', $vars);
                     }
                     return;
@@ -247,7 +257,9 @@ class EstudiantesController extends Controller
         // 2. Escribe encabezados
         $mainSheet->fromArray([
             'DNI',
-            'Apellidos Nombres',
+            'Apellido Paterno',
+            'Apellido Materno',
+            'Nombres',
             'Género',
             'Fecha Nac.',
             'Dirección',
@@ -285,13 +297,13 @@ class EstudiantesController extends Controller
         $planSheet->setSheetState(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet::SHEETSTATE_HIDDEN);
 
         // 4. Listas para género y discapacidad directo en arrays
-        $mainSheet->setCellValue('C2', ''); // Género
-        $mainSheet->setCellValue('H2', ''); // Discapacidad
+        $mainSheet->setCellValue('E2', ''); // Género
+        $mainSheet->setCellValue('J2', ''); // Discapacidad
 
         // 5. Agrega validación de datos (listas desplegables) en columnas seleccionadas
         for ($row = 2; $row <= 41; $row++) { // 100 filas para ejemplo
             // Género
-            $validation = $mainSheet->getCell("C$row")->getDataValidation();
+            $validation = $mainSheet->getCell("E$row")->getDataValidation();
             $validation->setType(DataValidation::TYPE_LIST)
                 ->setErrorStyle(DataValidation::STYLE_STOP)
                 ->setAllowBlank(true)
@@ -301,7 +313,7 @@ class EstudiantesController extends Controller
                 ->setFormula1('"M,F"');
 
             // Discapacidad
-            $validation = $mainSheet->getCell("H$row")->getDataValidation();
+            $validation = $mainSheet->getCell("J$row")->getDataValidation();
             $validation->setType(DataValidation::TYPE_LIST)
                 ->setErrorStyle(DataValidation::STYLE_STOP)
                 ->setAllowBlank(true)
@@ -311,7 +323,7 @@ class EstudiantesController extends Controller
                 ->setFormula1('"SI,NO"');
 
             // Programa Estudio
-            $validation = $mainSheet->getCell("I$row")->getDataValidation();
+            $validation = $mainSheet->getCell("K$row")->getDataValidation();
             $validation->setType(DataValidation::TYPE_LIST)
                 ->setErrorStyle(DataValidation::STYLE_STOP)
                 ->setAllowBlank(true)
@@ -321,14 +333,14 @@ class EstudiantesController extends Controller
                 ->setFormula1("=Programas!B2:B100");
 
             // Planes de estudio
-            $validation = $mainSheet->getCell("J$row")->getDataValidation();
+            $validation = $mainSheet->getCell("L$row")->getDataValidation();
             $validation->setType(DataValidation::TYPE_LIST)
                 ->setErrorStyle(DataValidation::STYLE_STOP)
                 ->setAllowBlank(true)
                 ->setShowInputMessage(true)
                 ->setShowErrorMessage(true)
                 ->setShowDropDown(true)
-                ->setFormula1("=Planes!A2:A100");
+                ->setFormula1("=Planes!A2:A1000");
         }
         $nombre_plantilla = "PlantillaCargaMasivaEstudiantes" . date("Ymd-H:i:s");
         // 6. Descarga el archivo
@@ -372,26 +384,34 @@ class EstudiantesController extends Controller
                     foreach ($rows as $i => $row) {
                         if ($i === 1) continue; // Saltar encabezados
                         $dni                 = trim($row['A']);
-                        $apellidos_nombres   = trim($row['B']);
-                        $genero              = strtoupper(trim($row['C']));
-                        $fecha_nac           = trim($row['D']);
-                        $direccion           = trim($row['E']);
-                        $correo              = trim($row['F']);
-                        $telefono            = trim($row['G']);
-                        $discapacidad        = strtoupper(trim($row['H']));
-                        $programa_estudios   = trim($row['I']);
-                        $plan_estudio        = trim($row['J']);
+                        $ApellidoPaterno     = trim($row['B']);
+                        $ApellidoMaterno     = trim($row['C']);
+                        $Nombres             = trim($row['D']);
+                        $genero              = strtoupper(trim($row['E']));
+                        $fecha_nac           = date('Y-m-d', strtotime($row['F']));
+                        $direccion           = trim($row['G']);
+                        $correo              = trim($row['H']);
+                        $telefono            = trim($row['I']);
+                        $discapacidad        = strtoupper(trim($row['J']));
+                        $programa_estudios   = trim($row['K']);
+                        $plan_estudio        = trim($row['L']);
 
                         $datos_validos = 0;
-                        if ($dni != '' && $apellidos_nombres != '' && $genero != '') {
+                        if ($dni != '' && $ApellidoPaterno != '' && $ApellidoMaterno != '' && $Nombres != '' && $genero != '') {
                             $datos_validos++;
 
                             // Validaciones
                             if (empty($dni) || !preg_match('/^\d{8,12}$/', $dni)) {
                                 $errores[] = "Fila $i: DNI inválido.";
                             }
-                            if (empty($apellidos_nombres) || strlen($apellidos_nombres) < 10) {
-                                $errores[] = "Fila $i: Nombre/apellido inválido.";
+                            if (empty($ApellidoPaterno) || strlen($ApellidoPaterno) < 2) {
+                                $errores[] = "Fila $i: Apellido Paterno inválido.";
+                            }
+                            if (empty($ApellidoMaterno) || strlen($ApellidoMaterno) < 2) {
+                                $errores[] = "Fila $i: Apellido Materno inválido.";
+                            }
+                            if (empty($Nombres) || strlen($Nombres) < 2) {
+                                $errores[] = "Fila $i: Nombres inválido.";
                             }
                             if (!in_array($genero, ['M', 'F'])) {
                                 $errores[] = "Fila $i: Género debe ser 'M' o 'F'.";
@@ -429,7 +449,7 @@ class EstudiantesController extends Controller
                             $datosAInsertar[] = [
                                 'id'                   => ($id_usuario['id'] > 0) ? $id_usuario['id'] : null,
                                 'dni'                  => $dni,
-                                'apellidos_nombres'    => $apellidos_nombres,
+                                'apellidos_nombres'    => $ApellidoPaterno . '_' . $ApellidoMaterno . '_' . $Nombres,
                                 'genero'               => $genero,
                                 'fecha_nacimiento'     => $fecha_nac,
                                 'direccion'            => $direccion,

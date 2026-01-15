@@ -13,7 +13,7 @@ class CoordinadorPeriodo extends Model
     {
         $sql = "SELECT 
                 c.id, 
-                u.apellidos_nombres AS coordinador, 
+                u.apellidos_nombres AS apellidos_nombres, 
                 pe.nombre AS programa, 
                 p.nombre AS periodo
             FROM sigi_coordinador_pe_periodo c

@@ -3,9 +3,17 @@
         <label class="form-label">DNI *</label>
         <input type="text" name="dni" class="form-control" maxlength="20" required value="<?= htmlspecialchars($dni ?? $estudiante['dni'] ?? '') ?>">
     </div>
-    <div class="col-md-5 mb-2">
-        <label class="form-label">Apellidos y Nombres *</label>
-        <input type="text" name="apellidos_nombres" class="form-control" maxlength="125" required value="<?= htmlspecialchars($apellidos_nombres ?? $estudiante['apellidos_nombres'] ?? '') ?>">
+    <div class="col-md-3 mb-2">
+        <label class="form-label">Apellido Paterno</label>
+        <input type="text" name="ApellidoPaterno" class="form-control" maxlength="120" value="<?= $estudiante['ApellidoPaterno'] ?? '' ?>" required>
+    </div>
+    <div class="col-md-3 mb-2">
+        <label class="form-label">Apellido Materno</label>
+        <input type="text" name="ApellidoMaterno" class="form-control" maxlength="120" value="<?= $estudiante['ApellidoMaterno'] ?? '' ?>" required>
+    </div>
+    <div class="col-md-3 mb-2">
+        <label class="form-label">Nombres</label>
+        <input type="text" name="Nombres" class="form-control" maxlength="120" value="<?= $estudiante['Nombres'] ?? '' ?>" required>
     </div>
     <div class="col-md-2 mb-2">
         <label class="form-label">Género *</label>
@@ -93,17 +101,17 @@
     </div>
 </div>
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    $('#id_programa_estudios').on('change', function () {
-        let idPrograma = $(this).val();
-        $('#id_plan_estudio').html('<option value="">Seleccione...</option>');
-        if (idPrograma) {
-            $.getJSON('<?= BASE_URL ?>/sigi/planes/porPrograma/' + idPrograma, function (planes) {
-                planes.forEach(function (pl) {
-                    $('#id_plan_estudio').append('<option value="' + pl.id + '">' + pl.nombre + '</option>');
+    document.addEventListener('DOMContentLoaded', function() {
+        $('#id_programa_estudios').on('change', function() {
+            let idPrograma = $(this).val();
+            $('#id_plan_estudio').html('<option value="">Seleccione...</option>');
+            if (idPrograma) {
+                $.getJSON('<?= BASE_URL ?>/sigi/planes/porPrograma/' + idPrograma, function(planes) {
+                    planes.forEach(function(pl) {
+                        $('#id_plan_estudio').append('<option value="' + pl.id + '">' + pl.nombre + '</option>');
+                    });
                 });
-            });
-        }
+            }
+        });
     });
-});
 </script>

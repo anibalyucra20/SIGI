@@ -15,7 +15,8 @@ class Auth
         self::start();
         $_SESSION['sigi_session_id']   = $user['id_session'];
         $_SESSION['sigi_user_id']   = $user['id'];
-        $_SESSION['sigi_user_name'] = $user['apellidos_nombres'];
+        $apellidos_nombres = explode('_', trim($user['apellidos_nombres']));
+        $_SESSION['sigi_user_name'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ', ' . $apellidos_nombres[2];
         $_SESSION['sigi_token'] = $user['token'];
         // Sede por defecto = la que tiene el usuario
         $_SESSION['sigi_sede_actual'] = $user['id_sede'];

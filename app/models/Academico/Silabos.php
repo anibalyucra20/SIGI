@@ -105,7 +105,10 @@ class Silabos extends Model
             WHERE pud.id = ?";
         $stmt = self::$db->prepare($sql);
         $stmt->execute([$id_programacion]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
+        $apellidos_nombres = explode('_', trim($data['docente']));
+        $data['docente'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ' ' . $apellidos_nombres[2];
+        return $data;
     }
 
 

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models\Academico;
 
 use Core\Model;
@@ -71,7 +72,13 @@ class Licencias extends Model
         }
         $stmtTotal->execute();
         $total = $stmtTotal->fetchColumn();
-
+        foreach ($data as $key => $value) {
+            $apellidos_nombres = explode('_', trim($value['apellidos_nombres']));
+            $data[$key]['ApellidoPaterno'] = $apellidos_nombres[0];
+            $data[$key]['ApellidoMaterno'] = $apellidos_nombres[1];
+            $data[$key]['Nombres'] = $apellidos_nombres[2];
+            $data[$key]['apellidos_nombres'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ' ' . $apellidos_nombres[2];
+        }
         return ['data' => $data, 'total' => $total];
     }
 
@@ -121,6 +128,12 @@ class Licencias extends Model
             INNER JOIN sigi_semestre s ON m.id_semestre = s.id
             WHERE m.id_periodo_academico = ? AND m.id_sede = ? AND u.dni = ? LIMIT 1");
         $stmt->execute([$periodo, $sede, $dni]);
-        return $stmt->fetch(\PDO::FETCH_ASSOC);
+        $estudiante = $stmt->fetch(\PDO::FETCH_ASSOC);
+        $apellidos_nombres = explode('_', trim($estudiante['apellidos_nombres']));
+        $estudiante['ApellidoPaterno'] = $apellidos_nombres[0];
+        $estudiante['ApellidoMaterno'] = $apellidos_nombres[1];
+        $estudiante['Nombres'] = $apellidos_nombres[2];
+        $estudiante['apellidos_nombres'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ' ' . $apellidos_nombres[2];
+        return $estudiante;
     }
 }

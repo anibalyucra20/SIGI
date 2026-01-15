@@ -21,7 +21,7 @@
                         <?php foreach ($coordinadores as $i => $item) : ?>
                             <tr>
                                 <td><?= $i + 1 ?></td>
-                                <td><?= $item['coordinador'] ?></td>
+                                <td><?= $item['apellidos_nombres'] ?></td>
                                 <td><?= $item['programa'] ?></td>
                                 <td><?= $item['periodo'] ?></td>
                                 <td>

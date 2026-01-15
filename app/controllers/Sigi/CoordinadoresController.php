@@ -36,6 +36,10 @@ class CoordinadoresController extends Controller
             $id_periodo = $_SESSION['sigi_periodo_actual_id'];
             $id_sede    = $_SESSION['sigi_sede_actual'];
             $coordinadores = $this->model->listarPorPeriodoYSede($id_periodo, $id_sede);
+            foreach ($coordinadores as $key => $value) {
+                $apellidos_nombres = explode('_', trim($value['apellidos_nombres']));
+                $coordinadores[$key]['apellidos_nombres'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ', ' . $apellidos_nombres[2];
+            }
         endif;
         $this->view('sigi/coordinadores/index', [
             'module' => 'sigi',

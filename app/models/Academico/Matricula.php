@@ -98,6 +98,7 @@ class Matricula extends Model
         $stmt->execute();
         $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+
         // Total count
         $sqlTotal = "SELECT COUNT(*) FROM acad_matricula m
                 INNER JOIN acad_estudiante_programa ep ON ep.id = m.id_estudiante
@@ -112,7 +113,13 @@ class Matricula extends Model
         }
         $stmtTotal->execute();
         $total = $stmtTotal->fetchColumn();
-
+        foreach ($data as $key => $value) {
+            $apellidos_nombres = explode('_', trim($value['apellidos_nombres']));
+            $data[$key]['ApellidoPaterno'] = $apellidos_nombres[0];
+            $data[$key]['ApellidoMaterno'] = $apellidos_nombres[1];
+            $data[$key]['Nombres'] = $apellidos_nombres[2];
+            $data[$key]['apellidos_nombres'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ' ' . $apellidos_nombres[2];
+        }
         return ['data' => $data, 'total' => $total];
     }
 
@@ -186,7 +193,7 @@ class Matricula extends Model
 
     public function getDetalleMatricula($id_matricula)
     {
-        $sql = "SELECT dm.id, prog.nombre as programa, s.descripcion as semestre, ud.nombre as unidad_didactica
+        $sql = "SELECT dm.id, prog.nombre as programa, s.descripcion as semestre, ud.nombre as unidad_didactica, u.apellidos_nombres as docente
             FROM acad_detalle_matricula dm
             INNER JOIN acad_programacion_unidad_didactica pud ON dm.id_programacion_ud = pud.id
             INNER JOIN sigi_unidad_didactica ud ON pud.id_unidad_didactica = ud.id
@@ -194,11 +201,17 @@ class Matricula extends Model
             INNER JOIN sigi_modulo_formativo mf ON s.id_modulo_formativo = mf.id
             INNER JOIN sigi_planes_estudio pl ON mf.id_plan_estudio = pl.id
             INNER JOIN sigi_programa_estudios prog ON pl.id_programa_estudios = prog.id
+            INNER JOIN sigi_usuarios u ON pud.id_docente = u.id
             WHERE dm.id_matricula = ?
             ORDER BY dm.orden";
         $stmt = self::$db->prepare($sql);
         $stmt->execute([$id_matricula]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($data as $key => $value) {
+            $apellidos_nombres = explode('_', trim($value['docente']));
+            $data[$key]['docente'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ' ' . $apellidos_nombres[2];
+        }
+        return $data;
     }
 
     public function getEstudianteByMatricula($id_matricula)
@@ -209,7 +222,13 @@ class Matricula extends Model
             WHERE m.id = ?";
         $stmt = self::$db->prepare($sql);
         $stmt->execute([$id_matricula]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        $estudiante = $stmt->fetch(PDO::FETCH_ASSOC);
+        $apellidos_nombres = explode('_', trim($estudiante['apellidos_nombres']));
+        $estudiante['ApellidoPaterno'] = $apellidos_nombres[0];
+        $estudiante['ApellidoMaterno'] = $apellidos_nombres[1];
+        $estudiante['Nombres'] = $apellidos_nombres[2];
+        $estudiante['apellidos_nombres'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ' ' . $apellidos_nombres[2];
+        return $estudiante;
     }
 
 
@@ -221,6 +240,11 @@ class Matricula extends Model
         $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
         if (!$usuario) return null;
         if ($usuario['id_sede'] != $sede_actual) return null;
+        $apellidos_nombres = explode('_', trim($usuario['apellidos_nombres']));
+        $usuario['ApellidoPaterno'] = $apellidos_nombres[0];
+        $usuario['ApellidoMaterno'] = $apellidos_nombres[1];
+        $usuario['Nombres'] = $apellidos_nombres[2];
+        $usuario['apellidos_nombres'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ' ' . $apellidos_nombres[2];
         return $usuario;
     }
 
@@ -267,7 +291,12 @@ class Matricula extends Model
               AND mf.id_plan_estudio = ?";
         $stmt = self::$db->prepare($sql);
         $stmt->execute([$sede, $periodo, $turno, $seccion, $idSemestre, $idPlan]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($data as $key => $value) {
+            $apellidos_nombres = explode('_', trim($value['docente']));
+            $data[$key]['docente'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ' ' . $apellidos_nombres[2];
+        }
+        return $data;
     }
 
 
@@ -341,11 +370,12 @@ class Matricula extends Model
     public function getUnidadesDisponibles($id_matricula, $id_semestre, $periodo, $sede, $turno, $seccion)
     {
         // Busca unidades programadas para el semestre y plan, y filtra las ya seleccionadas
-        $sql = "SELECT pud.id as id_programacion_ud, ud.nombre as unidad_didactica, mf.descripcion as modulo
+        $sql = "SELECT pud.id as id_programacion_ud, ud.nombre as unidad_didactica, mf.descripcion as modulo, u.apellidos_nombres as docente
         FROM acad_programacion_unidad_didactica pud
         INNER JOIN sigi_unidad_didactica ud ON pud.id_unidad_didactica = ud.id
         INNER JOIN sigi_semestre s ON ud.id_semestre = s.id
         INNER JOIN sigi_modulo_formativo mf ON s.id_modulo_formativo = mf.id
+        INNER JOIN sigi_usuarios u ON pud.id_docente = u.id
         WHERE s.id = ? AND pud.id_periodo_academico =? AND pud.id_sede = ? AND pud.turno = ? AND pud.seccion = ?
         AND pud.id NOT IN (
             SELECT id_programacion_ud FROM acad_detalle_matricula WHERE id_matricula = ?
@@ -353,14 +383,13 @@ class Matricula extends Model
         ORDER BY ud.nombre";
         $stmt = self::$db->prepare($sql);
         $stmt->execute([$id_semestre, $periodo, $sede, $turno, $seccion, $id_matricula]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($data as $key => $value) {
+            $apellidos_nombres = explode('_', trim($value['docente']));
+            $data[$key]['docente'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ' ' . $apellidos_nombres[2];
+        }
+        return $data;
     }
-
-
-
-
-
-
 
     public function eliminarDetalleMatricula($id_detalle)
     {

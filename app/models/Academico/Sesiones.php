@@ -110,6 +110,8 @@ class Sesiones extends Model
         ");
         $stmt->execute([$id_programacion]);
         $datos = $stmt->fetch(PDO::FETCH_ASSOC);
+        $apellidos_nombres = explode('_', trim($datos['docente']));
+        $datos['docente'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ' ' . $apellidos_nombres[2];
 
         // Si te pasan el id del indicador de logro, traes su info
         if ($id_ind_logro_aprendizaje) {

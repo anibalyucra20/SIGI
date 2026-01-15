@@ -10,3 +10,5 @@ public/images/*.svg
 public/images/*.pdf
 public/images/*.docx
 public/images/*.docx
+
+public/uploads/*

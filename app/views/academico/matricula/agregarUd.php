@@ -18,20 +18,20 @@
                         <label class="form-label">Turno *</label>
                         <select name="turno" id="turno" class="form-control" required>
                             <option value="" disabled>Seleccione</option>
-                            <option value="M" <?= (($matricula['turno'])=="M") ? "selected" : ""; ?>>Mañana</option>
-                            <option value="T" <?= (($matricula['turno'])=="T") ? "selected" : ""; ?>>Tarde</option>
-                            <option value="N" <?= (($matricula['turno'])=="N") ? "selected" : ""; ?>>Noche</option>
+                            <option value="M" <?= (($matricula['turno']) == "M") ? "selected" : ""; ?>>Mañana</option>
+                            <option value="T" <?= (($matricula['turno']) == "T") ? "selected" : ""; ?>>Tarde</option>
+                            <option value="N" <?= (($matricula['turno']) == "N") ? "selected" : ""; ?>>Noche</option>
                         </select>
                     </div>
                     <div class="col-md-4 mb-2">
                         <label class="form-label">Sección *</label>
                         <select name="seccion" id="seccion" class="form-control" required>
                             <option value="" disabled>Seleccione</option>
-                            <option value="A" <?= (($matricula['seccion'])=="A") ? "selected" : ""; ?>>A</option>
-                            <option value="B" <?= (($matricula['seccion'])=="B") ? "selected" : ""; ?>>B</option>
-                            <option value="C" <?= (($matricula['seccion'])=="C") ? "selected" : ""; ?>>C</option>
-                            <option value="D" <?= (($matricula['seccion'])=="D") ? "selected" : ""; ?>>D</option>
-                            <option value="E" <?= (($matricula['seccion'])=="E") ? "selected" : ""; ?>>E</option>
+                            <option value="A" <?= (($matricula['seccion']) == "A") ? "selected" : ""; ?>>A</option>
+                            <option value="B" <?= (($matricula['seccion']) == "B") ? "selected" : ""; ?>>B</option>
+                            <option value="C" <?= (($matricula['seccion']) == "C") ? "selected" : ""; ?>>C</option>
+                            <option value="D" <?= (($matricula['seccion']) == "D") ? "selected" : ""; ?>>D</option>
+                            <option value="E" <?= (($matricula['seccion']) == "E") ? "selected" : ""; ?>>E</option>
                         </select>
                     </div>
                     <div class="col-md-4 mb-2">
@@ -55,6 +55,7 @@
                                     <th></th>
                                     <th>Unidad Didáctica</th>
                                     <th>Módulo</th>
+                                    <th>Docente</th>
                                 </tr>
                             </thead>
                             <tbody id="tbody-unidades">
@@ -65,11 +66,12 @@
                                         </td>
                                         <td><?= htmlspecialchars($ud['unidad_didactica']) ?></td>
                                         <td><?= htmlspecialchars($ud['modulo']) ?></td>
+                                        <td><?= htmlspecialchars($ud['docente']) ?></td>
                                     </tr>
                                 <?php endforeach; ?>
                                 <?php if (empty($unidadesDisponibles)): ?>
                                     <tr>
-                                        <td colspan="3" class="text-center text-danger">No hay unidades didácticas disponibles para este semestre.</td>
+                                        <td colspan="4" class="text-center text-danger">No hay unidades didácticas disponibles para este semestre.</td>
                                     </tr>
                                 <?php endif; ?>
                             </tbody>
@@ -90,7 +92,7 @@
                 let idSemestre = document.getElementById('id_semestre').value;
                 let Turno = document.getElementById('turno').value;
                 let Seccion = document.getElementById('seccion').value;
-                let url = '<?= BASE_URL ?>/academico/matricula/unidadesDisponiblesAjax/<?= $matricula['id'] ?>/' + idSemestre+'/'+Turno+'/'+Seccion;
+                let url = '<?= BASE_URL ?>/academico/matricula/unidadesDisponiblesAjax/<?= $matricula['id'] ?>/' + idSemestre + '/' + Turno + '/' + Seccion;
                 fetch(url)
                     .then(response => response.json())
                     .then(data => {
@@ -102,10 +104,11 @@
                             <td><input type="checkbox" name="unidades[]" value="${ud.id_programacion_ud}"></td>
                             <td>${ud.unidad_didactica}</td>
                             <td>${ud.modulo}</td>
+                            <td>${ud.docente}</td>
                         </tr>`;
                             });
                         } else {
-                            tbody.innerHTML = '<tr><td colspan="3" class="text-center text-danger">No hay unidades didácticas disponibles para este semestre.</td></tr>';
+                            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">No hay unidades didácticas disponibles para este semestre.</td></tr>';
                         }
                     });
             }

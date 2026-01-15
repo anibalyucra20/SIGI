@@ -14,6 +14,9 @@ require_once __DIR__ . '/../../../app/models/Sigi/Sistema.php';
 require_once __DIR__ . '/../../../app/models/Sigi/DatosSistema.php';
 require_once __DIR__ . '/../../../app/models/Sigi/Permiso.php';
 
+// --- INTEGRACIÓN MOODLE: Incluir Helper ---
+require_once __DIR__ . '/../../../app/helpers/MoodleIntegrator.php';
+
 use App\Models\Sigi\Docente;
 use App\Models\Sigi\Rol;
 use App\Models\Sigi\Sedes;
@@ -22,6 +25,8 @@ use App\Models\Sigi\Programa;
 use App\Models\Sigi\Sistema;
 use App\Models\Sigi\DatosSistema;
 use App\Models\Sigi\Permiso;
+// Usar el Integrador
+use App\Helpers\MoodleIntegrator;
 
 class DocentesController extends Controller
 {
@@ -95,7 +100,7 @@ class DocentesController extends Controller
             $idPeriodo = $_SESSION['sigi_periodo_actual_id'] ?? null;
             $data = [
                 'dni'                 => $_POST['dni'],
-                'apellidos_nombres'   => $_POST['apellidos_nombres'],
+                'apellidos_nombres'   => $_POST['ApellidoPaterno'] . '_' . $_POST['ApellidoMaterno'] . '_' . $_POST['Nombres'],
                 'correo'              => $_POST['correo'],
                 'discapacidad'        => $_POST['discapacidad'],
                 'genero'              => $_POST['genero'],
@@ -106,6 +111,7 @@ class DocentesController extends Controller
                 'id_sede'             => $_POST['id_sede'],
                 'id_programa_estudios' => $_POST['id_programa_registro'],
                 'id_periodo_registro' => $idPeriodo,
+                'distrito_nacimiento' => '',
             ];
 
             $errores = $this->model->validar($data);
@@ -129,24 +135,63 @@ class DocentesController extends Controller
             }
 
             // Si pasa la validación, genera y encripta la contraseña
-            $password = bin2hex(random_bytes(5));
-            $data['password'] = password_hash($password, PASSWORD_DEFAULT);
+            // VARIABLES CRÍTICAS PARA MOODLE:
+            $passwordPlano = bin2hex(random_bytes(5)); // Esta es la que enviaremos a Moodle
+
+            $data['password'] = password_hash($passwordPlano, PASSWORD_DEFAULT); // Hash para SIGI
             $data['reset_password'] = 0;
             $data['token_password'] = '';
+            $data['estado'] = 1;
 
             $id_docente = $this->model->nuevo($data);
+
             if ($id_docente > 0) {
                 $this->registrar_permiso_inicial($id_docente);
+
+                // =======================================================
+                // INICIO INTEGRACIÓN MOODLE (Creación)
+                // =======================================================
+                try {
+                    $moodle = new MoodleIntegrator();
+
+                    // Separar Nombres y Apellidos (Heurística simple para Perú)
+                    $parts = explode('_', trim($data['apellidos_nombres']));
+                    if (count($parts) >= 3) {
+                        $lastname = $parts[0] . ' ' . $parts[1]; // Apellido Paterno + Materno
+                        $firstname = $parts[2]; // Nombres restantes
+                    } else {
+                        $lastname = $parts[0];
+                        $firstname = isset($parts[1]) ? $parts[1] : '-';
+                    }
+
+                    // Sincronizar usando ID de SIGI como idnumber y contraseña PLANA
+                    $moodle->syncUser(
+                        $id_docente,        // ID SIGI (Vinculo)
+                        $data['dni'],       // Username
+                        $data['correo'],    // Email
+                        $firstname,         // Nombres
+                        $lastname,          // Apellidos
+                        $passwordPlano      // Contraseña Real (Sin Hash)
+                    );
+                } catch (\Exception $e) {
+                    // Log silencioso para no detener el flujo de SIGI si falla Moodle
+                    error_log("Error Sync Moodle Docente: " . $e->getMessage());
+                }
+                // =======================================================
+                // FIN INTEGRACIÓN MOODLE
+                // =======================================================
             }
+
             // Guardar contraseña en sesión temporal para mostrarla una sola vez
-            $_SESSION['flash_success'] = "Docente registrado correctamente. La contraseña generada es: <strong>{$password}</strong>";
+            $_SESSION['flash_success'] = "Docente registrado correctamente. La contraseña generada es: <strong>{$passwordPlano}</strong>";
         endif;
         header('Location: ' . BASE_URL . '/sigi/docentes');
         exit;
     }
+
     protected function registrar_permiso_inicial($id_docente)
     {
-        $idRolDocente = 6; // 'ESTUDIANTE'
+        $idRolDocente = 6; // 'ESTUDIANTE' -- OJO: ¿Rol Docente es 6? Validar ID en tu DB
         //registrar los permisoselegidos por sistema para nuevos docentes
         $ds = $this->objDatosSistema->buscar();
         $idsSistemas = $this->objDatosSistema->decodePermisos($ds['permisos_inicial_docente'] ?? '');
@@ -180,25 +225,30 @@ class DocentesController extends Controller
             \Core\Auth::start();
             $data = [
                 'id'                  => $id,
-                'dni'                  => $_POST['dni'],
-                'apellidos_nombres'    => $_POST['apellidos_nombres'],
-                'correo'               => $_POST['correo'],
-                'discapacidad'         => $_POST['discapacidad'],
-                'genero'               => $_POST['genero'],
-                'fecha_nacimiento'     => $_POST['fecha_nacimiento'],
-                'direccion'            => $_POST['direccion'],
-                'telefono'             => $_POST['telefono'],
-                'estado'               => $_POST['estado'],
-                'id_rol'               => $_POST['id_rol'],
-                'id_sede'              => $_POST['id_sede'],
+                'dni'                 => $_POST['dni'],
+                'apellidos_nombres'   => $_POST['ApellidoPaterno'] . '_' . $_POST['ApellidoMaterno'] . '_' . $_POST['Nombres'],
+                'correo'              => $_POST['correo'],
+                'discapacidad'        => $_POST['discapacidad'],
+                'genero'              => $_POST['genero'],
+                'fecha_nacimiento'    => $_POST['fecha_nacimiento'],
+                'distrito_nacimiento' => $_POST['distrito_nacimiento'],
+                'direccion'           => $_POST['direccion'],
+                'telefono'            => $_POST['telefono'],
+                'estado'              => $_POST['estado'],
+                'id_rol'              => $_POST['id_rol'],
+                'id_sede'             => $_POST['id_sede'],
                 'id_programa_estudios' => $_POST['id_programa_registro']
             ];
             $errores = $this->model->validar($data, true, $id);
-
+            $docente = $data;
+            $apellidos_nombres = explode('_', trim($data['apellidos_nombres']));
+            $docente['ApellidoPaterno'] = $apellidos_nombres[0];
+            $docente['ApellidoMaterno'] = $apellidos_nombres[1];
+            $docente['Nombres'] = $apellidos_nombres[2];
             if ($errores) {
                 $this->view('sigi/docentes/editar', [
                     'errores'   => $errores,
-                    'docente'   => $data,
+                    'docente'   => $docente,
                     'roles'     => $this->objRol->getRolesDocente(),
                     'sedes'     => $this->objSede->getSedes(),
                     'programas' => $this->objPrograma->getAll(),
@@ -210,12 +260,46 @@ class DocentesController extends Controller
             }
             $model = new Docente();
             $model->update($id, $data);
+
+            // =======================================================
+            // INICIO INTEGRACIÓN MOODLE (Actualización)
+            // =======================================================
+            try {
+                $moodle = new MoodleIntegrator();
+
+                // Separar Nombres y Apellidos
+                $parts = explode('_', trim($data['apellidos_nombres']));
+                if (count($parts) >= 3) {
+                    $lastname = $parts[0] . ' ' . $parts[1];
+                    $firstname = $parts[2];
+                } else {
+                    $lastname = $parts[0];
+                    $firstname = isset($parts[1]) ? $parts[1] : '-';
+                }
+
+                // Actualizar datos. Pasamos NULL en password porque aquí no se cambia.
+                $moodle->syncUser(
+                    $id,                // ID SIGI
+                    $data['dni'],       // Username
+                    $data['correo'],
+                    $firstname,
+                    $lastname,
+                    null                // Password NULL = No cambiar contraseña en Moodle
+                );
+            } catch (\Exception $e) {
+                error_log("Error Update Moodle Docente: " . $e->getMessage());
+            }
+            // =======================================================
+            // FIN INTEGRACIÓN MOODLE
+            // =======================================================
+
             $_SESSION['flash_success'] = "Docente actualizado correctamente.";
         endif;
         header('Location: ' . BASE_URL . '/sigi/docentes');
         exit;
     }
 
+    // ... (El resto de métodos ver, data, editar_permisos, permisos, guardarPermisos se mantienen igual)
 
     public function ver($id)
     {
@@ -251,7 +335,6 @@ class DocentesController extends Controller
 
             $model = new Docente();
             $result   = $model->getPaginated($filters, (int)$length, (int)$start, $orderCol, $orderDir);
-
             // respuesta JSON
             echo json_encode([
                 'draw'            => (int)$draw,
@@ -312,5 +395,19 @@ class DocentesController extends Controller
         endif;
         header('Location: ' . BASE_URL . '/sigi/docentes');
         exit;
+    }
+    public function parseoNombres4()
+    {
+        $datos = $this->model->getAllUsuarios();
+        foreach ($datos as $x) {
+            $p = $this->model->parsePersona4($x);
+            echo "Original: {$x['apellidos_nombres']}<br>";
+            echo "Grado: {$p['grado']}<br>";
+            echo "Ap. Paterno: {$p['apellido_paterno']}<br>";
+            echo "Ap. Materno: {$p['apellido_materno']}<br>";
+            echo "Nombres: {$p['nombres']}<br>";
+            echo "Listo: {$p['apellidos_nombres']}<br>";
+            echo "-------------------------<br>";
+        }
     }
 }

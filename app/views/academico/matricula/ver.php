@@ -18,6 +18,7 @@
                         <th>Programa de Estudios</th>
                         <th>Semestre</th>
                         <th>Unidad Didáctica</th>
+                        <th>Docente</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -28,6 +29,7 @@
                             <td><?= htmlspecialchars($row['programa']) ?></td>
                             <td><?= htmlspecialchars($row['semestre']) ?></td>
                             <td><?= htmlspecialchars($row['unidad_didactica']) ?></td>
+                            <td><?= htmlspecialchars($row['docente']) ?></td>
                             <td>
                                 <?php if ($periodo_vigente): ?>
                                     <a href="<?= BASE_URL ?>/academico/matricula/eliminarDetalle/<?= $row['id'] ?>" class="btn btn-danger btn-sm" onclick="return confirm('¿Seguro de eliminar esta unidad didáctica?')">Eliminar</a>

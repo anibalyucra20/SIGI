@@ -48,6 +48,10 @@ class Reportes extends Model
         $stmtData = self::$db->prepare($sqlData);
         $stmtData->execute($params);
         $data = $stmtData->fetchAll(\PDO::FETCH_ASSOC);
+        foreach ($data as $key => $value) {
+            $apellidos_nombres = explode('_', trim($value['apellidos_nombres']));
+            $data[$key]['apellidos_nombres'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ' ' . $apellidos_nombres[2];
+        }
 
         // 5. Estructura requerida por DataTables
         return [
@@ -145,7 +149,12 @@ class Reportes extends Model
 
         $stmt = self::$db->prepare($sql);
         $stmt->execute([$id_programa, $id_semestre, $turno, $seccion, $periodo_id, $sede_id]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($data as $key => $value) {
+            $apellidos_nombres = explode('_', trim($value['apellidos_nombres']));
+            $data[$key]['apellidos_nombres'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ' ' . $apellidos_nombres[2];
+        }
+        return $data;
     }
 
 
@@ -305,7 +314,12 @@ class Reportes extends Model
             $sede_id
         ]);
 
-        return $st->fetchAll(PDO::FETCH_ASSOC);
+        $data = $st->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($data as $key => $value) {
+            $apellidos_nombres = explode('_', trim($value['apellidos_nombres']));
+            $data[$key]['apellidos_nombres'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ' ' . $apellidos_nombres[2];
+        }
+        return $data;
     }
 
 
@@ -447,7 +461,12 @@ class Reportes extends Model
         $sql .= " ORDER BY TRIM(CONVERT(u.apellidos_nombres USING utf8mb4)) COLLATE utf8mb4_spanish_ci ASC";
         $st = self::$db->prepare($sql);
         $st->execute($params);
-        return $st->fetchAll(PDO::FETCH_ASSOC);
+        $data = $st->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($data as $key => $value) {
+            $apellidos_nombres = explode('_', trim($value['apellidos_nombres']));
+            $data[$key]['apellidos_nombres'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ' ' . $apellidos_nombres[2];
+        }
+        return $data;
     }
 
     /* -------------- 6. CALIFICACIONES VISIBLES POR ESTUDIANTE ------------------*/
@@ -615,7 +634,12 @@ class Reportes extends Model
     ";
         $st = self::$db->prepare($sql);
         $st->execute($params);
-        return $st->fetchAll(PDO::FETCH_ASSOC);
+        $data = $st->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($data as $key => $value) {
+            $apellidos_nombres = explode('_', trim($value['docente_nombre']));
+            $data[$key]['docente_nombre'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ' ' . $apellidos_nombres[2];
+        }
+        return $data;
     }
     private function getSilabo(int $idPud): ?array
     {
