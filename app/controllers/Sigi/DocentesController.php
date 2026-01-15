@@ -230,6 +230,8 @@ class DocentesController extends Controller
                 'correo'              => $_POST['correo'],
                 'discapacidad'        => $_POST['discapacidad'],
                 'genero'              => $_POST['genero'],
+                'fecha_nacimiento'    => $_POST['fecha_nacimiento'],
+                'distrito_nacimiento' => $_POST['distrito_nacimiento'] ?? '',
                 'grado_academico'     => $_POST['grado_academico'],
                 'direccion'           => $_POST['direccion'],
                 'telefono'            => $_POST['telefono'],

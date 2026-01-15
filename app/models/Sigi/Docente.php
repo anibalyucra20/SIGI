@@ -164,6 +164,7 @@ class Docente extends Model
           discapacidad = :discapacidad,
           genero = :genero,
           fecha_nacimiento = :fecha_nacimiento,
+          distrito_nacimiento = :distrito_nacimiento,
           grado_academico = :grado_academico,
           direccion = :direccion,
           telefono = :telefono,
