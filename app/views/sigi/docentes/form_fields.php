@@ -33,7 +33,7 @@ $isEdit = $isEdit ?? false;
     <label class="form-label">Grado Académico</label>
     <input type="text" name="grado_academico" class="form-control"
       maxlength="120"
-      value="<?= $docente['grado_academico'] ?? '' ?>" required>
+      value="<?= $docente['grado_academico'] ?? '' ?>">
   </div>
   <!-- Género -->
   <div class="col-md-3 mb-3">
