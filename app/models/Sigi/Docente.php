@@ -485,8 +485,6 @@ class Docente extends Model
         $st = self::$db->prepare($sql);
         $st->execute([$token, $id_user]);
         $data = $st->fetch(PDO::FETCH_ASSOC);
-        $apellidos_nombres = explode('_', trim($data['apellidos_nombres']));
-        $data['apellidos_nombres'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ' ' . $apellidos_nombres[2];
         return $data;
     }
 
