@@ -21,8 +21,8 @@ class MoodleController extends Controller
     {
         $user = Auth::user();              // ya validado por middleware
         if ($user) {
-            $a = $_GET['a'] ?? null;
-            $id = $_GET['id'] ?? null;
+            $a = isset($_GET['a']) ? $_GET['a'] : null;
+            $id = isset($_GET['id']) ? $_GET['id'] : null;
             // link de moodle // Generar link SSO
             $idUsuarioSigi = $_SESSION['sigi_user_id'];
             $urlAulaVirtual = $this->moodleIntegrator->getAutoLoginUrl($idUsuarioSigi, $a, $id);
