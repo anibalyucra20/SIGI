@@ -2,9 +2,9 @@
 
 namespace App\Controllers\Aula;
 
+
 use Core\Controller;
 use Core\Model;
-use PDO;
 
 class HomeController extends Controller
 {
