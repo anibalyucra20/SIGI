@@ -331,7 +331,7 @@ class Docente extends Model
             if ($stmt->fetchColumn() > 0) $errores[] = "El DNI ya está registrado.";
 
             // Correo único
-            $q = "SELECT COUNT(*) FROM sigi_usuarios WHERE correo = :correo";
+            /*$q = "SELECT COUNT(*) FROM sigi_usuarios WHERE correo = :correo";
             $params = [':correo' => $data['correo']];
             if ($isEdit && $id) {
                 $q .= " AND id <> :id";
@@ -339,7 +339,7 @@ class Docente extends Model
             }
             $stmt = self::$db->prepare($q);
             $stmt->execute($params);
-            if ($stmt->fetchColumn() > 0) $errores[] = "El correo ya está registrado.";
+            if ($stmt->fetchColumn() > 0) $errores[] = "El correo ya está registrado.";*/
         }
 
         // 4. Claves foráneas válidas
