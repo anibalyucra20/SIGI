@@ -24,7 +24,6 @@ class LoginController extends Controller
     protected $objDatosSistema;
     protected $objDatosIes;
     protected $objDocente;
-    protected $objMoodleIntegrator;
 
     public function __construct()
     {
@@ -32,7 +31,6 @@ class LoginController extends Controller
         $this->objDatosSistema = new DatosSistema();
         $this->objDatosIes = new DatosInstitucionales();
         $this->objDocente = new Docente();
-        $this->objMoodleIntegrator = new MoodleIntegrator();
     }
     /* Formulario */
     public function index()
@@ -306,6 +304,7 @@ class LoginController extends Controller
         try {
             // Verificar que tenemos los datos necesarios en $user
             // Asumimos que findByResetToken devuelve: id, dni, correo, apellidos_nombres
+            $moodle = new MoodleIntegrator();
             // Lógica de separación de nombres (Igual que en DocentesController)
             $parts = explode('_', trim($user['apellidos_nombres']));
             if (count($parts) >= 3) {
@@ -317,7 +316,7 @@ class LoginController extends Controller
             }
 
             // Sincronizar: Envía la contraseña PLANA ($pass1)
-            $id_moodle_user = $this->objMoodleIntegrator->syncUser(
+            $id_moodle_user = $moodle->syncUser(
                 $user['id'],      // ID SIGI (idnumber)
                 $user['dni'],     // Username
                 $user['correo'],
@@ -326,7 +325,7 @@ class LoginController extends Controller
                 $pass1            // <--- CONTRASEÑA NUEVA EN TEXTO PLANO
             );
             if ($id_moodle_user) {
-                $this->objDocente->updateMoodleUserId($user['id'], $id_moodle_user);
+                $this->objDocente->updateUserMoodleId($id_user, $id_moodle_user);
             }
         } catch (\Exception $e) {
             // Loguear error pero NO detener el flujo (el usuario ya cambió su clave en SIGI)
