@@ -8,12 +8,16 @@ require_once __DIR__ . '/../../../app/models/Sigi/Docente.php';
 require_once __DIR__ . '/../../../app/utils/Mailer.php';
 require_once __DIR__ . '/../../../vendor/autoload.php';
 
+// --- INTEGRACIÓN MOODLE: Incluir Helper ---
+require_once __DIR__ . '/../../../app/helpers/MoodleIntegrator.php';
+
 use Core\Controller;
 use App\Models\Sigi\Docente;
 use App\Models\Sigi\DatosSistema;
 use App\Models\Sigi\DatosInstitucionales;
 use App\Utils\Mailer;
 use PDO;
+use App\Helpers\MoodleIntegrator;
 
 class LoginController extends Controller
 {
@@ -268,7 +272,7 @@ class LoginController extends Controller
 
         if ($token == '' || $data == '' || $pass1 == '' || $pass2 == '' || $pass1 !== $pass2) {
             $_SESSION['flash_error'] = 'Revise la contraseña y la confirmación.';
-            header('Location: ' . BASE_URL . '/restablecer?data' . $data . '=token=' . urlencode($token));
+            header('Location: ' . BASE_URL . '/restablecer?data=' . $data . '&token=' . urlencode($token));
             exit;
         }
         $user = $this->objDocente->findByResetToken($token, $id_user);
@@ -281,12 +285,52 @@ class LoginController extends Controller
         // Seguridad mínima de clave (ajusta a tu política)
         if (strlen($pass1) < 8) {
             $_SESSION['flash_error'] = 'La contraseña debe tener al menos 8 caracteres.';
-            header('Location: ' . BASE_URL . '/restablecer?token=' . urlencode($token));
+            header('Location: ' . BASE_URL . '/restablecer?data=' . $data . '&token=' . urlencode($token));
+            exit;
+        }
+        // Opcional: Validar complejidad para evitar rechazo de Moodle
+        if (!preg_match('/[A-Z]/', $pass1) || !preg_match('/[0-9]/', $pass1) || !preg_match('/[\W]/', $pass1)) {
+            $_SESSION['flash_error'] = 'La contraseña debe tener una Mayúscula, un Número y un Símbolo.';
+            header('Location: ' . BASE_URL . '/restablecer?data=' . $data . '&token=' . urlencode($token));
             exit;
         }
 
         $hash = password_hash($pass1, PASSWORD_BCRYPT);
         $this->objDocente->updatePassword((int)$user['id'], $hash);
+
+        // =======================================================
+        // INICIO INTEGRACIÓN MOODLE (Cambio de Password)
+        // =======================================================
+        try {
+            // Verificar que tenemos los datos necesarios en $user
+            // Asumimos que findByResetToken devuelve: id, dni, correo, apellidos_nombres
+            $moodle = new MoodleIntegrator();
+            // Lógica de separación de nombres (Igual que en DocentesController)
+            $parts = explode('_', trim($user['apellidos_nombres']));
+            if (count($parts) >= 3) {
+                $lastname = $parts[0] . ' ' . $parts[1]; // Apellido Paterno + Materno
+                $firstname = $parts[2]; // Nombres restantes
+            } else {
+                $lastname = $parts[0];
+                $firstname = isset($parts[1]) ? $parts[1] : '-';
+            }
+
+            // Sincronizar: Envía la contraseña PLANA ($pass1)
+            $moodle->syncUser(
+                $user['id'],      // ID SIGI (idnumber)
+                $user['dni'],     // Username
+                $user['correo'],
+                $firstname,
+                $lastname,
+                $pass1            // <--- CONTRASEÑA NUEVA EN TEXTO PLANO
+            );
+        } catch (\Exception $e) {
+            // Loguear error pero NO detener el flujo (el usuario ya cambió su clave en SIGI)
+            error_log("Error Moodle Password Sync: " . $e->getMessage());
+        }
+        // =======================================================
+        // FIN INTEGRACIÓN MOODLE
+        // =======================================================
 
         $_SESSION['flash_success'] = 'Contraseña actualizada. Ahora puedes iniciar sesión.';
         header('Location: ' . BASE_URL . '/login');

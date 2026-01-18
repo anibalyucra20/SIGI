@@ -178,6 +178,19 @@ class Docente extends Model
         $data['id'] = $id;
         return $stmt->execute($data);
     }
+
+    public function updateUserMoodleId($id, $moodle_user_id)
+    {
+        $sql = "UPDATE sigi_usuarios SET
+          moodle_user_id = :moodle_user_id
+        WHERE id = :id";
+
+        $stmt = self::$db->prepare($sql);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->bindValue(':moodle_user_id', $moodle_user_id, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
+
     public function updateInAdmision($id, $data)
     {
         $sql = "UPDATE sigi_usuarios SET

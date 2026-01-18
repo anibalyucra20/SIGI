@@ -38,6 +38,7 @@ class DocentesController extends Controller
     protected $objSistema;
     protected $objDatosSistema;
     protected $objPermiso;
+    protected $objMoodleIntegrator;
 
     public function __construct()
     {
@@ -56,6 +57,7 @@ class DocentesController extends Controller
         $this->objSistema = new Sistema();
         $this->objDatosSistema = new DatosSistema();
         $this->objPermiso = new Permiso();
+        $this->objMoodleIntegrator = new MoodleIntegrator();
     }
 
     public function index()
@@ -136,8 +138,8 @@ class DocentesController extends Controller
 
             // Si pasa la validación, genera y encripta la contraseña
             // VARIABLES CRÍTICAS PARA MOODLE:
-            $passwordPlano = bin2hex(random_bytes(5)); // Esta es la que enviaremos a Moodle
-
+            $parteAleatoria = bin2hex(random_bytes(6)); // Esta es la que enviaremos a Moodle
+            $passwordPlano = 'Sigi.' . $parteAleatoria;
             $data['password'] = password_hash($passwordPlano, PASSWORD_DEFAULT); // Hash para SIGI
             $data['reset_password'] = 0;
             $data['token_password'] = '';
@@ -152,20 +154,13 @@ class DocentesController extends Controller
                 // INICIO INTEGRACIÓN MOODLE (Creación)
                 // =======================================================
                 try {
-                    $moodle = new MoodleIntegrator();
-
                     // Separar Nombres y Apellidos (Heurística simple para Perú)
                     $parts = explode('_', trim($data['apellidos_nombres']));
-                    if (count($parts) >= 3) {
-                        $lastname = $parts[0] . ' ' . $parts[1]; // Apellido Paterno + Materno
-                        $firstname = $parts[2]; // Nombres restantes
-                    } else {
-                        $lastname = $parts[0];
-                        $firstname = isset($parts[1]) ? $parts[1] : '-';
-                    }
+                    $lastname = $parts[0] . ' ' . $parts[1]; // Apellido Paterno + Materno
+                    $firstname = $parts[2]; // Nombres restantes
 
                     // Sincronizar usando ID de SIGI como idnumber y contraseña PLANA
-                    $moodle->syncUser(
+                    $id_moodle_user = $this->objMoodleIntegrator->syncUser(
                         $id_docente,        // ID SIGI (Vinculo)
                         $data['dni'],       // Username
                         $data['correo'],    // Email
@@ -173,6 +168,9 @@ class DocentesController extends Controller
                         $lastname,          // Apellidos
                         $passwordPlano      // Contraseña Real (Sin Hash)
                     );
+                    if ($id_moodle_user) {
+                        $this->model->updateUserMoodleId($id_docente, $id_moodle_user);
+                    }
                 } catch (\Exception $e) {
                     // Log silencioso para no detener el flujo de SIGI si falla Moodle
                     error_log("Error Sync Moodle Docente: " . $e->getMessage());
@@ -183,7 +181,7 @@ class DocentesController extends Controller
             }
 
             // Guardar contraseña en sesión temporal para mostrarla una sola vez
-            $_SESSION['flash_success'] = "Docente registrado correctamente. La contraseña generada es: <strong>{$passwordPlano}</strong>";
+            $_SESSION['flash_success'] .= " Docente registrado correctamente. La contraseña generada es: <strong>{$passwordPlano}</strong>";
         endif;
         header('Location: ' . BASE_URL . '/sigi/docentes');
         exit;
@@ -266,8 +264,6 @@ class DocentesController extends Controller
             // INICIO INTEGRACIÓN MOODLE (Actualización)
             // =======================================================
             try {
-                $moodle = new MoodleIntegrator();
-
                 // Separar Nombres y Apellidos
                 $parts = explode('_', trim($data['apellidos_nombres']));
                 if (count($parts) >= 3) {
@@ -279,7 +275,7 @@ class DocentesController extends Controller
                 }
 
                 // Actualizar datos. Pasamos NULL en password porque aquí no se cambia.
-                $moodle->syncUser(
+                $id_moodle_user = $this->objMoodleIntegrator->syncUser(
                     $id,                // ID SIGI
                     $data['dni'],       // Username
                     $data['correo'],
@@ -287,6 +283,9 @@ class DocentesController extends Controller
                     $lastname,
                     null                // Password NULL = No cambiar contraseña en Moodle
                 );
+                if ($id_moodle_user) {
+                    $this->model->updateUserMoodleId($id, $id_moodle_user);
+                }
             } catch (\Exception $e) {
                 error_log("Error Update Moodle Docente: " . $e->getMessage());
             }
@@ -294,7 +293,7 @@ class DocentesController extends Controller
             // FIN INTEGRACIÓN MOODLE
             // =======================================================
 
-            $_SESSION['flash_success'] = "Docente actualizado correctamente.";
+            $_SESSION['flash_success'] .= " Docente actualizado correctamente.";
         endif;
         header('Location: ' . BASE_URL . '/sigi/docentes');
         exit;
@@ -334,8 +333,7 @@ class DocentesController extends Controller
                 'estado'  => $_GET['filter_estado']  ?? ''
             ];
 
-            $model = new Docente();
-            $result   = $model->getPaginated($filters, (int)$length, (int)$start, $orderCol, $orderDir);
+            $result = $this->model->getPaginated($filters, (int)$length, (int)$start, $orderCol, $orderDir);
             // respuesta JSON
             echo json_encode([
                 'draw'            => (int)$draw,
@@ -411,4 +409,61 @@ class DocentesController extends Controller
             echo "-------------------------<br>";
         }
     }*/
+    public function moodle_test()
+    {
+        // 1. Datos de prueba
+        // NOTA: He cambiado la contraseña para cumplir la política estándar de Moodle
+        // (8 caracteres, 1 Mayus, 1 Minus, 1 Num, 1 Simbolo)
+        $userPayload = [
+            'username'      => 'ayucra',
+            'firstname'     => 'anibal',
+            'lastname'      => 'yucra curo',
+            'email'         => '70198965@gmail.com',
+            'idnumber'      => '2',
+            'auth'          => 'manual',
+            'password'      => 'Yucra.2025', // <--- Contraseña más fuerte para evitar error 'passwordpolicy'
+        ];
+
+        $url = MOODLE_URL . '/webservice/rest/server.php' .
+            '?wstoken=' . MOODLE_TOKEN .
+            '&wsfunction=' . 'core_user_create_users' .
+            '&moodlewsrestformat=json';
+
+        // 2. Iniciar cURL con manejo de errores
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_POST, 1);
+
+        // IMPORTANTE: http_build_query maneja correctamente los índices para arrays anidados
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query(['users' => [$userPayload]]));
+
+        // Si estás en localhost sin SSL válido, descomenta la siguiente línea temporalmente:
+        // ... configuración previa ...
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+        // 👇 AGREGA ESTAS LÍNEAS PARA WAMP/LOCAL 👇
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+
+        $response = curl_exec($ch);
+        // ... resto del código ...
+
+        // 3. Verificación de errores de red (cURL)
+        if ($response === false) {
+            echo "<h1>Error de Conexión cURL:</h1>";
+            var_dump(curl_error($ch));
+            curl_close($ch);
+            exit;
+        }
+
+        curl_close($ch);
+
+        // 4. Decodificar y MOSTRAR la respuesta
+        $json = json_decode($response, true);
+
+        echo "<pre>"; // Etiqueta HTML para que se vea ordenado
+        echo "Respuesta de Moodle:\n";
+        print_r($json); // <--- print_r o var_dump es obligatorio para ver Arrays/Objetos
+        echo "</pre>";
+    }
 }

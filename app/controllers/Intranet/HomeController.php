@@ -5,8 +5,11 @@ namespace App\Controllers\Intranet;
 use Core\Controller;
 
 require_once __DIR__ . '/../../../app/models/Sigi/DatosSistema.php';
+require_once __DIR__ . '/../../../app/helpers/MoodleIntegrator.php';
 
 use App\Models\Sigi\DatosSistema;
+// Usar el Integrador
+use App\Helpers\MoodleIntegrator;
 use Core\Auth;
 use Core\Model;
 use PDO;
@@ -14,11 +17,13 @@ use PDO;
 class HomeController extends Controller
 {
     protected $datosSistema;
+    protected $moodleIntegrator;
     public function __construct()
     {
         parent::__construct();
 
         $this->datosSistema = new DatosSistema();
+        $this->moodleIntegrator = new MoodleIntegrator();
     }
     public function index()
     {
@@ -36,9 +41,14 @@ class HomeController extends Controller
         $_SESSION['sigi_modulo_actual'] = 0;
         $_SESSION['sigi_rol_actual']    = 0;
         $datos_sistema = $this->datosSistema->buscar();
+
+        // link de moodle // Generar link SSO
+        $idUsuarioSigi = $_SESSION['sigi_user_id'];
+        $urlAulaVirtual = $this->moodleIntegrator->getAutoLoginUrl($idUsuarioSigi);
         $this->view('intranet/index', [
             'sistemas' => $sistemas,
             'datos_sistema' => $datos_sistema,
+            'urlAulaVirtual' => $urlAulaVirtual,
             'pageTitle' => 'Panel principal',
             'module'   => 'intranet'
         ]);

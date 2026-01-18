@@ -35,15 +35,32 @@ curl_close($ch);
 ?>
 
 <div class="row">
-  <?php foreach ($sistemas as $s) : ?>
-    <div class="col-md-4 col-lg-3 mb-4">
-      <a href="<?= BASE_URL ?>/<?= strtolower($s['codigo']) ?>" class="text-decoration-none">
-        <div class="card shadow-sm h-100 text-center py-4">
-          <i class="<?= htmlspecialchars($s['icono']) ?> display-4 active mb-3" style="color: <?= $datos_sistema['color_correo']; ?>;"></i>
-          <h5 class="card-title"><?= htmlspecialchars($s['nombre']) ?></h5>
+  <?php foreach ($sistemas as $s) :
+    if (strtolower($s['codigo']) === 'aula') {
+      if (MOODLE_SYNC_ACTIVE == true) {
+  ?>
+        <div class="col-md-4 col-lg-3 mb-4">
+          <a href="<?= $urlAulaVirtual ?>" class="text-decoration-none" target="_blank">
+            <div class="card shadow-sm h-100 text-center py-4">
+              <i class="<?= htmlspecialchars($s['icono']) ?> display-4 active mb-3" style="color: <?= $datos_sistema['color_correo']; ?>;"></i>
+              <h5 class="card-title"><?= htmlspecialchars($s['nombre']) ?></h5>
+            </div>
+          </a>
         </div>
-      </a>
-    </div>
-  <?php endforeach; ?>
+      <?php
+      }
+    } else {
+      ?>
+      <div class="col-md-4 col-lg-3 mb-4">
+        <a href="<?= BASE_URL ?>/<?= strtolower($s['codigo']) ?>" class="text-decoration-none">
+          <div class="card shadow-sm h-100 text-center py-4">
+            <i class="<?= htmlspecialchars($s['icono']) ?> display-4 active mb-3" style="color: <?= $datos_sistema['color_correo']; ?>;"></i>
+            <h5 class="card-title"><?= htmlspecialchars($s['nombre']) ?></h5>
+          </div>
+        </a>
+      </div>
+  <?php
+    }
+  endforeach; ?>
 </div>
 <?php require __DIR__ . '/../layouts/footer.php'; ?>
