@@ -306,7 +306,7 @@ class LoginController extends Controller
             // Asumimos que findByResetToken devuelve: id, dni, correo, apellidos_nombres
             $moodle = new MoodleIntegrator();
             // Lógica de separación de nombres (Igual que en DocentesController)
-            $parts = explode('_', trim($user['apellidos_nombres']));
+            $parts = explode('_', $user['apellidos_nombres']);
             if (count($parts) >= 3) {
                 $lastname = $parts[0] . ' ' . $parts[1]; // Apellido Paterno + Materno
                 $firstname = $parts[2]; // Nombres restantes
@@ -325,7 +325,10 @@ class LoginController extends Controller
                 $pass1            // <--- CONTRASEÑA NUEVA EN TEXTO PLANO
             );
             if ($id_moodle_user) {
+                $_SESSION['flash_success'] .= ' ID Moodle: ' . $id_moodle_user;
                 $this->objDocente->updateUserMoodleId($id_user, $id_moodle_user);
+            } else {
+                $_SESSION['flash_error'] .= ' Error ID Moodle';
             }
         } catch (\Exception $e) {
             // Loguear error pero NO detener el flujo (el usuario ya cambió su clave en SIGI)
@@ -335,7 +338,7 @@ class LoginController extends Controller
         // FIN INTEGRACIÓN MOODLE
         // =======================================================
 
-        $_SESSION['flash_success'] = 'Contraseña actualizada. Ahora puedes iniciar sesión.';
+        $_SESSION['flash_success'] .= ' Contraseña actualizada. Ahora puedes iniciar sesión.';
         header('Location: ' . BASE_URL . '/login');
         exit;
     }

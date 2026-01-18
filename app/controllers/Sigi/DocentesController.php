@@ -265,7 +265,7 @@ class DocentesController extends Controller
             // =======================================================
             try {
                 // Separar Nombres y Apellidos
-                $parts = explode('_', trim($data['apellidos_nombres']));
+                $parts = explode('_', $data['apellidos_nombres']);
                 if (count($parts) >= 3) {
                     $lastname = $parts[0] . ' ' . $parts[1];
                     $firstname = $parts[2];
