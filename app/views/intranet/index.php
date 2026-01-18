@@ -35,8 +35,8 @@ curl_close($ch);
 ?>
 
 <div class="row">
-  <?php foreach ($sistemas as $s) :
-    if (strtolower($s['codigo']) === 'aula') {
+  <?php foreach ($sistemas as $s) {
+    if ($s['codigo'] === 'AULA') {
       if (MOODLE_SYNC_ACTIVE == true) {
   ?>
         <div class="col-md-4 col-lg-3 mb-4">
@@ -61,6 +61,6 @@ curl_close($ch);
       </div>
   <?php
     }
-  endforeach; ?>
+  }; ?>
 </div>
 <?php require __DIR__ . '/../layouts/footer.php'; ?>
