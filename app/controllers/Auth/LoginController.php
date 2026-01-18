@@ -325,7 +325,7 @@ class LoginController extends Controller
                 $pass1            // <--- CONTRASEÑA NUEVA EN TEXTO PLANO
             );
             if ($id_moodle_user) {
-                $_SESSION['flash_success'] .= ' ID Moodle: ' . $id_moodle_user;
+                //$_SESSION['flash_success'] .= ' ID Moodle: ' . $id_moodle_user;
                 $this->objDocente->updateUserMoodleId($id_user, $id_moodle_user);
             } else {
                 $_SESSION['flash_error'] .= ' Error ID Moodle';
