@@ -159,150 +159,148 @@ class EstudiantesController extends Controller
     {
         $periodo = $this->objPeriodoAcademico->getPeriodoVigente($_SESSION['sigi_periodo_actual_id']);
         $periodo_vigente = ($periodo && $periodo['vigente']);
-        if ($periodo_vigente) {
-            if (\Core\Auth::esAdminAcademico()):
-                $id_sede = $_SESSION['sigi_sede_actual'] ?? 0;
-                $errores = [];
-                $isNuevo = empty($_POST['id']);
+        if (\Core\Auth::esAdminAcademico()):
+            $id_sede = $_SESSION['sigi_sede_actual'] ?? 0;
+            $errores = [];
+            $isNuevo = empty($_POST['id']);
 
-                $parteAleatoria = bin2hex(random_bytes(6)); // Esta es la que enviaremos a Moodle
-                $password = 'Sigi.' . $parteAleatoria;
-                $password_secure = password_hash($password, PASSWORD_DEFAULT);
-                $data = [
-                    'id'                  => $_POST['id'] ?? null,
-                    'dni'                 => trim($_POST['dni']),
-                    'apellidos_nombres'   => trim($_POST['ApellidoPaterno']) . '_' . trim($_POST['ApellidoMaterno']) . '_' . trim($_POST['Nombres']),
-                    'genero'              => $_POST['genero'],
-                    'fecha_nacimiento'    => $_POST['fecha_nacimiento'],
-                    'direccion'           => trim($_POST['direccion']),
-                    'correo'              => trim($_POST['correo']),
-                    'telefono'            => trim($_POST['telefono']),
-                    'discapacidad'        => $_POST['discapacidad'],
-                    'id_programa_estudios' => $_POST['id_programa_estudios'],
-                    'id_plan_estudio'     => $_POST['id_plan_estudio'],
-                    'estado'              => $_POST['estado'] ?? 1,
-                    'id_rol'              => 7, // Ajusta si tu rol de ESTUDIANTE es otro id
-                    'password'             => $password_secure,
-                    'reset_password'       => 0,
-                    'token_password'       => '',
-                    // Sede y periodo
-                    'id_sede'             => $isNuevo ? ($_SESSION['sigi_sede_actual'] ?? 0) : $_POST['id_sede'],
-                    'id_periodo'          => $isNuevo ? ($_SESSION['sigi_periodo_actual_id'] ?? 0) : $_POST['id_periodo'],
+            $parteAleatoria = bin2hex(random_bytes(6)); // Esta es la que enviaremos a Moodle
+            $password = 'Sigi.' . $parteAleatoria;
+            $password_secure = password_hash($password, PASSWORD_DEFAULT);
+            $data = [
+                'id'                  => $_POST['id'] ?? null,
+                'dni'                 => trim($_POST['dni']),
+                'apellidos_nombres'   => trim($_POST['ApellidoPaterno']) . '_' . trim($_POST['ApellidoMaterno']) . '_' . trim($_POST['Nombres']),
+                'genero'              => $_POST['genero'],
+                'fecha_nacimiento'    => $_POST['fecha_nacimiento'],
+                'direccion'           => trim($_POST['direccion']),
+                'correo'              => trim($_POST['correo']),
+                'telefono'            => trim($_POST['telefono']),
+                'discapacidad'        => $_POST['discapacidad'],
+                'id_programa_estudios' => $_POST['id_programa_estudios'],
+                'id_plan_estudio'     => $_POST['id_plan_estudio'],
+                'estado'              => $_POST['estado'] ?? 1,
+                'id_rol'              => 7, // Ajusta si tu rol de ESTUDIANTE es otro id
+                'password'             => $password_secure,
+                'reset_password'       => 0,
+                'token_password'       => '',
+                // Sede y periodo
+                'id_sede'             => $isNuevo ? ($_SESSION['sigi_sede_actual'] ?? 0) : $_POST['id_sede'],
+                'id_periodo'          => $isNuevo ? ($_SESSION['sigi_periodo_actual_id'] ?? 0) : $_POST['id_periodo'],
+            ];
+
+            // Validación de duplicados
+            if ($this->model->existeDni($data['dni'], $data['id'])) {
+                $errores[] = "Ya existe un estudiante registrado con este DNI.";
+            }
+            if (!$isNuevo && $this->model->existeEstudianteEnPlan(
+                $data['id'],
+                $data['id_plan_estudio'],
+                $_POST['id_acad_est_prog'] ?? $estudiante['id_acad_est_prog'] ?? null
+            )) {
+                $errores[] = "Este estudiante ya está registrado en este plan de estudios y periodo.";
+            }
+
+
+            if (!empty($errores)) {
+                $programas = $this->objPrograma->getAllBySede($id_sede);
+                $planes = $this->objPlan->getPlanesByPrograma($data['id_programa_estudios']);
+                $periodos = $this->objPeriodoAcademico->getPeriodos();
+                $sedes = $this->objSede->getSedes();
+                $estudiante = $data;
+                $estudiante['ApellidoPaterno'] = $_POST['ApellidoPaterno'];
+                $estudiante['ApellidoMaterno'] = $_POST['ApellidoMaterno'];
+                $estudiante['Nombres'] = $_POST['Nombres'];
+                $vars = [
+                    'errores' => $errores,
+                    'programas' => $programas,
+                    'planes' => $planes,
+                    'periodos' => $periodos,
+                    'sedes' => $sedes,
+                    'estudiante' => $estudiante,
+                    'periodos' => $periodos,
+                    'sedes' => $sedes,
+                    'module' => 'academico',
+                    'pageTitle' => 'Nuevo Estudiante',
+                    'periodo_vigente' => $periodo_vigente,
                 ];
-
-                // Validación de duplicados
-                if ($this->model->existeDni($data['dni'], $data['id'])) {
-                    $errores[] = "Ya existe un estudiante registrado con este DNI.";
-                }
-                if (!$isNuevo && $this->model->existeEstudianteEnPlan(
-                    $data['id'],
-                    $data['id_plan_estudio'],
-                    $_POST['id_acad_est_prog'] ?? $estudiante['id_acad_est_prog'] ?? null
-                )) {
-                    $errores[] = "Este estudiante ya está registrado en este plan de estudios y periodo.";
-                }
-
-
-                if (!empty($errores)) {
-                    $programas = $this->objPrograma->getAllBySede($id_sede);
-                    $planes = $this->objPlan->getPlanesByPrograma($data['id_programa_estudios']);
-                    $periodos = $this->objPeriodoAcademico->getPeriodos();
-                    $sedes = $this->objSede->getSedes();
-                    $estudiante = $data;
-                    $estudiante['ApellidoPaterno'] = $_POST['ApellidoPaterno'];
-                    $estudiante['ApellidoMaterno'] = $_POST['ApellidoMaterno'];
-                    $estudiante['Nombres'] = $_POST['Nombres'];
-                    $vars = [
-                        'errores' => $errores,
-                        'programas' => $programas,
-                        'planes' => $planes,
-                        'periodos' => $periodos,
-                        'sedes' => $sedes,
-                        'estudiante' => $estudiante,
-                        'periodos' => $periodos,
-                        'sedes' => $sedes,
-                        'module' => 'academico',
-                        'pageTitle' => 'Nuevo Estudiante',
-                        'periodo_vigente' => $periodo_vigente,
-                    ];
-                    if ($isNuevo) {
-                        $this->view('academico/estudiantes/nuevo', $vars);
-                    } else {
-                        $this->view('academico/estudiantes/editar', $vars);
-                    }
-                    return;
-                }
-
-                // Guardar normal si todo está OK
-                $id_estudiante =  $this->model->guardar($data);
-                if ($id_estudiante > 0) {
-                    $this->registrar_permiso_inicial($id_estudiante);
-                }
-                $_SESSION['flash_success'] .= "Estudiante guardado correctamente.";
-                $parts = explode('_', $data['apellidos_nombres']);
-                if (count($parts) >= 3) {
-                    $lastname = $parts[0] . ' ' . $parts[1];
-                    $firstname = $parts[2];
-                } else {
-                    $lastname = $parts[0];
-                    $firstname = isset($parts[1]) ? $parts[1] : '-';
-                }
                 if ($isNuevo) {
-                    $passwordPlano = $password;
+                    $this->view('academico/estudiantes/nuevo', $vars);
                 } else {
-                    $passwordPlano = null;
+                    $this->view('academico/estudiantes/editar', $vars);
                 }
-                // =======================================================
-                // INICIO INTEGRACIÓN 
-                // =======================================================
-                if (INTEGRACIONES_SYNC_ACTIVE) {
-                    try {
-                        $programa_est =  $this->objPrograma->find($data['id_programa_estudios']);
-                        $nombre_programa = $programa_est['nombre'];
-                        $rol = $this->objRol->find($data['id_rol']);
-                        $tipo_usuario = $rol['nombre'];
+                return;
+            }
 
-                        //peticion curl a API
-                        $usuario = [
-                            'id' => $id_estudiante,
-                            'dni' => $data['dni'],
-                            'nombres' => $firstname,
-                            'apellidos' => $lastname,
-                            'passwordPlano' => $passwordPlano,
-                            'programa_estudios' => $nombre_programa,
-                            'tipo_usuario' => $tipo_usuario,
-                            'estado' => 1
-                        ];
-                        $response = $this->objIntegrator->sincronizarUsuarios($usuario);
-                        if ($response['data']['moodle']['message_success']) {
-                            //actualizar usuarioen sigi
-                            $this->objDocente->updateUserMoodleId($id_estudiante, $response['data']['moodle']['id']);
-                            $_SESSION['flash_success'] .= $response['data']['moodle']['message_success'];
-                        } else {
-                            $_SESSION['flash_error'] .= $response['data']['moodle']['message_error'];
-                        }
-                        if ($response['data']['microsoft']['success']) {
-                            //actualizar usuario en sigi
-                            $this->objDocente->updateUserMicrosoftId($id_estudiante, $response['data']['microsoft']['id_microsoft']);
-                            $_SESSION['flash_success'] .= '<br>  Usuario actualizado en Microsoft 365';
-                            if ($response['data']['microsoft']['license']['success']) {
-                                $_SESSION['flash_success'] .= '<br>  Licencia asignada en Microsoft 365';
-                            } else {
-                                $_SESSION['flash_error'] .= '<br>  Error al asignar licencia en Microsoft 365';
-                            }
-                        } else {
-                            $_SESSION['flash_error'] .= '<br>  Error al actualizar usuario en Microsoft 365';
-                        }
-                    } catch (\Exception $e) {
-                        error_log("Error Update Integraciones Docente: " . $e->getMessage());
+            // Guardar normal si todo está OK
+            $id_estudiante =  $this->model->guardar($data);
+            if ($id_estudiante > 0) {
+                $this->registrar_permiso_inicial($id_estudiante);
+            }
+            $_SESSION['flash_success'] .= "Estudiante guardado correctamente.";
+            $parts = explode('_', $data['apellidos_nombres']);
+            if (count($parts) >= 3) {
+                $lastname = $parts[0] . ' ' . $parts[1];
+                $firstname = $parts[2];
+            } else {
+                $lastname = $parts[0];
+                $firstname = isset($parts[1]) ? $parts[1] : '-';
+            }
+            if ($isNuevo) {
+                $passwordPlano = $password;
+            } else {
+                $passwordPlano = null;
+            }
+            // =======================================================
+            // INICIO INTEGRACIÓN 
+            // =======================================================
+            if (INTEGRACIONES_SYNC_ACTIVE) {
+                try {
+                    $programa_est =  $this->objPrograma->find($data['id_programa_estudios']);
+                    $nombre_programa = $programa_est['nombre'];
+                    $rol = $this->objRol->find($data['id_rol']);
+                    $tipo_usuario = $rol['nombre'];
+
+                    //peticion curl a API
+                    $usuario = [
+                        'id' => $id_estudiante,
+                        'dni' => $data['dni'],
+                        'nombres' => $firstname,
+                        'apellidos' => $lastname,
+                        'passwordPlano' => $passwordPlano,
+                        'programa_estudios' => $nombre_programa,
+                        'tipo_usuario' => $tipo_usuario,
+                        'estado' => 1
+                    ];
+                    $response = $this->objIntegrator->sincronizarUsuarios($usuario);
+                    if ($response['data']['moodle']['message_success']) {
+                        //actualizar usuarioen sigi
+                        $this->objDocente->updateUserMoodleId($id_estudiante, $response['data']['moodle']['id']);
+                        $_SESSION['flash_success'] .= $response['data']['moodle']['message_success'];
+                    } else {
+                        $_SESSION['flash_error'] .= $response['data']['moodle']['message_error'];
                     }
+                    if ($response['data']['microsoft']['success']) {
+                        //actualizar usuario en sigi
+                        $this->objDocente->updateUserMicrosoftId($id_estudiante, $response['data']['microsoft']['id_microsoft']);
+                        $_SESSION['flash_success'] .= '<br>  Usuario actualizado en Microsoft 365';
+                        if ($response['data']['microsoft']['license']['success']) {
+                            $_SESSION['flash_success'] .= '<br>  Licencia asignada en Microsoft 365';
+                        } else {
+                            $_SESSION['flash_error'] .= '<br>  Error al asignar licencia en Microsoft 365';
+                        }
+                    } else {
+                        $_SESSION['flash_error'] .= '<br>  Error al actualizar usuario en Microsoft 365';
+                    }
+                } catch (\Exception $e) {
+                    error_log("Error Update Integraciones Docente: " . $e->getMessage());
                 }
-            // =======================================================
-            // FIN INTEGRACIÓN 
-            // =======================================================
+            }
+        // =======================================================
+        // FIN INTEGRACIÓN 
+        // =======================================================
 
-            endif;
-        }
+        endif;
         header('Location: ' . BASE_URL . '/academico/estudiantes');
         exit;
     }
