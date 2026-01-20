@@ -36,8 +36,8 @@ curl_close($ch);
 
 <div class="row">
   <?php foreach ($sistemas as $s) {
-    if ($s['codigo'] === 'AULA') {
-      if (MOODLE_SYNC_ACTIVE == true && $id_moodle) {
+    if ($s['codigo'] == 'AULA') {
+      if (MOODLE_SYNC_ACTIVE == true && $id_moodle > 0) {
   ?>
         <div class="col-md-4 col-lg-3 mb-4">
           <a href="<?= BASE_URL . '/aula/moodle' ?>" class="text-decoration-none" target="_blank">

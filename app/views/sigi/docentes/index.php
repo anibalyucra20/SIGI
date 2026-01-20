@@ -5,8 +5,8 @@
   <!-- Filtros -->
   <div class="card p-2">
     <div class="row g-2 mb-2">
-      <div class="col-md-3"><input id="f_dni" class="form-control" placeholder="Buscar DNI"></div>
-      <div class="col-md-3"><input id="f_nom" class="form-control" placeholder="Apellidos y nombres"></div>
+      <div class="col-md-3"><input id="f_dni" class="form-control" placeholder="Buscar DNI" maxlength="20" autofocus></div>
+      <div class="col-md-3"><input id="f_nom" class="form-control" placeholder="Apellidos y nombres" maxlength="120"></div>
       <div class="col-md-2">
         <select id="f_estado" class="form-control">
           <option value="">Todos los estados</option>
@@ -85,7 +85,8 @@
             <a href="<?= BASE_URL ?>/sigi/docentes/ver/${row.id}"      title="ver" class="btn btn-info btn-sm"><i class="fa fa-eye"></i></a>
             <a href="<?= BASE_URL ?>/sigi/docentes/editar/${row.id}"   title="editar" class="btn btn-warning btn-sm"><i class="fa fa-edit"></i></a>
             <a href="<?= BASE_URL ?>/sigi/docentes/permisos/${row.id}" title="Permisos" class="btn btn-primary btn-sm"><i class="fa fa-project-diagram"></i></a>
-            <a href="<?= BASE_URL ?>/resetPassword?data=${btoa(row.id)}&back=<?= urlencode($_SERVER['REQUEST_URI']) ?>" title="Enviar Correo" class="btn btn-dark btn-sm"><i class="fa fa-envelope"></i></a>`;
+            <a href="<?= BASE_URL ?>/resetPassword?data=${btoa(row.id)}&back=<?= urlencode($_SERVER['REQUEST_URI']) ?>" title="Enviar Correo" class="btn btn-dark btn-sm"><i class="fa fa-envelope"></i></a>
+            <a href="<?= BASE_URL ?>/sigi/docentes/resetPassword?data=${btoa(row.id)}&back=<?= urlencode($_SERVER['REQUEST_URI']) ?>" title="Cambiar Contraseña" class="btn btn-success btn-sm"><i class="fa fa-key"></i></a>`;
             }
           }
         ],

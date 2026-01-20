@@ -191,6 +191,18 @@ class Docente extends Model
         return $stmt->execute();
     }
 
+    public function updateUserMicrosoftId($id, $microsoft_user_id)
+    {
+        $sql = "UPDATE sigi_usuarios SET
+          microsoft_user_id = :microsoft_user_id
+        WHERE id = :id";
+
+        $stmt = self::$db->prepare($sql);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->bindValue(':microsoft_user_id', $microsoft_user_id, PDO::PARAM_STR);
+        return $stmt->execute();
+    }
+
     public function updateInAdmision($id, $data)
     {
         $sql = "UPDATE sigi_usuarios SET

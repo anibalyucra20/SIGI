@@ -5,25 +5,32 @@ namespace App\Controllers\Auth;
 require_once __DIR__ . '/../../../app/models/Sigi/DatosSistema.php';
 require_once __DIR__ . '/../../../app/models/Sigi/DatosInstitucionales.php';
 require_once __DIR__ . '/../../../app/models/Sigi/Docente.php';
+require_once __DIR__ . '/../../../app/models/Sigi/Programa.php';
+require_once __DIR__ . '/../../../app/models/Sigi/Rol.php';
 require_once __DIR__ . '/../../../app/utils/Mailer.php';
 require_once __DIR__ . '/../../../vendor/autoload.php';
 
 // --- INTEGRACIÓN MOODLE: Incluir Helper ---
-require_once __DIR__ . '/../../../app/helpers/MoodleIntegrator.php';
+require_once __DIR__ . '/../../../app/helpers/Integrator.php';
 
 use Core\Controller;
 use App\Models\Sigi\Docente;
+use App\Models\Sigi\Programa;
+use App\Models\Sigi\Rol;
 use App\Models\Sigi\DatosSistema;
 use App\Models\Sigi\DatosInstitucionales;
 use App\Utils\Mailer;
 use PDO;
-use App\Helpers\MoodleIntegrator;
+use App\Helpers\Integrator;
 
 class LoginController extends Controller
 {
     protected $objDatosSistema;
     protected $objDatosIes;
     protected $objDocente;
+    protected $objPrograma;
+    protected $objRol;
+    protected $objIntegrator;
 
     public function __construct()
     {
@@ -31,6 +38,10 @@ class LoginController extends Controller
         $this->objDatosSistema = new DatosSistema();
         $this->objDatosIes = new DatosInstitucionales();
         $this->objDocente = new Docente();
+        $this->objPrograma = new Programa();
+        $this->objRol = new Rol();
+        // --- INTEGRACIÓN MOODLE: Instanciar Helper ---
+        $this->objIntegrator = new Integrator();
     }
     /* Formulario */
     public function index()
@@ -116,6 +127,10 @@ class LoginController extends Controller
 
     public function resetPassword()
     {
+        if (!\Core\Auth::user()) {
+            header('Location: ' . BASE_URL . '/login');
+            exit;
+        }
         $back = $_GET['back'];
         if ($back == '') {
             $back = "/intranet";
@@ -297,45 +312,62 @@ class LoginController extends Controller
 
         $hash = password_hash($pass1, PASSWORD_BCRYPT);
         $this->objDocente->updatePassword((int)$user['id'], $hash);
-
+        // Lógica de separación de nombres (Igual que en DocentesController)
+        $parts = explode('_', $user['apellidos_nombres']);
+        if (count($parts) >= 3) {
+            $lastname = $parts[0] . ' ' . $parts[1]; // Apellido Paterno + Materno
+            $firstname = $parts[2]; // Nombres restantes
+        } else {
+            $lastname = $parts[0];
+            $firstname = isset($parts[1]) ? $parts[1] : '-';
+        }
+        $programa_est = $this->objPrograma->find($user['id']);
+        $nombre_programa = $programa_est['nombre'];
         // =======================================================
-        // INICIO INTEGRACIÓN MOODLE (Cambio de Password)
+        // INICIO INTEGRACIÓN 
         // =======================================================
-        try {
-            // Verificar que tenemos los datos necesarios en $user
-            // Asumimos que findByResetToken devuelve: id, dni, correo, apellidos_nombres
-            $moodle = new MoodleIntegrator();
-            // Lógica de separación de nombres (Igual que en DocentesController)
-            $parts = explode('_', $user['apellidos_nombres']);
-            if (count($parts) >= 3) {
-                $lastname = $parts[0] . ' ' . $parts[1]; // Apellido Paterno + Materno
-                $firstname = $parts[2]; // Nombres restantes
-            } else {
-                $lastname = $parts[0];
-                $firstname = isset($parts[1]) ? $parts[1] : '-';
-            }
+        if (INTEGRACIONES_SYNC_ACTIVE) {
+            try {
+                $rol = $this->objRol->find($user['id_rol']);
+                $tipo_usuario = $rol['nombre'];
 
-            // Sincronizar: Envía la contraseña PLANA ($pass1)
-            $id_moodle_user = $moodle->syncUser(
-                $user['id'],      // ID SIGI (idnumber)
-                $user['dni'],     // Username
-                $user['correo'],
-                $firstname,
-                $lastname,
-                $pass1            // <--- CONTRASEÑA NUEVA EN TEXTO PLANO
-            );
-            if ($id_moodle_user) {
-                //$_SESSION['flash_success'] .= ' ID Moodle: ' . $id_moodle_user;
-                $this->objDocente->updateUserMoodleId($id_user, $id_moodle_user);
-            } else {
-                $_SESSION['flash_error'] .= ' Error ID Moodle';
+                //peticion curl a API
+                $usuario = [
+                    'id' => $user['id'],
+                    'dni' => $user['dni'],
+                    'nombres' => $firstname,
+                    'apellidos' => $lastname,
+                    'passwordPlano' => $pass1,
+                    'programa_estudios' => $nombre_programa,
+                    'tipo_usuario' => $tipo_usuario,
+                    'estado' => $user['estado']
+                ];
+                $response = $this->objIntegrator->sincronizarUsuarios($usuario);
+                if ($response['data']['moodle']['message_success']) {
+                    //actualizar usuarioen sigi
+                    $this->objDocente->updateUserMoodleId($user['id'], $response['data']['moodle']['id']);
+                    $_SESSION['flash_success'] .= $response['data']['moodle']['message_success'];
+                } else {
+                    $_SESSION['flash_error'] .= $response['data']['moodle']['message_error'];
+                }
+                if ($response['data']['microsoft']['success']) {
+                    //actualizar usuario en sigi
+                    $this->objDocente->updateUserMicrosoftId($user['id'], $response['data']['microsoft']['id_microsoft']);
+                    $_SESSION['flash_success'] .= '<br>  Usuario actualizado en Microsoft 365';
+                    if ($response['data']['microsoft']['license']['success']) {
+                        $_SESSION['flash_success'] .= '<br>  Licencia asignada en Microsoft 365';
+                    } else {
+                        $_SESSION['flash_error'] .= '<br>  Error al asignar licencia en Microsoft 365';
+                    }
+                } else {
+                    $_SESSION['flash_error'] .= '<br>  Error al actualizar usuario en Microsoft 365';
+                }
+            } catch (\Exception $e) {
+                error_log("Error Update Integraciones Docente: " . $e->getMessage());
             }
-        } catch (\Exception $e) {
-            // Loguear error pero NO detener el flujo (el usuario ya cambió su clave en SIGI)
-            error_log("Error Moodle Password Sync: " . $e->getMessage());
         }
         // =======================================================
-        // FIN INTEGRACIÓN MOODLE
+        // FIN INTEGRACIÓN 
         // =======================================================
 
         $_SESSION['flash_success'] .= ' Contraseña actualizada. Ahora puedes iniciar sesión.';

@@ -15,7 +15,7 @@ require_once __DIR__ . '/../../../app/models/Sigi/DatosSistema.php';
 require_once __DIR__ . '/../../../app/models/Sigi/Permiso.php';
 
 // --- INTEGRACIÓN MOODLE: Incluir Helper ---
-require_once __DIR__ . '/../../../app/helpers/MoodleIntegrator.php';
+require_once __DIR__ . '/../../../app/helpers/Integrator.php';
 
 use App\Models\Sigi\Docente;
 use App\Models\Sigi\Rol;
@@ -26,7 +26,7 @@ use App\Models\Sigi\Sistema;
 use App\Models\Sigi\DatosSistema;
 use App\Models\Sigi\Permiso;
 // Usar el Integrador
-use App\Helpers\MoodleIntegrator;
+use App\Helpers\Integrator;
 
 class DocentesController extends Controller
 {
@@ -38,7 +38,7 @@ class DocentesController extends Controller
     protected $objSistema;
     protected $objDatosSistema;
     protected $objPermiso;
-    protected $objMoodleIntegrator;
+    protected $objIntegrator;
 
     public function __construct()
     {
@@ -57,7 +57,7 @@ class DocentesController extends Controller
         $this->objSistema = new Sistema();
         $this->objDatosSistema = new DatosSistema();
         $this->objPermiso = new Permiso();
-        $this->objMoodleIntegrator = new MoodleIntegrator();
+        $this->objIntegrator = new Integrator();
     }
 
     public function index()
@@ -146,42 +146,64 @@ class DocentesController extends Controller
             $data['estado'] = 1;
 
             $id_docente = $this->model->nuevo($data);
-
+            // Guardar contraseña en sesión temporal para mostrarla una sola vez
             if ($id_docente > 0) {
+                $_SESSION['flash_success'] = " Docente registrado correctamente. La contraseña generada es: <strong>{$passwordPlano}</strong>";
                 $this->registrar_permiso_inicial($id_docente);
-
+                // Separar Nombres y Apellidos (Heurística simple para Perú)
+                $firstname = $_POST['Nombres'];
+                $lastname = $_POST['ApellidoPaterno'] . ' ' . $_POST['ApellidoMaterno'];
+                $estado = 1;
                 // =======================================================
-                // INICIO INTEGRACIÓN MOODLE (Creación)
+                // INICIO INTEGRACIÓN 
                 // =======================================================
-                try {
-                    // Separar Nombres y Apellidos (Heurística simple para Perú)
-                    $parts = explode('_', trim($data['apellidos_nombres']));
-                    $lastname = $parts[0] . ' ' . $parts[1]; // Apellido Paterno + Materno
-                    $firstname = $parts[2]; // Nombres restantes
+                if (INTEGRACIONES_SYNC_ACTIVE) {
+                    try {
+                        $programa_est =  $this->objPrograma->find($data['id_programa_estudios']);
+                        $nombre_programa = $programa_est['nombre'];
+                        $rol = $this->objRol->find($data['id_rol']);
+                        $tipo_usuario = $rol['nombre'];
 
-                    // Sincronizar usando ID de SIGI como idnumber y contraseña PLANA
-                    $id_moodle_user = $this->objMoodleIntegrator->syncUser(
-                        $id_docente,        // ID SIGI (Vinculo)
-                        $data['dni'],       // Username
-                        $data['correo'],    // Email
-                        $firstname,         // Nombres
-                        $lastname,          // Apellidos
-                        $passwordPlano      // Contraseña Real (Sin Hash)
-                    );
-                    if ($id_moodle_user) {
-                        $this->model->updateUserMoodleId($id_docente, $id_moodle_user);
+                        //peticion curl a API
+                        $usuario = [
+                            'id' => $id_docente,
+                            'dni' => $data['dni'],
+                            'nombres' => $firstname,
+                            'apellidos' => $lastname,
+                            'passwordPlano' => $passwordPlano,
+                            'programa_estudios' => $nombre_programa,
+                            'tipo_usuario' => $tipo_usuario,
+                            'estado' => $estado
+                        ];
+                        $response = $this->objIntegrator->sincronizarUsuarios($usuario);
+                        if ($response['data']['moodle']['message_success']) {
+                            //actualizar usuarioen sigi
+                            $this->model->updateUserMoodleId($id_docente, $response['data']['moodle']['id']);
+                            $_SESSION['flash_success'] .= $response['data']['moodle']['message_success'];
+                        } else {
+                            $_SESSION['flash_error'] .= $response['data']['moodle']['message_error'];
+                        }
+                        if ($response['data']['microsoft']['success']) {
+                            //actualizar usuario en sigi
+                            $this->model->updateUserMicrosoftId($id_docente, $response['data']['microsoft']['id_microsoft']);
+                            $_SESSION['flash_success'] .= '<br>  Usuario actualizado en Microsoft 365';
+                            if ($response['data']['microsoft']['license']['success']) {
+                                $_SESSION['flash_success'] .= '<br>  Licencia asignada en Microsoft 365';
+                            } else {
+                                $_SESSION['flash_error'] .= '<br>  Error al asignar licencia en Microsoft 365';
+                            }
+                        } else {
+                            $_SESSION['flash_error'] .= '<br>  Error al actualizar usuario en Microsoft 365';
+                        }
+                    } catch (\Exception $e) {
+                        error_log("Error Update Integraciones Docente: " . $e->getMessage());
                     }
-                } catch (\Exception $e) {
-                    // Log silencioso para no detener el flujo de SIGI si falla Moodle
-                    error_log("Error Sync Moodle Docente: " . $e->getMessage());
                 }
                 // =======================================================
-                // FIN INTEGRACIÓN MOODLE
+                // FIN INTEGRACIÓN 
                 // =======================================================
             }
 
-            // Guardar contraseña en sesión temporal para mostrarla una sola vez
-            $_SESSION['flash_success'] .= " Docente registrado correctamente. La contraseña generada es: <strong>{$passwordPlano}</strong>";
         endif;
         header('Location: ' . BASE_URL . '/sigi/docentes');
         exit;
@@ -240,7 +262,7 @@ class DocentesController extends Controller
             ];
             $errores = $this->model->validar($data, true, $id);
             $docente = $data;
-            $apellidos_nombres = explode('_', trim($data['apellidos_nombres']));
+            $apellidos_nombres = explode('_', $data['apellidos_nombres']);
             $docente['ApellidoPaterno'] = $apellidos_nombres[0];
             $docente['ApellidoMaterno'] = $apellidos_nombres[1];
             $docente['Nombres'] = $apellidos_nombres[2];
@@ -259,41 +281,65 @@ class DocentesController extends Controller
             }
             $model = new Docente();
             $model->update($id, $data);
-
-            // =======================================================
-            // INICIO INTEGRACIÓN MOODLE (Actualización)
-            // =======================================================
-            try {
-                // Separar Nombres y Apellidos
-                $parts = explode('_', $data['apellidos_nombres']);
-                if (count($parts) >= 3) {
-                    $lastname = $parts[0] . ' ' . $parts[1];
-                    $firstname = $parts[2];
-                } else {
-                    $lastname = $parts[0];
-                    $firstname = isset($parts[1]) ? $parts[1] : '-';
-                }
-
-                // Actualizar datos. Pasamos NULL en password porque aquí no se cambia.
-                $id_moodle_user = $this->objMoodleIntegrator->syncUser(
-                    $id,                // ID SIGI
-                    $data['dni'],       // Username
-                    $data['correo'],
-                    $firstname,
-                    $lastname,
-                    null                // Password NULL = No cambiar contraseña en Moodle
-                );
-                if ($id_moodle_user) {
-                    $this->model->updateUserMoodleId($id, $id_moodle_user);
-                }
-            } catch (\Exception $e) {
-                error_log("Error Update Moodle Docente: " . $e->getMessage());
+            $_SESSION['flash_success'] .= "Docente actualizado correctamente.";
+            // Separar Nombres y Apellidos
+            $parts = explode('_', $data['apellidos_nombres']);
+            if (count($parts) >= 3) {
+                $lastname = $parts[0] . ' ' . $parts[1];
+                $firstname = $parts[2];
+            } else {
+                $lastname = $parts[0];
+                $firstname = isset($parts[1]) ? $parts[1] : '-';
             }
             // =======================================================
-            // FIN INTEGRACIÓN MOODLE
+            // INICIO INTEGRACIÓN
             // =======================================================
+            if (INTEGRACIONES_SYNC_ACTIVE) {
+                try {
+                    $programa_est =  $this->objPrograma->find($data['id_programa_estudios']);
+                    $nombre_programa = $programa_est['nombre'];
+                    $rol = $this->objRol->find($data['id_rol']);
+                    $tipo_usuario = $rol['nombre'];
 
-            $_SESSION['flash_success'] .= " Docente actualizado correctamente.";
+                    //peticion curl a API
+                    $data = [
+                        'id' => $id,
+                        'dni' => $data['dni'],
+                        'nombres' => $firstname,
+                        'apellidos' => $lastname,
+                        'passwordPlano' => null,
+                        'programa_estudios' => $nombre_programa,
+                        'tipo_usuario' => $tipo_usuario,
+                        'estado' => $data['estado']
+                    ];
+                    $response = $this->objIntegrator->sincronizarUsuarios($data);
+                    if ($response['data']['moodle']['id'] > 0) {
+                        //actualizar usuarioen sigi
+                        $this->model->updateUserMoodleId($id, $response['data']['moodle']['id']);
+                        $_SESSION['flash_success'] .= $response['data']['moodle']['message_success'];
+                    } else {
+                        $_SESSION['flash_error'] .= $response['data']['moodle']['message_error'];
+                    }
+                    if ($response['data']['microsoft']['success']) {
+                        //actualizar usuario en sigi
+                        $this->model->updateUserMicrosoftId($id, $response['data']['microsoft']['id_microsoft']);
+                        $_SESSION['flash_success'] .= '<br>  Usuario actualizado en Microsoft 365';
+                        if ($response['data']['microsoft']['license']['success']) {
+                            $_SESSION['flash_success'] .= '<br>  Licencia asignada en Microsoft 365';
+                        } else {
+                            $_SESSION['flash_error'] .= '<br>  Error al asignar licencia en Microsoft 365';
+                        }
+                    } else {
+                        $_SESSION['flash_error'] .= '<br>  Error al actualizar usuario en Microsoft 365';
+                    }
+                } catch (\Exception $e) {
+                    error_log("Error Update Integraciones Docente: " . $e->getMessage());
+                }
+            }
+        // =======================================================
+        // FIN INTEGRACIÓN 
+        // =======================================================
+
         endif;
         header('Location: ' . BASE_URL . '/sigi/docentes');
         exit;
@@ -386,13 +432,89 @@ class DocentesController extends Controller
             \Core\Auth::start();
             $id_usuario = $_POST['id_usuario'];
             $permisos = $_POST['permisos'] ?? [];
-
             // ¡No necesitas parsear aquí! El modelo lo hace.
             $this->model->actualizarPermisos($id_usuario, $permisos);
-
             $_SESSION['flash_success'] = "Permisos actualizados correctamente.";
         endif;
         header('Location: ' . BASE_URL . '/sigi/docentes');
+        exit;
+    }
+
+    public function resetPassword()
+    {
+        if (!\Core\Auth::esAdminSigi() && !\Core\Auth::esAdminAcademico()) {
+            header('Location: ' . BASE_URL . '/intranet');
+            exit;
+        }
+        $back = $_GET['back'];
+        if ($back == '') {
+            $back = "/intranet";
+        }
+        $data = $_GET['data'];
+        if ($data == '') {
+            header('Location: ' . BASE_URL . $back);
+            exit;
+        }
+        $id = base64_decode($data);
+        $docente = $this->model->find($id);
+        if (!$docente) {
+            header('Location: ' . BASE_URL . $back);
+            exit;
+        }
+
+        // Separar Nombres y Apellidos
+        $firstname = $docente['Nombres'];
+        $lastname = $docente['ApellidoPaterno'] . ' ' . $docente['ApellidoMaterno'];
+        //generar contraseña segura nueva para docente
+        $parteAleatoria = bin2hex(random_bytes(6)); // Esta es la que enviaremos a Moodle
+        $passwordPlano = 'Sigi.' . $parteAleatoria;
+        $password = password_hash($passwordPlano, PASSWORD_DEFAULT);
+        $this->model->updatePassword($id, $password);
+        $_SESSION['flash_success'] .= "Contraseña actualizada correctamente para el docente " . $firstname . " " . $lastname . ". La contraseña es: " . $passwordPlano;
+        // =======================================================
+        // INICIO INTEGRACIÓN (Actualización)
+        // =======================================================
+        if (INTEGRACIONES_SYNC_ACTIVE) {
+            try {
+                //peticion curl a API
+                $usuario = [
+                    'id' => $id,
+                    'dni' => $docente['dni'],
+                    'nombres' => $firstname,
+                    'apellidos' => $lastname,
+                    'passwordPlano' => $passwordPlano,
+                    'programa_estudios' => $docente['nombre_programa'],
+                    'tipo_usuario' => $docente['nombre_rol'],
+                    'estado' => $docente['estado']
+                ];
+                $response = $this->objIntegrator->sincronizarUsuarios($usuario);
+                if ($response['data']['moodle']['message_success']) {
+                    //actualizar usuarioen sigi
+                    $this->model->updateUserMoodleId($id, $response['data']['moodle']['id']);
+                    $_SESSION['flash_success'] .= $response['data']['moodle']['message_success'];
+                } else {
+                    $_SESSION['flash_error'] .= $response['data']['moodle']['message_error'];
+                }
+                if ($response['data']['microsoft']['success']) {
+                    //actualizar usuario en sigi
+                    $this->model->updateUserMicrosoftId($id, $response['data']['microsoft']['id_microsoft']);
+                    $_SESSION['flash_success'] .= '<br>  Usuario actualizado en Microsoft 365';
+                    if ($response['data']['microsoft']['license']['success']) {
+                        $_SESSION['flash_success'] .= '<br>  Licencia asignada en Microsoft 365';
+                    } else {
+                        $_SESSION['flash_error'] .= '<br>  Error al asignar licencia en Microsoft 365';
+                    }
+                } else {
+                    $_SESSION['flash_error'] .= '<br>  Error al actualizar usuario en Microsoft 365';
+                }
+            } catch (\Exception $e) {
+                error_log("Error Update Integraciones Docente: " . $e->getMessage());
+            }
+        }
+        // =======================================================
+        // FIN INTEGRACIÓN 
+        // =======================================================
+        header('Location: ' . BASE_URL . $back);
         exit;
     }
     /*public function parseoNombres4()
@@ -409,61 +531,4 @@ class DocentesController extends Controller
             echo "-------------------------<br>";
         }
     }*/
-    public function moodle_test()
-    {
-        // 1. Datos de prueba
-        // NOTA: He cambiado la contraseña para cumplir la política estándar de Moodle
-        // (8 caracteres, 1 Mayus, 1 Minus, 1 Num, 1 Simbolo)
-        $userPayload = [
-            'username'      => 'ayucra',
-            'firstname'     => 'anibal',
-            'lastname'      => 'yucra curo',
-            'email'         => '70198965@gmail.com',
-            'idnumber'      => '2',
-            'auth'          => 'manual',
-            'password'      => 'Yucra.2025', // <--- Contraseña más fuerte para evitar error 'passwordpolicy'
-        ];
-
-        $url = MOODLE_URL . '/webservice/rest/server.php' .
-            '?wstoken=' . MOODLE_TOKEN .
-            '&wsfunction=' . 'core_user_create_users' .
-            '&moodlewsrestformat=json';
-
-        // 2. Iniciar cURL con manejo de errores
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_POST, 1);
-
-        // IMPORTANTE: http_build_query maneja correctamente los índices para arrays anidados
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query(['users' => [$userPayload]]));
-
-        // Si estás en localhost sin SSL válido, descomenta la siguiente línea temporalmente:
-        // ... configuración previa ...
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-        // 👇 AGREGA ESTAS LÍNEAS PARA WAMP/LOCAL 👇
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-
-        $response = curl_exec($ch);
-        // ... resto del código ...
-
-        // 3. Verificación de errores de red (cURL)
-        if ($response === false) {
-            echo "<h1>Error de Conexión cURL:</h1>";
-            var_dump(curl_error($ch));
-            curl_close($ch);
-            exit;
-        }
-
-        curl_close($ch);
-
-        // 4. Decodificar y MOSTRAR la respuesta
-        $json = json_decode($response, true);
-
-        echo "<pre>"; // Etiqueta HTML para que se vea ordenado
-        echo "Respuesta de Moodle:\n";
-        print_r($json); // <--- print_r o var_dump es obligatorio para ver Arrays/Objetos
-        echo "</pre>";
-    }
 }

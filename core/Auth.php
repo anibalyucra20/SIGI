@@ -118,9 +118,9 @@ class Auth
         if (!isset($_SESSION['sigi_modulo_actual'], $_SESSION['sigi_rol_actual'])) {
             return false;
         }
-        if ($_SESSION['sigi_modulo_actual'] != 1) {
+        /*if ($_SESSION['sigi_modulo_actual'] != 1) {
             return false;
-        }
+        }*/
         if (empty($roles)) return true; // Cualquier rol en SIGI
         return in_array($_SESSION['sigi_rol_actual'], (array)$roles);
     }
@@ -134,9 +134,9 @@ class Auth
         if (!isset($_SESSION['sigi_modulo_actual'], $_SESSION['sigi_rol_actual'])) {
             return false;
         }
-        if ($_SESSION['sigi_modulo_actual'] != 2) {
+        /*if ($_SESSION['sigi_modulo_actual'] != 2) {
             return false;
-        }
+        }*/
         if (empty($roles)) return true; // Cualquier rol en ACADEMICO
         return in_array($_SESSION['sigi_rol_actual'], (array)$roles);
     }
@@ -190,9 +190,9 @@ class Auth
         if (!isset($_SESSION['sigi_modulo_actual'], $_SESSION['sigi_rol_actual'])) {
             return false;
         }
-        if ($_SESSION['sigi_modulo_actual'] != 3) {
+        /*if ($_SESSION['sigi_modulo_actual'] != 3) {
             return false;
-        }
+        }*/
         if (empty($roles)) return true; // Cualquier rol en TUTORIA
         return in_array($_SESSION['sigi_rol_actual'], (array)$roles);
     }
@@ -221,9 +221,9 @@ class Auth
         if (!isset($_SESSION['sigi_modulo_actual'], $_SESSION['sigi_rol_actual'])) {
             return false;
         }
-        if ($_SESSION['sigi_modulo_actual'] != 4) {
+        /*if ($_SESSION['sigi_modulo_actual'] != 4) {
             return false;
-        }
+        }*/
         if (empty($roles)) return true; // Cualquier rol en BIBLIOTECA
         return in_array($_SESSION['sigi_rol_actual'], (array)$roles);
     }
@@ -251,9 +251,9 @@ class Auth
         if (!isset($_SESSION['sigi_modulo_actual'], $_SESSION['sigi_rol_actual'])) {
             return false;
         }
-        if ($_SESSION['sigi_modulo_actual'] != 5) {
+        /*if ($_SESSION['sigi_modulo_actual'] != 5) {
             return false;
-        }
+        }*/
         if (empty($roles)) return true; // Cualquier rol en ADMISION
         return in_array($_SESSION['sigi_rol_actual'], (array)$roles);
     }
@@ -277,9 +277,9 @@ class Auth
         if (!isset($_SESSION['sigi_modulo_actual'], $_SESSION['sigi_rol_actual'])) {
             return false;
         }
-        if ($_SESSION['sigi_modulo_actual'] != 6) {
+        /*if ($_SESSION['sigi_modulo_actual'] != 6) {
             return false;
-        }
+        }*/
         if (empty($roles)) return true; // Cualquier rol en EGRESADOS
         return in_array($_SESSION['sigi_rol_actual'], (array)$roles);
     }
@@ -303,9 +303,9 @@ class Auth
         if (!isset($_SESSION['sigi_modulo_actual'], $_SESSION['sigi_rol_actual'])) {
             return false;
         }
-        if ($_SESSION['sigi_modulo_actual'] != 7) {
+        /*if ($_SESSION['sigi_modulo_actual'] != 7) {
             return false;
-        }
+        }*/
         if (empty($roles)) return true; // Cualquier rol en BOLSA LABORAL
         return in_array($_SESSION['sigi_rol_actual'], (array)$roles);
     }
@@ -336,9 +336,9 @@ class Auth
         if (!isset($_SESSION['sigi_modulo_actual'], $_SESSION['sigi_rol_actual'])) {
             return false;
         }
-        if ($_SESSION['sigi_modulo_actual'] != 8) {
+        /*if ($_SESSION['sigi_modulo_actual'] != 8) {
             return false;
-        }
+        }*/
         if (empty($roles)) return true; // Cualquier rol en AULA
         return in_array($_SESSION['sigi_rol_actual'], (array)$roles);
     }
@@ -380,9 +380,9 @@ class Auth
         if (!isset($_SESSION['sigi_modulo_actual'], $_SESSION['sigi_rol_actual'])) {
             return false;
         }
-        if ($_SESSION['sigi_modulo_actual'] != 9) {
+        /*if ($_SESSION['sigi_modulo_actual'] != 9) {
             return false;
-        }
+        }*/
         if (empty($roles)) return true; // Cualquier rol en INVENTARIO
         return in_array($_SESSION['sigi_rol_actual'], (array)$roles);
     }
@@ -413,9 +413,9 @@ class Auth
         if (!isset($_SESSION['sigi_modulo_actual'], $_SESSION['sigi_rol_actual'])) {
             return false;
         }
-        if ($_SESSION['sigi_modulo_actual'] != 10) {
+        /*if ($_SESSION['sigi_modulo_actual'] != 10) {
             return false;
-        }
+        }*/
         if (empty($roles)) return true; // Cualquier rol en CAJA
         return in_array($_SESSION['sigi_rol_actual'], (array)$roles);
     }
@@ -439,9 +439,9 @@ class Auth
         if (!isset($_SESSION['sigi_modulo_actual'], $_SESSION['sigi_rol_actual'])) {
             return false;
         }
-        if ($_SESSION['sigi_modulo_actual'] != 11) {
+        /*if ($_SESSION['sigi_modulo_actual'] != 11) {
             return false;
-        }
+        }*/
         if (empty($roles)) return true; // Cualquier rol en EFSRT
         return in_array($_SESSION['sigi_rol_actual'], (array)$roles);
     }

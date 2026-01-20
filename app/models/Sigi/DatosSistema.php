@@ -211,4 +211,13 @@ class DatosSistema extends Model
         </html>
         HTML;
     }
+
+    public function actualizarTokenMicrosoft($token, $expire_in)
+    {
+        $sql = "UPDATE sigi_datos_sistema SET token_dinamico_microsoft = :token, token_microsoft_expire = :expire_in";
+        $stmt = self::$db->prepare($sql);
+        $data['token'] = $token;
+        $data['expire_in'] = $expire_in;
+        return $stmt->execute($data);
+    }
 }

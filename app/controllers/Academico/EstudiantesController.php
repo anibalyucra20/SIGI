@@ -11,7 +11,12 @@ require_once __DIR__ . '/../../../app/models/Sigi/Programa.php';
 require_once __DIR__ . '/../../../app/models/Sigi/Plan.php';
 require_once __DIR__ . '/../../../app/models/Sigi/PeriodoAcademico.php';
 require_once __DIR__ . '/../../../app/models/Sigi/DatosSistema.php';
+require_once __DIR__ . '/../../../app/models/Sigi/Rol.php';
 require_once __DIR__ . '/../../../vendor/autoload.php';
+
+//integraciones
+require_once __DIR__ . '/../../helpers/Integrator.php';
+
 
 use App\Models\Academico\Estudiantes;
 use App\Models\Sigi\Docente;
@@ -20,12 +25,15 @@ use App\Models\Sigi\Programa;
 use App\Models\Sigi\Plan;
 use App\Models\Sigi\PeriodoAcademico;
 use App\Models\Sigi\DatosSistema;
+use App\Models\Sigi\Rol;
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
+// Usar el Integrador
+use App\Helpers\Integrator;
 
 
 class EstudiantesController extends Controller
@@ -37,6 +45,8 @@ class EstudiantesController extends Controller
     protected $objPlan;
     protected $objPeriodoAcademico;
     protected $objDatosSistema;
+    protected $objRol;
+    protected $objIntegrator;
 
     public function __construct()
     {
@@ -48,6 +58,8 @@ class EstudiantesController extends Controller
         $this->objPlan = new Plan();
         $this->objPeriodoAcademico = new PeriodoAcademico();
         $this->objDatosSistema = new DatosSistema();
+        $this->objRol = new Rol();
+        $this->objIntegrator = new Integrator();
     }
 
 
@@ -153,7 +165,8 @@ class EstudiantesController extends Controller
                 $errores = [];
                 $isNuevo = empty($_POST['id']);
 
-                $password = bin2hex(random_bytes(5));
+                $parteAleatoria = bin2hex(random_bytes(6)); // Esta es la que enviaremos a Moodle
+                $password = 'Sigi.' . $parteAleatoria;
                 $password_secure = password_hash($password, PASSWORD_DEFAULT);
                 $data = [
                     'id'                  => $_POST['id'] ?? null,
@@ -225,7 +238,69 @@ class EstudiantesController extends Controller
                 if ($id_estudiante > 0) {
                     $this->registrar_permiso_inicial($id_estudiante);
                 }
-                $_SESSION['flash_success'] = "Estudiante guardado correctamente.";
+                $_SESSION['flash_success'] .= "Estudiante guardado correctamente.";
+                $parts = explode('_', $data['apellidos_nombres']);
+                if (count($parts) >= 3) {
+                    $lastname = $parts[0] . ' ' . $parts[1];
+                    $firstname = $parts[2];
+                } else {
+                    $lastname = $parts[0];
+                    $firstname = isset($parts[1]) ? $parts[1] : '-';
+                }
+                if ($isNuevo) {
+                    $passwordPlano = $password;
+                } else {
+                    $passwordPlano = null;
+                }
+                // =======================================================
+                // INICIO INTEGRACIÓN 
+                // =======================================================
+                if (INTEGRACIONES_SYNC_ACTIVE) {
+                    try {
+                        $programa_est =  $this->objPrograma->find($data['id_programa_estudios']);
+                        $nombre_programa = $programa_est['nombre'];
+                        $rol = $this->objRol->find($data['id_rol']);
+                        $tipo_usuario = $rol['nombre'];
+
+                        //peticion curl a API
+                        $usuario = [
+                            'id' => $id_estudiante,
+                            'dni' => $data['dni'],
+                            'nombres' => $firstname,
+                            'apellidos' => $lastname,
+                            'passwordPlano' => $passwordPlano,
+                            'programa_estudios' => $nombre_programa,
+                            'tipo_usuario' => $tipo_usuario,
+                            'estado' => 1
+                        ];
+                        $response = $this->objIntegrator->sincronizarUsuarios($usuario);
+                        if ($response['data']['moodle']['message_success']) {
+                            //actualizar usuarioen sigi
+                            $this->objDocente->updateUserMoodleId($id_estudiante, $response['data']['moodle']['id']);
+                            $_SESSION['flash_success'] .= $response['data']['moodle']['message_success'];
+                        } else {
+                            $_SESSION['flash_error'] .= $response['data']['moodle']['message_error'];
+                        }
+                        if ($response['data']['microsoft']['success']) {
+                            //actualizar usuario en sigi
+                            $this->objDocente->updateUserMicrosoftId($id_estudiante, $response['data']['microsoft']['id_microsoft']);
+                            $_SESSION['flash_success'] .= '<br>  Usuario actualizado en Microsoft 365';
+                            if ($response['data']['microsoft']['license']['success']) {
+                                $_SESSION['flash_success'] .= '<br>  Licencia asignada en Microsoft 365';
+                            } else {
+                                $_SESSION['flash_error'] .= '<br>  Error al asignar licencia en Microsoft 365';
+                            }
+                        } else {
+                            $_SESSION['flash_error'] .= '<br>  Error al actualizar usuario en Microsoft 365';
+                        }
+                    } catch (\Exception $e) {
+                        error_log("Error Update Integraciones Docente: " . $e->getMessage());
+                    }
+                }
+            // =======================================================
+            // FIN INTEGRACIÓN 
+            // =======================================================
+
             endif;
         }
         header('Location: ' . BASE_URL . '/academico/estudiantes');

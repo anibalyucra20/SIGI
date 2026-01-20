@@ -18,6 +18,13 @@ class Rol extends Model
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+    public function find($id)
+    {
+        $sql = "SELECT * FROM sigi_roles WHERE id = ?";
+        $stmt = self::$db->prepare($sql);
+        $stmt->execute([$id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
     // Listado de roles válidos (excluye ESTUDIANTE y EXTERNO)
     public function getRolesDocente()
     {

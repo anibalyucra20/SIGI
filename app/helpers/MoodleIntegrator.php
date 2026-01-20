@@ -160,17 +160,23 @@ class MoodleIntegrator
 
             // Llamamos a la función de UPDATE
             $this->call('core_user_update_users', ['users' => [$userPayload]]);
-            $_SESSION['flash_success'] .= ' Usuario actualizado en Moodle.';
+            $_SESSION['flash_success'] .= '<br>Usuario actualizado en Moodle.';
             return $moodleInternalId;
+        }
+        // Generar contraseña aleatoria en caso que no enviaron para actualizar y no enviaron contraseña
+        if ($passwordPlano == null) {
+            $parteAleatoria = bin2hex(random_bytes(6)); // Esta es la que enviaremos a Moodle
+            $passwordPlano = 'Sigi.' . $parteAleatoria;
+            $userPayload['password'] = $passwordPlano;
         }
         // CASO B: CREAR (Si no existe)
         if ($passwordPlano) {
             // Solo creamos si tenemos contraseña. Si no, fallará.
             $resp = $this->call('core_user_create_users', ['users' => [$userPayload]]);
-            //$_SESSION['flash_success'] .= ' Usuario creado en Moodle.';
+            $_SESSION['flash_success'] .= '<br>Usuario creado en Moodle.';
             return isset($resp[0]['id']) ? $resp[0]['id'] : false;
         }
-        $_SESSION['flash_error'] = 'Usuario no creado en Moodle.';
+        $_SESSION['flash_error'] .= '<br>Usuario no creado en Moodle.';
         return false;
     }
 
