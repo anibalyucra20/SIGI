@@ -2,19 +2,19 @@
 
 namespace App\Controllers\Aula;
 
-require_once __DIR__ . '/../../../app/helpers/MoodleIntegrator.php';
+require_once __DIR__ . '/../../../app/helpers/Integrator.php';
 
 use Core\Controller;
-use App\Helpers\MoodleIntegrator;
+use App\Helpers\Integrator;
 use Core\Auth;
 
 class MoodleController extends Controller
 {
-    protected $moodleIntegrator;
+    protected $integrator;
     public function __construct()
     {
         parent::__construct();
-        $this->moodleIntegrator = new MoodleIntegrator();
+        $this->integrator = new Integrator();
     }
 
     public function index()
@@ -25,12 +25,15 @@ class MoodleController extends Controller
             $id = isset($_GET['id']) ? $_GET['id'] : null;
             // link de moodle // Generar link SSO
             $idUsuarioSigi = $_SESSION['sigi_user_id'];
-            $urlAulaVirtual = $this->moodleIntegrator->getAutoLoginUrl($idUsuarioSigi, $a, $id);
-            header("Location: " . $urlAulaVirtual);
-            exit();
+            $respuesta = $this->integrator->loginMoodle($idUsuarioSigi, $a, $id);
+            if ($respuesta['ok']) {
+                header("Location: " . $respuesta['url']);
+            } else {
+                $_SESSION['flash_error'] = $respuesta['message_error'];
+                header("Location: " . BASE_URL . "/intranet");
+            }
         } else {
             header("Location: " . BASE_URL . "/login");
-            exit();
         }
     }
 }
