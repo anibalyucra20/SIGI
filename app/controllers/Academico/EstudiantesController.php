@@ -164,8 +164,7 @@ class EstudiantesController extends Controller
             $errores = [];
             $isNuevo = empty($_POST['id']);
 
-            $parteAleatoria = bin2hex(random_bytes(6)); // Esta es la que enviaremos a Moodle
-            $password = 'Sigi.' . $parteAleatoria;
+            $password = \Core\Auth::crearPassword(8);
             $password_secure = password_hash($password, PASSWORD_DEFAULT);
             $data = [
                 'id'                  => $_POST['id'] ?? null,
@@ -284,11 +283,11 @@ class EstudiantesController extends Controller
                         //actualizar usuario en sigi
                         $this->objDocente->updateUserMicrosoftId($id_estudiante, $response['data']['microsoft']['id_microsoft']);
                         $_SESSION['flash_success'] .= '<br>  Usuario actualizado en Microsoft 365';
-                        if ($response['data']['microsoft']['license']['success']) {
+                        /*if ($response['data']['microsoft']['license']['success']) {
                             $_SESSION['flash_success'] .= '<br>  Licencia asignada en Microsoft 365';
                         } else {
                             $_SESSION['flash_error'] .= '<br>  Error al asignar licencia en Microsoft 365';
-                        }
+                        }*/
                     } else {
                         $_SESSION['flash_error'] .= '<br>  Error al actualizar usuario en Microsoft 365';
                     }
@@ -432,12 +431,25 @@ class EstudiantesController extends Controller
     {
         $periodo = $this->objPeriodoAcademico->getPeriodoVigente($_SESSION['sigi_periodo_actual_id']);
         $periodo_vigente = ($periodo && $periodo['vigente']);
+        // Detectar si viene por AJAX (tu caso con XHR)
+        $esAjax = (
+            !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
+            strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest'
+        );
+
         if ($periodo_vigente) {
             if (\Core\Auth::esAdminAcademico()):
                 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['archivo_excel'])) {
+
                     $archivoTmp = $_FILES['archivo_excel']['tmp_name'];
                     $extension  = strtolower(pathinfo($_FILES['archivo_excel']['name'], PATHINFO_EXTENSION));
+
                     if (!in_array($extension, ['xlsx', 'xls'])) {
+                        if ($esAjax) {
+                            header('Content-Type: application/json; charset=utf-8');
+                            echo json_encode(['success' => false, 'message' => 'Solo se permite archivos Excel (.xlsx, .xls)']);
+                            exit;
+                        }
                         $_SESSION['flash_error'] = "Solo se permite archivos Excel (.xlsx, .xls)";
                         header('Location: ' . BASE_URL . '/academico/estudiantes');
                         exit;
@@ -446,16 +458,23 @@ class EstudiantesController extends Controller
                     $spreadsheet = IOFactory::load($archivoTmp);
                     $sheet = $spreadsheet->getSheetByName('Estudiantes');
                     if (!$sheet) {
+                        if ($esAjax) {
+                            header('Content-Type: application/json; charset=utf-8');
+                            echo json_encode(['success' => false, 'message' => "Hoja 'Estudiantes' no encontrada en el archivo."]);
+                            exit;
+                        }
                         $_SESSION['flash_error'] = "Hoja 'Estudiantes' no encontrada en el archivo.";
                         header('Location: ' . BASE_URL . '/academico/estudiantes');
                         exit;
                     }
 
-                    $rows = $sheet->toArray(null, true, true, true); // Array asociativo por columnas: A, B, C...
+                    $rows = $sheet->toArray(null, true, true, true);
                     $errores = [];
                     $datosAInsertar = [];
+
                     foreach ($rows as $i => $row) {
-                        if ($i === 1) continue; // Saltar encabezados
+                        if ($i === 1) continue; // encabezados
+
                         $dni                 = trim($row['A']);
                         $ApellidoPaterno     = trim($row['B']);
                         $ApellidoMaterno     = trim($row['C']);
@@ -469,21 +488,19 @@ class EstudiantesController extends Controller
                         $programa_estudios   = trim($row['K']);
                         $plan_estudio        = trim($row['L']);
 
-                        $datos_validos = 0;
+                        // Solo procesar filas "mínimas"
                         if ($dni != '' && $ApellidoPaterno != '' && $ApellidoMaterno != '' && $Nombres != '' && $genero != '') {
-                            $datos_validos++;
 
-                            // Validaciones
                             if (empty($dni) || !preg_match('/^\d{8,12}$/', $dni)) {
                                 $errores[] = "Fila $i: DNI inválido.";
                             }
-                            if (empty($ApellidoPaterno) || strlen($ApellidoPaterno) < 2) {
+                            if (empty($ApellidoPaterno) || strlen($ApellidoPaterno) < 1) {
                                 $errores[] = "Fila $i: Apellido Paterno inválido.";
                             }
-                            if (empty($ApellidoMaterno) || strlen($ApellidoMaterno) < 2) {
+                            if (empty($ApellidoMaterno) || strlen($ApellidoMaterno) < 1) {
                                 $errores[] = "Fila $i: Apellido Materno inválido.";
                             }
-                            if (empty($Nombres) || strlen($Nombres) < 2) {
+                            if (empty($Nombres) || strlen($Nombres) < 1) {
                                 $errores[] = "Fila $i: Nombres inválido.";
                             }
                             if (!in_array($genero, ['M', 'F'])) {
@@ -508,14 +525,15 @@ class EstudiantesController extends Controller
                             $id_sede = $_SESSION['sigi_sede_actual'];
                             $datos_plan = $this->objPlan->getPlanByProgramaAndPlanName($id_programa_estudios, $plan_estudio);
                             $id_plan_estudio = $datos_plan['id'];
+
                             if (!$id_plan_estudio) $errores[] = "Fila $i: Plan de Estudios inválido.";
+
                             $id_usuario = $this->model->existeDni($dni);
 
-                            // Si hay errores, saltar inserción
+                            // Si hay errores globales, seguimos juntando pero no insertamos.
                             if (!empty($errores)) continue;
 
-                            // Password aleatorio y token
-                            $password = bin2hex(random_bytes(5));
+                            $password = \Core\Auth::crearPassword(8);
                             $password_secure = password_hash($password, PASSWORD_DEFAULT);
                             $token    = '';
 
@@ -523,6 +541,9 @@ class EstudiantesController extends Controller
                                 'id'                   => ($id_usuario['id'] > 0) ? $id_usuario['id'] : null,
                                 'dni'                  => $dni,
                                 'apellidos_nombres'    => $ApellidoPaterno . '_' . $ApellidoMaterno . '_' . $Nombres,
+                                'apellido_paterno'     => $ApellidoPaterno,
+                                'apellido_materno'     => $ApellidoMaterno,
+                                'nombres'              => $Nombres,
                                 'genero'               => $genero,
                                 'fecha_nacimiento'     => $fecha_nac,
                                 'direccion'            => $direccion,
@@ -530,39 +551,200 @@ class EstudiantesController extends Controller
                                 'telefono'             => $telefono,
                                 'id_periodo'           => $id_periodo_registro,
                                 'id_programa_estudios' => $id_programa_estudios,
+                                'nombre_programa'      => $programa_estudios,
                                 'discapacidad'         => $discapacidad,
                                 'id_rol'               => 7,
                                 'id_sede'              => $id_sede,
                                 'estado'               => 1,
-                                'password'             => $password,
-                                'passwords'             => $password_secure,
+                                'password_plano'       => $password,
+                                'password'             => $password_secure,
                                 'reset_password'       => 0,
                                 'token_password'       => $token,
                                 'id_plan_estudio'      => $id_plan_estudio
                             ];
                         }
                     }
-                    // Mostrar errores (puedes mostrar en vista, aquí solo ejemplo)
+
                     if ($errores) {
-                        $_SESSION['flash_error'] = implode('<br>', $errores);
+                        $msg = implode('<br>', $errores);
+                        if ($esAjax) {
+                            header('Content-Type: application/json; charset=utf-8');
+                            echo json_encode(['success' => false, 'message' => $msg]);
+                            exit;
+                        }
+                        $_SESSION['flash_error'] = $msg;
                         header('Location: ' . BASE_URL . '/academico/estudiantes');
                         exit;
                     }
 
                     // Insertar estudiantes
+                    $contador_insertados = 0;
+                    $UsersForIntegrations = [];
+
                     foreach ($datosAInsertar as $estudiante) {
                         $id_estudiante = $this->model->guardar($estudiante);
                         if ($id_estudiante > 0) {
                             $this->registrar_permiso_inicial($id_estudiante);
+
+                            $UsersForIntegrations[] = [
+                                'id'                   => $id_estudiante,
+                                'dni'                  => $estudiante['dni'],
+                                'nombres'              => $estudiante['nombres'],
+                                'apellidos'            => $estudiante['apellido_paterno'] . ' ' . $estudiante['apellido_materno'],
+                                'passwordPlano'        => $estudiante['password_plano'],
+                                'programa_estudios'    => $estudiante['nombre_programa'],
+                                'tipo_usuario'         => 'ESTUDIANTE',
+                                'estado'               => 1
+                            ];
+                            $contador_insertados++;
                         }
                     }
-                    $_SESSION['flash_error'] = implode('<br>', $errores);
-                    $_SESSION['flash_success'] = "Importación completada correctamente.";
-                    header('Location: ' . BASE_URL . '/academico/estudiantes');
-                    exit;
+
+                    $_SESSION['flash_success'] = "Importación local completada correctamente. Se insertaron $contador_insertados estudiantes.";
+
+                    $resultadoApi = $this->objIntegrator->sincronizarUsuariosMasivos($UsersForIntegrations);
+
+                    $usersForExcel = [];
+                    if ($resultadoApi['success']) {
+                        $procesados_moodle = 0;
+                        $procesados_microsoft = 0;
+                        $errores_moodle = [];
+                        $errores_microsoft = 0;
+                        foreach ($resultadoApi['detalles_api'] as $lote) {
+                            if ($lote['moodle_ok']) {
+                                if ($lote['moodle']['ok']) {
+                                    $procesados_moodle += $lote['moodle']['moodle_procesados'] ?? 0;
+                                    $datosProcesados_moodle = $lote['moodle']['data'] ?? [];
+                                    $errores_moodle += $lote['moodle']['errores_moodle_detalle'] ?? [];
+                                    foreach ($datosProcesados_moodle as $value) {
+                                        $this->objDocente->updateUserMoodleId($value['id_sigi'], $value['moodle_id']);
+                                    }
+                                } else {
+                                    $_SESSION['flash_error'] .= "<br>Error al sincronizar con Moodle.";
+                                }
+                            }
+
+                            if ($lote['microsoft_ok']) {
+                                if ($lote['microsoft']['success']) {
+                                    $reporte = $lote['microsoft']['reporte'];
+                                    foreach ($reporte as $item) {
+                                        if ($item['status']) {
+                                            $this->objDocente->updateUserMicrosoftId($item['id_sigi'], $item['id_microsoft']);
+                                            $usersForExcel[(int)$item['id_sigi']] = $item['correo'];
+                                            $procesados_microsoft++;
+                                        } else {
+                                            $errores_microsoft++;
+                                        }
+                                    }
+                                } else {
+                                    $_SESSION['flash_error'] .= "<br>Error al sincronizar con Microsoft.";
+                                }
+                            }
+                        }
+                        if ($procesados_moodle > 0) {
+                            $_SESSION['flash_success'] .= "<br>Moodle: $procesados_moodle procesados.";
+                        }
+                        if ($procesados_microsoft > 0) {
+                            $_SESSION['flash_success'] .= "<br>Microsoft: $procesados_microsoft procesados.";
+                        }
+                        if (!empty($errores_moodle)) {
+                            $_SESSION['flash_error'] .= "<br>Errores Moodle: " . implode('<br>', array_slice($errores_moodle, 0, 5));
+                        }
+                        if ($errores_microsoft > 0) {
+                            $_SESSION['flash_error'] .= "<br>Errores Microsoft: $errores_microsoft errores.";
+                        }
+                        // Agregar correo a la lista (evitar notice con ?? '')
+                        foreach ($UsersForIntegrations as &$u) {
+                            $id = (int)($u['id'] ?? 0);
+                            $u['correo'] = $usersForExcel[$id] ?? '';
+                        }
+                        unset($u);
+                    } else {
+                        $errores = $resultadoApi['errores'];
+                        $_SESSION['flash_error'] .= "<br>Error al sincronizar con Usuarios. " . implode('<br>', array_slice($errores, 0, 5));
+                    }
+                    // Generar Excel (IMPORTANTE: si OK, esto termina la respuesta con el archivo)
+                    $generar_excel = $this->exportarExcelUsuariosSincronizados($UsersForIntegrations);
+
+                    if ($generar_excel) {
+                        $_SESSION['flash_success'] .= "<br>Excel generado correctamente.";
+                        exit; // no seguir renderizando nada
+                    } else {
+                        if ($esAjax) {
+                            header('Content-Type: application/json; charset=utf-8');
+                            echo json_encode(['success' => false, 'message' => 'Error al generar excel.']);
+                            exit;
+                        }
+                        $_SESSION['flash_error'] .= "<br>Error al generar excel.";
+                        header('Location: ' . BASE_URL . '/academico/estudiantes');
+                        exit;
+                    }
                 }
             endif;
         }
+
+        // Si no entra al POST o no tiene permisos, puedes redirigir:
+        header('Location: ' . BASE_URL . '/academico/estudiantes');
         exit;
+    }
+
+
+    public function exportarExcelUsuariosSincronizados(array $usuarios): bool
+    {
+        if (headers_sent()) {
+            return false;
+        }
+
+        try {
+            $spreadsheet = new Spreadsheet();
+            $mainSheet = $spreadsheet->getActiveSheet();
+            $mainSheet->setTitle('Estudiantes');
+
+            $mainSheet->fromArray([
+                'DNI',
+                'Apellidos',
+                'Nombres',
+                'Correo Institucional',
+                'Programa de Estudios',
+                'Usuario Moodle',
+                'Usuario Microsoft',
+                'Usuario Sigi',
+                'Contraseña generada'
+            ], null, 'A1');
+
+            $row = 2;
+            foreach ($usuarios as $usuario) {
+                $mainSheet->fromArray([
+                    $usuario['dni'] ?? '',
+                    $usuario['apellidos'] ?? '',
+                    $usuario['nombres'] ?? '',
+                    $usuario['correo'] ?? '',
+                    $usuario['programa_estudios'] ?? '',
+                    $usuario['dni'] ?? '',
+                    $usuario['correo'] ?? '',
+                    $usuario['dni'] ?? '',
+                    $usuario['passwordPlano'] ?? ''
+                ], null, 'A' . $row);
+                $row++;
+            }
+
+            $nombre_plantilla = "UsuariosSincronizados_" . date("Ymd_His");
+
+            while (ob_get_level() > 0) {
+                ob_end_clean();
+            }
+
+            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            header('Content-Disposition: attachment;filename="' . $nombre_plantilla . '.xlsx"');
+            header('Cache-Control: max-age=0');
+
+            $writer = new Xlsx($spreadsheet);
+            $writer->save('php://output');
+
+            return true;
+        } catch (\Throwable $e) {
+            error_log("Excel export error: " . $e->getMessage());
+            return false;
+        }
     }
 }

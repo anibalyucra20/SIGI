@@ -187,11 +187,11 @@ class DocentesController extends Controller
                             //actualizar usuario en sigi
                             $this->model->updateUserMicrosoftId($id_docente, $response['data']['microsoft']['id_microsoft']);
                             $_SESSION['flash_success'] .= '<br>  Usuario actualizado en Microsoft 365';
-                            if ($response['data']['microsoft']['license']['success']) {
+                            /*if ($response['data']['microsoft']['license']['success']) {
                                 $_SESSION['flash_success'] .= '<br>  Licencia asignada en Microsoft 365';
                             } else {
                                 $_SESSION['flash_error'] .= '<br>  Error al asignar licencia en Microsoft 365';
-                            }
+                            }*/
                         } else {
                             $_SESSION['flash_error'] .= '<br>  Error al actualizar usuario en Microsoft 365';
                         }
@@ -324,11 +324,11 @@ class DocentesController extends Controller
                         //actualizar usuario en sigi
                         $this->model->updateUserMicrosoftId($id, $response['data']['microsoft']['id_microsoft']);
                         $_SESSION['flash_success'] .= '<br>  Usuario actualizado en Microsoft 365';
-                        if ($response['data']['microsoft']['license']['success']) {
+                        /*if ($response['data']['microsoft']['license']['success']) {
                             $_SESSION['flash_success'] .= '<br>  Licencia asignada en Microsoft 365';
                         } else {
                             $_SESSION['flash_error'] .= '<br>  Error al asignar licencia en Microsoft 365';
-                        }
+                        }*/
                     } else {
                         $_SESSION['flash_error'] .= '<br>  Error al actualizar usuario en Microsoft 365';
                     }
@@ -466,8 +466,7 @@ class DocentesController extends Controller
         $firstname = $docente['Nombres'];
         $lastname = $docente['ApellidoPaterno'] . ' ' . $docente['ApellidoMaterno'];
         //generar contraseña segura nueva para docente
-        $parteAleatoria = bin2hex(random_bytes(6)); // Esta es la que enviaremos a Moodle
-        $passwordPlano = 'Sigi.' . $parteAleatoria;
+        $passwordPlano = \Core\Auth::crearPassword(8);
         $password = password_hash($passwordPlano, PASSWORD_DEFAULT);
         $this->model->updatePassword($id, $password);
         $_SESSION['flash_success'] .= "Contraseña actualizada correctamente para el docente " . $firstname . " " . $lastname . ". La contraseña es: " . $passwordPlano;
@@ -499,11 +498,11 @@ class DocentesController extends Controller
                     //actualizar usuario en sigi
                     $this->model->updateUserMicrosoftId($id, $response['data']['microsoft']['id_microsoft']);
                     $_SESSION['flash_success'] .= '<br>  Usuario actualizado en Microsoft 365';
-                    if ($response['data']['microsoft']['license']['success']) {
+                    /*if ($response['data']['microsoft']['license']['success']) {
                         $_SESSION['flash_success'] .= '<br>  Licencia asignada en Microsoft 365';
                     } else {
                         $_SESSION['flash_error'] .= '<br>  Error al asignar licencia en Microsoft 365';
-                    }
+                    }*/
                 } else {
                     $_SESSION['flash_error'] .= '<br>  Error al actualizar usuario en Microsoft 365';
                 }

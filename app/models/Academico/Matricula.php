@@ -141,7 +141,11 @@ class Matricula extends Model
     }
     public function getDatosMatricula($id_matricula)
     {
-        $sql = "SELECT m.*, 
+        $sql = "SELECT m.*,
+                   u.moodle_user_id,
+                   u.microsoft_user_id,
+                   u.dni,
+                   u.apellidos_nombres,
                    pl.id as plan_id, 
                    pl.nombre as plan, 
                    prog.nombre as programa, 
@@ -151,6 +155,7 @@ class Matricula extends Model
             INNER JOIN acad_estudiante_programa ep ON ep.id = m.id_estudiante
             INNER JOIN sigi_planes_estudio pl ON ep.id_plan_estudio = pl.id
             INNER JOIN sigi_programa_estudios prog ON pl.id_programa_estudios = prog.id
+            INNER JOIN sigi_usuarios u ON ep.id_usuario = u.id
             WHERE m.id = ?";
         $stmt = self::$db->prepare($sql);
         $stmt->execute([$id_matricula]);
@@ -184,7 +189,22 @@ class Matricula extends Model
 
     public function getMatriculaByDetalle($id_detalle)
     {
-        $stmt = self::$db->prepare("SELECT * FROM acad_detalle_matricula WHERE id = ?");
+        $stmt = self::$db->prepare("SELECT 
+        dm.*,
+        ue.id AS id_usuario_estudiante,
+        ue.moodle_user_id AS id_estudiante_moodle,
+        ue.microsoft_user_id AS id_estudiante_microsoft,
+        pud.id_moodle AS id_course_moodle
+        FROM acad_detalle_matricula dm
+        INNER JOIN acad_matricula m 
+            ON dm.id_matricula = m.id
+        INNER JOIN acad_estudiante_programa ep
+            ON m.id_estudiante = ep.id
+        INNER JOIN sigi_usuarios ue 
+            ON ep.id_usuario = ue.id
+        INNER JOIN acad_programacion_unidad_didactica pud
+            ON dm.id_programacion_ud = pud.id
+        WHERE dm.id = ?");
         $stmt->execute([$id_detalle]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
@@ -193,21 +213,55 @@ class Matricula extends Model
 
     public function getDetalleMatricula($id_matricula)
     {
-        $sql = "SELECT dm.id, prog.nombre as programa, s.descripcion as semestre, ud.nombre as unidad_didactica, u.apellidos_nombres as docente
-            FROM acad_detalle_matricula dm
-            INNER JOIN acad_programacion_unidad_didactica pud ON dm.id_programacion_ud = pud.id
-            INNER JOIN sigi_unidad_didactica ud ON pud.id_unidad_didactica = ud.id
-            INNER JOIN sigi_semestre s ON ud.id_semestre = s.id
-            INNER JOIN sigi_modulo_formativo mf ON s.id_modulo_formativo = mf.id
-            INNER JOIN sigi_planes_estudio pl ON mf.id_plan_estudio = pl.id
-            INNER JOIN sigi_programa_estudios prog ON pl.id_programa_estudios = prog.id
-            INNER JOIN sigi_usuarios u ON pud.id_docente = u.id
-            WHERE dm.id_matricula = ?
-            ORDER BY dm.orden";
+        $sql = "SELECT 
+        dm.id,
+        prog.nombre AS programa,
+        s.descripcion AS semestre,
+        ud.nombre AS unidad_didactica,
+        u.apellidos_nombres AS docente,
+
+        ue.dni AS dni_estudiante,
+        ue.apellidos_nombres AS estudiante,
+        ue.id AS id_usuario_estudiante,
+        ue.moodle_user_id AS id_estudiante_moodle,
+        ue.microsoft_user_id AS id_estudiante_microsoft,
+        pud.id_moodle AS id_course_moodle
+        FROM acad_detalle_matricula dm
+        INNER JOIN acad_matricula m 
+            ON dm.id_matricula = m.id
+        INNER JOIN acad_estudiante_programa ep
+            ON m.id_estudiante = ep.id
+        INNER JOIN sigi_usuarios ue 
+            ON ep.id_usuario = ue.id
+
+        INNER JOIN acad_programacion_unidad_didactica pud 
+            ON dm.id_programacion_ud = pud.id
+        INNER JOIN sigi_unidad_didactica ud 
+            ON pud.id_unidad_didactica = ud.id
+        INNER JOIN sigi_semestre s 
+            ON ud.id_semestre = s.id
+        INNER JOIN sigi_modulo_formativo mf 
+            ON s.id_modulo_formativo = mf.id
+        INNER JOIN sigi_planes_estudio pl 
+            ON mf.id_plan_estudio = pl.id
+        INNER JOIN sigi_programa_estudios prog 
+            ON pl.id_programa_estudios = prog.id
+
+        INNER JOIN sigi_usuarios u 
+            ON pud.id_docente = u.id
+
+        WHERE dm.id_matricula = ?
+        ORDER BY dm.orden";
         $stmt = self::$db->prepare($sql);
         $stmt->execute([$id_matricula]);
         $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
         foreach ($data as $key => $value) {
+
+            $apellidos_nombres = explode('_', trim($value['estudiante']));
+            $data[$key]['Nombres_estudiante'] = $apellidos_nombres[2];
+            $data[$key]['ApellidoPaterno_estudiante'] = $apellidos_nombres[0];
+            $data[$key]['ApellidoMaterno_estudiante'] = $apellidos_nombres[1];
+
             $apellidos_nombres = explode('_', trim($value['docente']));
             $data[$key]['docente'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ' ' . $apellidos_nombres[2];
         }
@@ -216,9 +270,11 @@ class Matricula extends Model
 
     public function getEstudianteByMatricula($id_matricula)
     {
-        $sql = "SELECT u.apellidos_nombres FROM acad_matricula m
+        $sql = "SELECT u.*, pe.nombre as programa 
+            FROM acad_matricula m
             INNER JOIN acad_estudiante_programa ep ON ep.id = m.id_estudiante
             INNER JOIN sigi_usuarios u ON u.id = ep.id_usuario
+            INNER JOIN sigi_programa_estudios pe ON pe.id = u.id_programa_estudios
             WHERE m.id = ?";
         $stmt = self::$db->prepare($sql);
         $stmt->execute([$id_matricula]);
@@ -235,8 +291,22 @@ class Matricula extends Model
     // === Buscar estudiante activo, rol 7, en sede ===
     public function buscarEstudiantePorDNI($dni, $sede_actual)
     {
-        $stmt = self::$db->prepare("SELECT id, apellidos_nombres, id_sede, estado FROM sigi_usuarios WHERE dni = ? AND id_rol = 7 AND estado = 1");
-        $stmt->execute([$dni]);
+        $stmt = self::$db->prepare("SELECT 
+            u.*,
+            p.nombre AS nombre_programa
+        FROM sigi_usuarios u
+        INNER JOIN sigi_programa_estudios p ON u.id_programa_estudios = p.id
+        WHERE u.dni = ?
+          AND u.id_rol = 7
+          AND u.estado = 1
+          AND u.id_sede = ?
+          AND EXISTS (
+              SELECT 1
+              FROM acad_estudiante_programa ep
+              WHERE ep.id_usuario = u.id
+          )
+        LIMIT 1");
+        $stmt->execute([$dni, $sede_actual]);
         $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
         if (!$usuario) return null;
         if ($usuario['id_sede'] != $sede_actual) return null;
@@ -466,8 +536,6 @@ class Matricula extends Model
         try {
             self::$db->beginTransaction();
 
-
-
             $this->registrar_detalle_matricula($id_matricula, $unidades);
 
             self::$db->commit();
@@ -489,8 +557,8 @@ class Matricula extends Model
         $cantidad = count($b_det_mat);
         //var_dump($b_det_mat);
         if ($cantidad < 1) {
-            // si no hay ningun matriculado regresamos 2 como los criterios de evaluacion
-            return 2;
+            // si no hay ningun matriculado regresamos 1 como los criterios de evaluacion
+            return 1;
         } else {
             $b_califacion = $this->buscarCalificacionByIdDetalleMatricula_nro($b_det_mat['id'], $nro_calif) ?? 0;
 
@@ -499,7 +567,7 @@ class Matricula extends Model
             $b_crit_evaluacion = $this->buscarCriterioEvaluacionByEvaluacion($b_evaluacion['id']) ?? 0;
             $cant_crit = count($b_crit_evaluacion);
             if ($cant_crit < 1) {
-                return 2;
+                return 1;
             } else {
                 return $cant_crit;
             }

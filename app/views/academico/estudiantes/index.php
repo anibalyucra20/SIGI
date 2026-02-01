@@ -18,14 +18,14 @@
                         </div>
                         <div class="modal-body">
                             <a href="<?= BASE_URL ?>/academico/estudiantes/descargarPlantillaCargaMasiva" class="btn btn-success col-6">Descargar Plantilla Excel</a> <br><br>
-                            <form action="<?= BASE_URL ?>/academico/estudiantes/CargaMasivaEstudiantes" method="post" enctype="multipart/form-data">
+                            <form id="form-carga-masiva" action="<?= BASE_URL ?>/academico/estudiantes/CargaMasivaEstudiantes" method="post" enctype="multipart/form-data" target="upload_frame">
                                 <input type="file" name="archivo_excel" class="form-control" required accept=".xlsx,.xls"><br><br>
                                 <button type="submit" class="btn btn-primary waves-effect waves-light">Cargar Plantilla</button>
                             </form>
+                            <iframe id="upload_frame" name="upload_frame" style="display: none;"></iframe>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary waves-effect waves-light" data-dismiss="modal">Cancelar</button>
-
                         </div>
                     </div>
                 </div>
@@ -162,6 +162,121 @@
             });
         });
     </script>
+    <script>
+        document.getElementById('form-carga-masiva').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const form = this;
+            const formData = new FormData(form);
+            const xhr = new XMLHttpRequest();
+
+            xhr.open('POST', form.action, true);
+            xhr.responseType = 'blob';
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
+            xhr.onload = function() {
+                const contentType = (xhr.getResponseHeader('Content-Type') || '').toLowerCase();
+
+                // Helper para leer blob como texto
+                const blobToText = (blob, cb) => {
+                    const reader = new FileReader();
+                    reader.onload = () => cb(reader.result);
+                    reader.onerror = () => cb('');
+                    reader.readAsText(blob);
+                };
+
+                try {
+                    // Si no es 200, intentamos leer el contenido como texto (puede traer mensaje)
+                    if (xhr.status !== 200) {
+                        return blobToText(xhr.response, (txt) => {
+                            SIGI_LOADER.hide();
+
+                            // intenta JSON
+                            try {
+                                const data = JSON.parse(txt);
+                                alert(data?.message || ('Error HTTP: ' + xhr.status));
+                            } catch {
+                                // muestra un mensaje corto
+                                alert('Ocurrió un error (HTTP ' + xhr.status + ').');
+                            }
+                        });
+                    }
+
+                    // Si es JSON, interpretamos mensaje de error/estado
+                    if (contentType.includes('application/json')) {
+                        return blobToText(xhr.response, (txt) => {
+                            SIGI_LOADER.hide();
+                            try {
+                                const data = JSON.parse(txt);
+                                alert(data?.message || 'Error al generar el Excel.');
+                            } catch {
+                                alert('Error al generar el Excel.');
+                            }
+                        });
+                    }
+
+                    // Si es HTML, probablemente sesión expirada o error renderizado
+                    if (contentType.includes('text/html')) {
+                        return blobToText(xhr.response, (txt) => {
+                            SIGI_LOADER.hide();
+                            alert('La respuesta no fue un Excel (posible sesión expirada o error del servidor).');
+                            // opcional: redirigir al listado o login
+                            // window.location.href = "<?= BASE_URL ?>/academico/estudiantes";
+                        });
+                    }
+
+                    // Intentar obtener nombre de archivo de Content-Disposition
+                    let filename = 'Estudiantes.xlsx';
+                    const disposition = xhr.getResponseHeader('Content-Disposition') || '';
+
+                    // filename*=UTF-8''...
+                    const matchStar = disposition.match(/filename\*\s*=\s*UTF-8''([^;]+)/i);
+                    if (matchStar && matchStar[1]) {
+                        filename = decodeURIComponent(matchStar[1].trim());
+                    } else {
+                        // filename="..."
+                        const match = disposition.match(/filename\s*=\s*"?([^;"\n]+)"?/i);
+                        if (match && match[1]) {
+                            filename = match[1].trim();
+                        }
+                    }
+
+                    // Descargar blob
+                    const blob = xhr.response;
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    window.URL.revokeObjectURL(url);
+
+                    // UI post-éxito
+                    $('#modal-carga-masiva').modal('hide');
+                    SIGI_LOADER.hide();
+
+                    if (window.tabla && tabla.ajax) {
+                        tabla.ajax.reload(null, false);
+                    }
+                    SIGI_LOADER.hide();
+                    window.location.reload();
+                } catch (err) {
+                    SIGI_LOADER.hide();
+                    alert('Error inesperado al descargar el Excel.');
+                }
+            };
+
+            xhr.onerror = function() {
+                SIGI_LOADER.hide();
+                alert('No se pudo conectar con el servidor para generar el Excel.');
+            };
+            xhr.send(formData);
+
+        });
+    </script>
+
+
 <?php else: ?>
     <p>El módulo solo es para rol de Administrador Académico.</p>
 <?php endif; ?>

@@ -144,9 +144,10 @@ class Estudiantes extends Model
     // CRUD
     public function find($id)
     {
-        $sql = "SELECT u.*, ep.id_plan_estudio, ep.id_periodo, ep.id as id_acad_est_prog
+        $sql = "SELECT u.*, ep.id_plan_estudio, ep.id_periodo, ep.id as id_acad_est_prog, p.nombre AS nombre_programa
                 FROM sigi_usuarios u
                 INNER JOIN acad_estudiante_programa ep ON ep.id_usuario = u.id
+                INNER JOIN sigi_programa_estudios p ON u.id_programa_estudios = p.id
                 WHERE u.id = ?";
         $stmt = self::$db->prepare($sql);
         $stmt->execute([$id]);

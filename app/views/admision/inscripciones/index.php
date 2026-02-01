@@ -71,7 +71,8 @@
                         render: function(data, type, row) {
                             return `
                         <a href="<?= BASE_URL ?>/admision/inscripciones/editar/${row.id}" class="btn btn-warning btn-sm m-1">Editar</a>
-                        <a href="<?= BASE_URL ?>/admision/inscripciones/pdfFichaInscripcion/${row.id}" target="_blank" class="btn btn-info btn-sm m-1">PDF</a>
+                        <a href="<?= BASE_URL ?>/admision/inscripciones/pdfFichaInscripcion/${row.id}" target="_blank" class="btn btn-info btn-sm m-1">Ficha</a>
+                        <a href="<?= BASE_URL ?>/admision/inscripciones/pdfCarnet/${row.id}" target="_blank" class="btn btn-info btn-sm m-1">Carnet</a>
                         `;
                         }
                     }

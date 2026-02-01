@@ -83,7 +83,8 @@ class ProgramacionUnidadDidactica extends Model
                        s.descripcion AS semestre_nombre,
                        ud.nombre AS unidad_nombre, 
                        d.apellidos_nombres AS docente_nombre,
-                       pud.turno, pud.seccion
+                       pud.turno, pud.seccion,
+                       COUNT(dm.id) AS cantidad_detalle_matricula
                 FROM acad_programacion_unidad_didactica pud
                 INNER JOIN sigi_unidad_didactica ud ON pud.id_unidad_didactica = ud.id
                 INNER JOIN sigi_usuarios d ON pud.id_docente = d.id
@@ -91,7 +92,11 @@ class ProgramacionUnidadDidactica extends Model
                 INNER JOIN sigi_modulo_formativo mf ON s.id_modulo_formativo = mf.id
                 INNER JOIN sigi_planes_estudio pl ON mf.id_plan_estudio = pl.id
                 INNER JOIN sigi_programa_estudios pr ON pl.id_programa_estudios = pr.id
+                LEFT JOIN acad_detalle_matricula dm ON pud.id = dm.id_programacion_ud
                 $sqlWhere
+                GROUP BY 
+                    pud.id, pr.nombre, pl.nombre, mf.descripcion, s.descripcion, ud.nombre, d.apellidos_nombres,
+                    pud.turno, pud.seccion
                 ORDER BY $ordenarPor $orderDir
                 LIMIT :limit OFFSET :offset";
         $stmt = self::$db->prepare($sql);
@@ -217,6 +222,13 @@ class ProgramacionUnidadDidactica extends Model
         $stmt = self::$db->prepare($sql);
         return $stmt->execute([$id_docente, $id_programacion]);
     }
+    public function actualizarIdMoodle($id_programacion, $id_moodle)
+    {
+        $sql = "UPDATE acad_programacion_unidad_didactica SET id_moodle = ? WHERE id = ?";
+        $stmt = self::$db->prepare($sql);
+        return $stmt->execute([$id_moodle, $id_programacion]);
+    }
+
     public function getIdDocente($id_programacion)
     {
         $stmt = self::$db->prepare("SELECT id_docente FROM acad_programacion_unidad_didactica WHERE id = ?");
@@ -245,6 +257,78 @@ class ProgramacionUnidadDidactica extends Model
     }
 
 
+    public function eliminarProgramacionCompleta(int $id_programacion_ud): bool
+    {
+        // 1) Bloqueo si hay matrículas (FK acad_detalle_matricula.id_programacion_ud)
+        $stmt = self::$db->prepare("SELECT COUNT(*) FROM acad_detalle_matricula WHERE id_programacion_ud = ?");
+        $stmt->execute([$id_programacion_ud]);
+        if ((int)$stmt->fetchColumn() > 0) {
+            return false;
+        }
+
+        self::$db->beginTransaction();
+        try {
+            // 2) Obtener IDs de silabos asociados
+            $stmt = self::$db->prepare("SELECT id FROM acad_silabos WHERE id_prog_unidad_didactica = ?");
+            $stmt->execute([$id_programacion_ud]);
+            $silabos = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+            if (!empty($silabos)) {
+                // 3) Obtener IDs de actividades del sílabo
+                $inSilabos = implode(',', array_fill(0, count($silabos), '?'));
+                $stmt = self::$db->prepare("SELECT id FROM acad_programacion_actividades_silabo WHERE id_silabo IN ($inSilabos)");
+                $stmt->execute($silabos);
+                $acts = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+                if (!empty($acts)) {
+                    $inActs = implode(',', array_fill(0, count($acts), '?'));
+
+                    // 4) Obtener IDs de sesiones
+                    $stmt = self::$db->prepare("SELECT id FROM acad_sesion_aprendizaje WHERE id_prog_actividad_silabo IN ($inActs)");
+                    $stmt->execute($acts);
+                    $sesiones = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+                    if (!empty($sesiones)) {
+                        $inSes = implode(',', array_fill(0, count($sesiones), '?'));
+
+                        // 5) Eliminar dependientes de sesión
+                        $stmt = self::$db->prepare("DELETE FROM acad_actividad_evaluacion_sesion_aprendizaje WHERE id_sesion_aprendizaje IN ($inSes)");
+                        $stmt->execute($sesiones);
+
+                        $stmt = self::$db->prepare("DELETE FROM acad_momentos_sesion_aprendizaje WHERE id_sesion_aprendizaje IN ($inSes)");
+                        $stmt->execute($sesiones);
+
+                        $stmt = self::$db->prepare("DELETE FROM acad_asistencia WHERE id_sesion_aprendizaje IN ($inSes)");
+                        $stmt->execute($sesiones);
+
+                        // (si tienes más tablas hijas de acad_sesion_aprendizaje, agrégalas aquí)
+                    }
+
+                    // 6) Eliminar sesiones
+                    $stmt = self::$db->prepare("DELETE FROM acad_sesion_aprendizaje WHERE id_prog_actividad_silabo IN ($inActs)");
+                    $stmt->execute($acts);
+
+                    // 7) Eliminar actividades del silabo
+                    $stmt = self::$db->prepare("DELETE FROM acad_programacion_actividades_silabo WHERE id_silabo IN ($inSilabos)");
+                    $stmt->execute($silabos);
+                }
+
+                // 8) Eliminar silabos
+                $stmt = self::$db->prepare("DELETE FROM acad_silabos WHERE id_prog_unidad_didactica = ?");
+                $stmt->execute([$id_programacion_ud]);
+            }
+
+            // 9) Finalmente eliminar la programación
+            $stmt = self::$db->prepare("DELETE FROM acad_programacion_unidad_didactica WHERE id = ?");
+            $stmt->execute([$id_programacion_ud]);
+
+            self::$db->commit();
+            return true;
+        } catch (\Throwable $e) {
+            self::$db->rollBack();
+            throw $e;
+        }
+    }
 
 
 
@@ -500,5 +584,63 @@ class ProgramacionUnidadDidactica extends Model
         $semestres = $q4->fetchAll(PDO::FETCH_ASSOC);
 
         return compact('programas', 'planes', 'modulos', 'semestres');
+    }
+
+    //============= datos para vinculacion con moodle por programacion
+    public function obtenerJerarquiaCompletaPorProgramacion($id_programacion)
+    {
+        $sql = "SELECT 
+                    prog.id AS id_programacion,
+                    prog.turno,
+                    prog.seccion,
+                    prog.id_docente,
+                    -- usuario docente
+                    us.moodle_user_id,
+                    us.microsoft_user_id,
+                    -- Periodo
+                    per.id AS id_periodo,
+                    per.nombre AS nombre_periodo,
+                    -- Sede
+                    sede.id AS id_sede,
+                    sede.nombre AS nombre_sede,
+                    -- Programa
+                    pr.id AS id_programa,
+                    pr.nombre AS nombre_programa,
+                    pr.codigo AS codigo_programa, 
+                    -- Plan
+                    pl.id AS id_plan,
+                    pl.nombre AS nombre_plan,
+                    -- Modulo
+                    modf.id AS id_modulo,
+                    modf.descripcion AS nombre_modulo,
+                    modf.nro_modulo,
+                    -- Semestre
+                    sem.id AS id_semestre,
+                    sem.descripcion AS nombre_semestre,
+                    -- Unidad Didactica (Curso)
+                    ud.id AS id_ud,
+                    ud.nombre AS nombre_ud
+                FROM acad_programacion_unidad_didactica prog
+                INNER JOIN sigi_usuarios us ON prog.id_docente = us.id
+                INNER JOIN sigi_periodo_academico per ON prog.id_periodo_academico = per.id
+                INNER JOIN sigi_sedes sede ON prog.id_sede = sede.id
+                INNER JOIN sigi_unidad_didactica ud ON prog.id_unidad_didactica = ud.id
+                INNER JOIN sigi_semestre sem ON ud.id_semestre = sem.id
+                INNER JOIN sigi_modulo_formativo modf ON sem.id_modulo_formativo = modf.id
+                INNER JOIN sigi_planes_estudio pl ON modf.id_plan_estudio = pl.id
+                INNER JOIN sigi_programa_estudios pr ON pl.id_programa_estudios = pr.id
+                WHERE prog.id = :id_programacion
+                ORDER BY 
+                    sede.nombre,
+                    pr.nombre,
+                    pl.nombre,
+                    modf.nro_modulo,
+                    sem.descripcion,
+                    prog.turno,
+                    prog.seccion";
+        $db = self::getDB();
+        $stmt = $db->prepare($sql);
+        $stmt->execute([':id_programacion' => $id_programacion]);
+        return $stmt->fetch(\PDO::FETCH_ASSOC);
     }
 }

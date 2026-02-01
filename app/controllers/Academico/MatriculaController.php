@@ -7,25 +7,35 @@ use PDO;
 use Exception;
 
 require_once __DIR__ . '/../../../app/models/Academico/Matricula.php';
+require_once __DIR__ . '/../../../app/models/Academico/ProgramacionUnidadDidactica.php';
 require_once __DIR__ . '/../../../app/models/Sigi/Semestre.php';
 require_once __DIR__ . '/../../../app/models/Sigi/PeriodoAcademico.php';
 
+//integraciones
+require_once __DIR__ . '/../../helpers/Integrator.php';
+
 use App\Models\Academico\Matricula;
+use App\Models\Academico\ProgramacionUnidadDidactica;
 use App\Models\Sigi\Semestre;
 use App\Models\Sigi\PeriodoAcademico;
+use App\Helpers\Integrator;
 
 class MatriculaController extends Controller
 {
     protected $model;
+    protected $objProgramacionUD;
     protected $objSemestre;
     protected $objPeriodoAcademico;
+    protected $objIntegrator;
 
     public function __construct()
     {
         parent::__construct();
         $this->model = new Matricula();
+        $this->objProgramacionUD = new ProgramacionUnidadDidactica();
         $this->objSemestre = new Semestre();
         $this->objPeriodoAcademico = new PeriodoAcademico();
+        $this->objIntegrator = new Integrator();
     }
 
     public function index()
@@ -189,9 +199,32 @@ class MatriculaController extends Controller
                     $exito = $this->model->registrarMatriculaCompleta($usuario['id'], $data, $periodo, $sede, $errores);
                     if (!$exito) throw new Exception("No se pudo registrar la matrícula." . (isset($errores[0]) ? ' Motivo: ' . $errores[0] : ''));
 
-                    $_SESSION['flash_success'] = "¡Matrícula registrada correctamente!";
-                    $this->nuevo();
-                    //header('Location: ' . BASE_URL . '/academico/matricula');
+                    //sincronizar moodle
+                    $datos_moodle['dni'] = $usuario['dni'];
+                    $datos_moodle['id_estudiante'] = $usuario['id'];
+                    $datos_moodle['Nombres'] = $usuario['Nombres'];
+                    $datos_moodle['Apellidos'] = $usuario['ApellidoPaterno'] . ' ' . $usuario['ApellidoMaterno'];
+                    $datos_moodle['tipo_usuario'] = 'ESTUDIANTE';
+                    $datos_moodle['nombre_programa'] = $usuario['nombre_programa'];
+                    $datos_moodle['moodle_user_id'] = $usuario['moodle_user_id'];
+                    $datos_moodle['microsoft_user_id'] = $usuario['microsoft_user_id'];
+                    $datos_moodle['password'] = null;
+                    $datos_moodle['ud_programadas'] = [];
+                    foreach ($data['ud_programadas'] as $id_programacion_ud) {
+                        $ud_prog = $this->objProgramacionUD->find($id_programacion_ud);
+                        $datos_moodle['ud_programadas'][$id_programacion_ud] = $ud_prog['id_moodle'];
+                    }
+                    /*echo "<pre>";
+                    print_r($datos_moodle);
+                    echo "</pre>";*/
+                    $moodle_create = $this->objIntegrator->SyncCreateMatricula($datos_moodle);
+                    if ($moodle_create['success']):
+                        $_SESSION['flash_success'] .= $moodle_create['cantMatriculas'] . " Matrículas creadas en Moodle exitosamente.";
+                    else:
+                        $_SESSION['flash_error'] .= "<br>No se pudo crear la matrícula en Moodle. " . implode(', ', $moodle_create['errores']);
+                    endif;
+                    $_SESSION['flash_success'] .= "<br>¡Matrícula registrada correctamente!";
+                    header('Location: ' . BASE_URL . '/academico/matricula/nuevo');
                     exit;
                 } catch (Exception $e) {
                     $errores[] = $e->getMessage();
@@ -260,15 +293,40 @@ class MatriculaController extends Controller
                 'id_semestre' => $_POST['id_semestre'] ?? '',
                 'ud_programadas' => $_POST['unidades'] ?? [],
             ];
-
+            $datos_matricula = $this->model->getEstudianteByMatricula($id_matricula);
             $resultado = $model->agregarUnidadesDidacticas($id_matricula, $id_semestre, $data);
 
             if ($resultado['ok']) {
-                $_SESSION['flash_success'] = "Unidades Didácticas agregadas correctamente.";
+                //sincronizar moodle
+                $datos_moodle['dni'] = $datos_matricula['dni'];
+                $datos_moodle['id_estudiante'] = $datos_matricula['id'];
+                $datos_moodle['Nombres'] = $datos_matricula['Nombres'];
+                $datos_moodle['Apellidos'] = $datos_matricula['ApellidoPaterno'] . ' ' . $datos_matricula['ApellidoMaterno'];
+                $datos_moodle['tipo_usuario'] = 'ESTUDIANTE';
+                $datos_moodle['nombre_programa'] = $datos_matricula['programa'];
+                $datos_moodle['moodle_user_id'] = $datos_matricula['moodle_user_id'];
+                $datos_moodle['microsoft_user_id'] = $datos_matricula['microsoft_user_id'];
+                $datos_moodle['password'] = null;
+                $datos_moodle['ud_programadas'] = [];
+                foreach ($data['ud_programadas'] as $id_programacion_ud) {
+                    $ud_prog = $this->objProgramacionUD->find($id_programacion_ud);
+                    $datos_moodle['ud_programadas'][$id_programacion_ud] = $ud_prog['id_moodle'];
+                }
+                /*echo "<pre>";
+                print_r($datos_moodle);
+                echo "</pre>";*/
+                $moodle_create = $this->objIntegrator->SyncCreateMatricula($datos_moodle);
+                if ($moodle_create['success']):
+                    $_SESSION['flash_success'] .= $moodle_create['cantMatriculas'] . " Matrículas creadas en Moodle exitosamente.";
+                else:
+                    $_SESSION['flash_error'] .= "<br>No se pudo crear la matrícula en Moodle. " . implode(', ', $moodle_create['errores']);
+                endif;
+
+                $_SESSION['flash_success'] .= "<br>Unidades Didácticas agregadas correctamente.";
                 header('Location: ' . BASE_URL . "/academico/matricula/ver/$id_matricula");
                 exit;
             } else {
-                $_SESSION['flash_error'] = "No se pudo agregar las Unidades Didácticas. Error: " . $resultado['error'];
+                $_SESSION['flash_error'] .= "<br>No se pudo agregar las Unidades Didácticas. Error: " . $resultado['error'];
                 header('Location: ' . BASE_URL . "/academico/matricula/agregarUd/$id_matricula");
                 exit;
             }
@@ -285,23 +343,39 @@ class MatriculaController extends Controller
                 // 1. Obtener el id_matricula antes de borrar
                 $stmt = $this->model->getDetalleMatricula($id_matricula);
 
+                $datos_moodle = [];
                 // 2. Eliminar el detalle y registros dependientes
                 foreach ($stmt as $udp) {
                     $id_det_mat = $udp['id'];
+                    $datos_moodle[] = [
+                        'id_usuario_sigi' => $udp['id_usuario_estudiante'],
+                        'id_usuario_moodle' => $udp['id_estudiante_moodle'],
+                        'id_usuario_microsoft' => $udp['id_estudiante_microsoft'],
+                        'id_curso_moodle' => $udp['id_course_moodle'],
+                    ];
                     $res = $this->model->eliminarDetalleMatricula($id_det_mat);
                     if ($res) {
-                        $_SESSION['flash_success'] = "<br>Unidades didacticas matriculadas eliminadas correctamente.";
+                        $_SESSION['flash_success'] = "Unidades didacticas matriculadas eliminadas correctamente.";
                     } else {
-                        $_SESSION['flash_error'] .= "<br>Error al eliminar el detalle. Intente nuevamente o contacte soporte.";
+                        $_SESSION['flash_error'] = "Error al eliminar el detalle.";
                     }
+                }
+                $responseApi = $this->objIntegrator->eliminarMatriculaMoodle($datos_moodle);
+                if ($responseApi['success']) {
+                    $_SESSION['flash_success'] .= "<br> " . $responseApi['cantDesmatriculas'] . " matriculas eliminadas de moodle.";
+                } else {
+                    $_SESSION['flash_error'] .= "<br>Error al eliminar las matriculas de moodle.";
                 }
                 $resMat = $this->model->eliminarMatricula($id_matricula);
                 if ($resMat) {
-                    $_SESSION['flash_success'] = "<br>Matricula eliminada correctamente.";
+                    $_SESSION['flash_success'] .= "<br>Matricula eliminada correctamente.";
                 } else {
-                    $_SESSION['flash_error'] .= "<br>Error al eliminar la Matricula. Intente nuevamente o contacte soporte.";
+                    $_SESSION['flash_error'] .= "<br>Error al eliminar la Matricula.";
                 }
-
+            /*echo "<pre>";
+                print_r($datos_moodle);
+                echo "</pre>";
+                exit;*/
 
             endif;
         }
@@ -323,12 +397,27 @@ class MatriculaController extends Controller
 
                 // 2. Eliminar el detalle y registros dependientes
                 $res = $this->model->eliminarDetalleMatricula($id_detalle);
-
-                if ($res) {
-                    $_SESSION['flash_success'] = "Unidad Didáctica eliminada correctamente.";
+                $datos_moodle[] = [
+                    'id_usuario_sigi' => $stmt['id_usuario_estudiante'],
+                    'id_usuario_moodle' => $stmt['id_estudiante_moodle'],
+                    'id_usuario_microsoft' => $stmt['id_estudiante_microsoft'],
+                    'id_curso_moodle' => $stmt['id_course_moodle'],
+                ];
+                $responseApi = $this->objIntegrator->eliminarMatriculaMoodle($datos_moodle);
+                if ($responseApi['success']) {
+                    $_SESSION['flash_success'] .= "Matricula eliminada de moodle.";
                 } else {
-                    $_SESSION['flash_error'] = "Error al eliminar el detalle. Intente nuevamente o contacte soporte.";
+                    $_SESSION['flash_error'] .= "<br>Error al eliminar la matricula de moodle.";
                 }
+                if ($res) {
+                    $_SESSION['flash_success'] .= "<br> Unidad Didáctica eliminada correctamente.";
+                } else {
+                    $_SESSION['flash_error'] .= "<br>Error al eliminar el detalle. Intente nuevamente o contacte soporte.";
+                }
+            /*echo "<pre>";
+                print_r($datos_moodle);
+                echo "</pre>";
+                exit;*/
             endif;
         }
         // 3. Redirige a la vista del detalle de la matrícula

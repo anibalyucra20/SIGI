@@ -16,6 +16,9 @@ require_once __DIR__ . '/../../../app/models/Sigi/DatosSistema.php';
 require_once __DIR__ . '/../../../app/models/Sigi/IndicadorLogroCapacidad.php';
 require_once __DIR__ . '/../../../app/models/Sigi/UnidadDidactica.php';
 
+//integraciones
+require_once __DIR__ . '/../../helpers/Integrator.php';
+
 use App\Models\Academico\ProgramacionUnidadDidactica;
 use App\Models\Academico\Silabos;
 use App\Models\Academico\Sesiones;
@@ -27,6 +30,7 @@ use App\Models\Sigi\DatosSistema;
 use App\Models\Sigi\IndicadorLogroCapacidad;
 use App\Models\Sigi\PeriodoAcademico;
 use App\Models\Sigi\UnidadDidactica;
+use App\Helpers\Integrator;
 
 class ProgramacionUnidadDidacticaController extends Controller
 {
@@ -39,6 +43,7 @@ class ProgramacionUnidadDidacticaController extends Controller
     protected $objCompetencia;
     protected $objDocente;
     protected $objUnidadDidactica;
+    protected $objIntegrator;
 
     protected $objIndicadorLogroCapacidad;
     protected $objDatosSistema;
@@ -57,6 +62,7 @@ class ProgramacionUnidadDidacticaController extends Controller
         $this->objIndicadorLogroCapacidad = new IndicadorLogroCapacidad();
         $this->objDatosSistema = new DatosSistema();
         $this->objUnidadDidactica = new UnidadDidactica();
+        $this->objIntegrator = new Integrator();
     }
 
     public function index()
@@ -151,15 +157,50 @@ class ProgramacionUnidadDidacticaController extends Controller
             }
 
             try {
-                $this->crearProgramacionCompleta($id_unidad_didactica, $id_docente, $turno, $seccion);
-                $_SESSION['flash_success'] = "Programación y sílabo registrados exitosamente.";
+                $id_prog_ud = $this->crearProgramacionCompleta($id_unidad_didactica, $id_docente, $turno, $seccion, 'INDIVIDUAL');
+                $_SESSION['flash_success'] .= "Programación y sílabo registrados exitosamente.";
                 header('Location: ' . BASE_URL . '/academico/programacionUnidadDidactica');
                 exit;
             } catch (\Exception $e) {
-                $_SESSION['flash_error'] = "No se pudo registrar: " . $e->getMessage();
+                $_SESSION['flash_error'] .= "No se pudo registrar: " . $e->getMessage();
                 header('Location: ' . BASE_URL . '/academico/programacionUnidadDidactica/nuevo');
                 exit;
             }
+        endif;
+        exit;
+    }
+    public function eliminar($id_prog_ud)
+    {
+        $periodo = $this->objPeriodoAcademico->getPeriodoVigente($_SESSION['sigi_periodo_actual_id']);
+        $periodo_vigente = ($periodo && $periodo['vigente']);
+        if (\Core\Auth::esAdminAcademico() && $periodo_vigente):
+            $id_prog_ud = (int)($id_prog_ud ?? 0);
+            if ($id_prog_ud > 0):
+                try {
+                    $eliminado = $this->model->eliminarProgramacionCompleta($id_prog_ud);
+                    if ($eliminado):
+                        $_SESSION['flash_success'] .= "Programación y sílabo eliminados exitosamente.";
+
+                        //sincronizar moodle
+                        $moodle_delete = $this->objIntegrator->deleteProgramacionUd($id_prog_ud);
+                        if ($moodle_delete['success']):
+                            $_SESSION['flash_success'] .= "<br>Programación eliminada en Moodle exitosamente.";
+                        else:
+                            $_SESSION['flash_error'] .= "<br>No se pudo eliminar la programación en Moodle. " . implode(', ', $moodle_delete['errores']);
+                        endif;
+                        header('Location: ' . BASE_URL . '/academico/programacionUnidadDidactica');
+                        exit;
+                    else:
+                        $_SESSION['flash_error'] .= "<br>No se pudo eliminar: la programación ya tiene estudiantes matriculados.";
+                        header('Location: ' . BASE_URL . '/academico/programacionUnidadDidactica');
+                        exit;
+                    endif;
+                } catch (\Exception $e) {
+                    $_SESSION['flash_error'] .= "<br>No se pudo eliminar: " . $e->getMessage();
+                    header('Location: ' . BASE_URL . '/academico/programacionUnidadDidactica');
+                    exit;
+                }
+            endif;
         endif;
         exit;
     }
@@ -170,12 +211,8 @@ class ProgramacionUnidadDidacticaController extends Controller
      * Reutilizable por guardar() individual y programacionMasiva().
      * Lanza \Exception con mensaje de negocio si algo falla.
      */
-    private function crearProgramacionCompleta(
-        int $id_unidad_didactica,
-        int $id_docente,
-        string $turno,
-        string $seccion
-    ): int {
+    private function crearProgramacionCompleta(int $id_unidad_didactica, int $id_docente, string $turno, string $seccion, $tipo_programacion): int
+    {
         $id_sede = (int)($_SESSION['sigi_sede_actual'] ?? 0);
         $id_periodo_academico = (int)($_SESSION['sigi_periodo_actual_id'] ?? 0);
 
@@ -185,13 +222,7 @@ class ProgramacionUnidadDidacticaController extends Controller
         }
 
         // Evitar duplicados
-        if ($this->model->existeProgramacion(
-            $id_unidad_didactica,
-            $id_sede,
-            $id_periodo_academico,
-            $turno,
-            $seccion
-        )) {
+        if ($this->model->existeProgramacion($id_unidad_didactica, $id_sede, $id_periodo_academico, $turno, $seccion)) {
             throw new \Exception('Ya existe una programación con esos datos.');
         }
         $nro_plantilla_silabo = $this->objDatosSistema->getNro_PlantillaSilabos();
@@ -313,6 +344,51 @@ class ProgramacionUnidadDidacticaController extends Controller
             }
 
             $db->commit();
+            if ($tipo_programacion == 'INDIVIDUAL') {
+                // Sincronizar con Moodle
+                $jerarquia_programacion = $this->model->obtenerJerarquiaCompletaPorProgramacion($id_prog_ud);
+                $programaciones = [$jerarquia_programacion];
+                foreach ($programaciones as $key => $value) {
+                    //datos del docente
+                    $programaciones[$key]['docente_distinto'] = true;
+                    $docente = $this->objDocente->find($id_docente);
+                    $programaciones[$key]['id_docente'] = $docente['id'];
+                    $programaciones[$key]['nombre_docente'] = $docente['Nombres'];
+                    $programaciones[$key]['apellidos_docente'] = $docente['ApellidoPaterno'] . ' ' . $docente['ApellidoMaterno'];
+                    $programaciones[$key]['dni_docente'] = $docente['dni'];
+                    $programaciones[$key]['tipo_usuario_docente'] = 'DOCENTE';
+                    $programaciones[$key]['programa_estudios_docente'] = $docente['nombre_programa'];
+                    $programaciones[$key]['moodle_user_id_docente'] = $docente['moodle_user_id'];
+                    $programaciones[$key]['microsoft_user_id_docente'] = $docente['microsoft_user_id'];
+                    $programaciones[$key]['id_moodle_docente_anterior'] = false;
+
+                    //indicadores de logro
+                    $indicadores = $this->objIndicadorLogroCapacidad->getIndicadoresLogroCapacidad($value['id_ud']);
+                    $programaciones[$key]['indicadores'] = $indicadores;
+
+                    // Sincronizar con Moodle
+                    $datos_sincronizacion = $this->objIntegrator->sincronizarProgramacionUDMoodle($programaciones);
+                    if ($datos_sincronizacion['success']) {
+                        $detalles_api = $datos_sincronizacion['detalles_api'];
+                        foreach ($detalles_api as $detalle) {
+                            if ($detalle['success']) {
+                                $lista_cursos = $detalle['listaCursos'];
+                                foreach ($lista_cursos as $id_programacion => $id_moodle) {
+                                    $this->model->actualizarIdMoodle($id_programacion, $id_moodle);
+                                    $_SESSION['flash_success'] .= "Programación registrada correctamente en Moodle.<br>";
+                                }
+                            } else {
+                                $_SESSION['flash_error'] .= "Error al registrar la programación en Moodle.<br>";
+                            }
+                        }
+                    } else {
+                        $errores = $datos_sincronizacion['errors'];
+                        foreach ($errores as $error) {
+                            $_SESSION['flash_error'] .= $error . "<br>";
+                        }
+                    }
+                }
+            }
             return $id_prog_ud;
         } catch (\Exception $e) {
             $db->rollBack();
@@ -377,10 +453,65 @@ class ProgramacionUnidadDidacticaController extends Controller
                 return;
             }
 
-            // Actualizar solo el campo docente
+
+
+            // Sincronizar con Moodle
+            $jerarquia_programacion = $this->model->obtenerJerarquiaCompletaPorProgramacion($id);
+            $programaciones = [$jerarquia_programacion];
+            foreach ($programaciones as $key => $value) {
+                //datos del docente
+                if ($value['id_docente'] != $id_docente) {
+                    $programaciones[$key]['docente_distinto'] = true;
+                    $docente = $this->objDocente->find($id_docente);
+                    $programaciones[$key]['id_docente'] = $docente['id'];
+                    $programaciones[$key]['nombre_docente'] = $docente['Nombres'];
+                    $programaciones[$key]['apellidos_docente'] = $docente['ApellidoPaterno'] . ' ' . $docente['ApellidoMaterno'];
+                    $programaciones[$key]['dni_docente'] = $docente['dni'];
+                    $programaciones[$key]['tipo_usuario_docente'] = 'DOCENTE';
+                    $programaciones[$key]['programa_estudios_docente'] = $docente['nombre_programa'];
+                    $programaciones[$key]['moodle_user_id_docente'] = $docente['moodle_user_id'];
+                    $programaciones[$key]['microsoft_user_id_docente'] = $docente['microsoft_user_id'];
+                    $programaciones[$key]['id_moodle_docente_anterior'] = $value['moodle_user_id'];
+                } else {
+                    $programaciones[$key]['docente_distinto'] = false;
+                }
+
+                //indicadores de logro
+                $indicadores = $this->objIndicadorLogroCapacidad->getIndicadoresLogroCapacidad($value['id_ud']);
+                $programaciones[$key]['indicadores'] = $indicadores;
+            }
+            // Actualizar solo el campo docente en SIGI
             $this->model->actualizarDocente($id, $id_docente);
 
-            $_SESSION['flash_success'] = "Docente actualizado correctamente.";
+            // Sincronizar con Moodle
+            $datos_sincronizacion = $this->objIntegrator->sincronizarProgramacionUDMoodle($programaciones);
+            if ($datos_sincronizacion['success']) {
+                $detalles_api = $datos_sincronizacion['detalles_api'];
+                foreach ($detalles_api as $detalle) {
+                    if ($detalle['success']) {
+                        $lista_cursos = $detalle['listaCursos'];
+                        foreach ($lista_cursos as $id_programacion => $id_moodle) {
+                            $this->model->actualizarIdMoodle($id_programacion, $id_moodle);
+                            $_SESSION['flash_success'] .= "Programación actualizada correctamente en Moodle.<br>";
+                        }
+                    } else {
+                        $_SESSION['flash_error'] .= "Error al actualizar la programación en Moodle.<br>";
+                    }
+                }
+            } else {
+                $errores = $datos_sincronizacion['errors'];
+                foreach ($errores as $error) {
+                    $_SESSION['flash_error'] .= $error . "<br>";
+                }
+            }
+            /*echo "<pre>";
+            print_r($datos_sincronizacion);
+            echo "</pre>";
+            echo "<pre>";
+            print_r($programaciones);
+            echo "</pre>";
+            exit;*/
+            $_SESSION['flash_success'] .= "Docente actualizado correctamente.";
         endif;
         header('Location: ' . BASE_URL . '/academico/programacionUnidadDidactica');
         exit;
@@ -405,33 +536,35 @@ class ProgramacionUnidadDidacticaController extends Controller
         $id_plan_estudio      = (int)($_POST['id_plan_estudio'] ?? 0);
         $id_modulo_formativo  = (int)($_POST['id_modulo_formativo'] ?? 0);
         $id_semestre          = (int)($_POST['id_semestre'] ?? 0);
+        $id_docente           = (int)($_POST['id_docente'] ?? 0);
         $turno                = trim($_POST['turno'] ?? '');
         $seccion              = trim($_POST['seccion'] ?? '');
         $id_sede              = (int)($_SESSION['sigi_sede_actual'] ?? 0);
 
-        if (!$id_semestre || $turno === '' || $seccion === '') {
+        if (!$id_semestre || $turno === '' || $seccion === '' || $id_docente === 0) {
             $_SESSION['flash_error'] = 'Complete todos los campos de la programación masiva.';
             header('Location: ' . BASE_URL . '/academico/programacionUnidadDidactica');
             exit;
         }
 
         // Obtener UDs del semestre
-        // Usa el modelo de UD (debes tener método porSemestre/getBySemestre)
-        $uds = $this->objUnidadDidactica->getUnidadesBySemestre($id_semestre); // <-- si tu modelo se llama distinto, ajusta aquí
+        $uds = $this->objUnidadDidactica->getUnidadesBySemestre($id_semestre);
         if (!$uds || !is_array($uds) || count($uds) === 0) {
             $_SESSION['flash_error'] = 'No hay unidades didácticas para el semestre seleccionado.';
             header('Location: ' . BASE_URL . '/academico/programacionUnidadDidactica');
             exit;
         }
         // Determinar docente por defecto:
-        $id_docente_defecto = $_SESSION['sigi_user_id'];
+        $docente = $this->objDocente->find($id_docente);
         // Procesar en lote (por UD, con try/catch individual)
         $ok = 0;
         $skip = 0;
         $err = 0;
+        $sync = 0;
         $mensajesErr = [];
+        $programaciones = [];
 
-        foreach ($uds as $ud) {
+        foreach ($uds as $key => $ud) {
             $id_ud = (int)$ud['id'];
             // Evitar duplicados previamente
             if ($this->model->existeProgramacion($id_ud, $id_sede, (int)$_SESSION['sigi_periodo_actual_id'], $turno, $seccion)) {
@@ -440,17 +573,57 @@ class ProgramacionUnidadDidacticaController extends Controller
             }
 
             try {
-                $this->crearProgramacionCompleta($id_ud, $id_docente_defecto, $turno, $seccion);
-                $ok++;
+                $id_prog_ud = $this->crearProgramacionCompleta($id_ud, $id_docente, $turno, $seccion, 'MASIVA');
+                if ($id_prog_ud) {
+                    $ok++;
+                    // alistar datos para laprogramacion masiva
+                    $jerarquia_programacion = $this->model->obtenerJerarquiaCompletaPorProgramacion($id_prog_ud);
+                    $programaciones[$key] = $jerarquia_programacion;
+                    foreach ($programaciones as $i => $value) {
+                        //datos del docente
+                        $programaciones[$i]['docente_distinto'] = true;
+                        $programaciones[$i]['id_docente'] = $id_docente;
+                        $programaciones[$i]['nombre_docente'] = $docente['Nombres'];
+                        $programaciones[$i]['apellidos_docente'] = $docente['ApellidoPaterno'] . ' ' . $docente['ApellidoMaterno'];
+                        $programaciones[$i]['dni_docente'] = $docente['dni'];
+                        $programaciones[$i]['tipo_usuario_docente'] = 'DOCENTE';
+                        $programaciones[$i]['programa_estudios_docente'] = $docente['nombre_programa'];
+                        $programaciones[$i]['moodle_user_id_docente'] = $docente['moodle_user_id'];
+                        $programaciones[$i]['microsoft_user_id_docente'] = $docente['microsoft_user_id'];
+                        $programaciones[$i]['id_moodle_docente_anterior'] = false;
+                        //indicadores de logro
+                        $indicadores = $this->objIndicadorLogroCapacidad->getIndicadoresLogroCapacidad($value['id_ud']);
+                        $programaciones[$i]['indicadores'] = $indicadores;
+                    }
+                }
             } catch (\Exception $e) {
                 $err++;
                 // Guardar detalle de error por UD
                 $mensajesErr[] = ($ud['nombre'] ?? ('UD ' . $id_ud)) . ': ' . $e->getMessage();
             }
         }
+        // Sincronizar con Moodle
+        $datos_sincronizacion = $this->objIntegrator->sincronizarProgramacionUDMoodle($programaciones);
+        if ($datos_sincronizacion['success']) {
+            $detalles_api = $datos_sincronizacion['detalles_api'];
+            foreach ($detalles_api as $detalle) {
+                if ($detalle['success']) {
+                    $lista_cursos = $detalle['listaCursos'];
+                    foreach ($lista_cursos as $id_programacion => $id_moodle) {
+                        $this->model->actualizarIdMoodle($id_programacion, $id_moodle);
+                        $sync++;
+                    }
+                }
+            }
+        } else {
+            $errores = $datos_sincronizacion['errors'];
+            foreach ($errores as $error) {
+                $_SESSION['flash_error'] .= $error . "<br>";
+            }
+        }
 
         // Feedback
-        $msg = "Masivo completado. Creadas: $ok. Existentes: $skip. Errores: $err.";
+        $msg = "Masivo completado. Creadas: $ok. Existentes: $skip. Errores: $err. Sincronizados Moodle: $sync";
         if ($err && !empty($mensajesErr)) {
             $msg .= ' Detalles: ' . implode(' | ', array_slice($mensajesErr, 0, 5)); // limita output
         }

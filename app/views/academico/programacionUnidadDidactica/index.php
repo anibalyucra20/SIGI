@@ -47,6 +47,15 @@
                                         <option value="">Seleccione...</option>
                                     </select>
                                 </div>
+                                <div class="col-md-12 mb-2">
+                                    <label>Docente *</label>
+                                    <select name="id_docente" id="id_docente" class="form-control" required>
+                                        <option value="">Seleccione...</option>
+                                        <?php foreach ($docentes as $d): ?>
+                                            <option value="<?= $d['id'] ?>"><?= htmlspecialchars($d['apellidos_nombres']) ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
                                 <div class="col-md-6 mb-2">
                                     <label>Turno *</label>
                                     <select name="turno" class="form-control" required>
@@ -263,8 +272,20 @@
                         orderable: false,
                         searchable: false,
 
-                        render: row => ` <?php if ($periodo_vigente): ?><a href="<?= BASE_URL ?>/academico/programacionUnidadDidactica/editar/${row.id}" class="btn btn-warning btn-sm">Editar</a> <?php endif; ?>`
-
+                        render: row => `
+                        ${<?= $periodo_vigente ? 'true' : 'false' ?> ? `<a href="<?= BASE_URL ?>/academico/programacionUnidadDidactica/editar/${row.id}" class="btn btn-warning btn-sm m-1">Editar</a>` : ''}
+                        ${(parseInt(row.cantidad_detalle_matricula, 10) === 0) ? `
+                        <a href="<?= BASE_URL ?>/academico/programacionUnidadDidactica/eliminar/${row.id}" target="_blank"
+                            class="btn btn-danger btn-sm m-1"
+                            data-sigi-confirm="1"
+                            data-sigi-title="¿Eliminar programación?"
+                            data-sigi-text="Se eliminará la programación de ${row.unidad_nombre}. \n Esta acción no se puede deshacer."
+                            data-sigi-confirm-text="Sí, eliminar"
+                            data-sigi-cancel-text="No, cancelar"
+                            data-sigi-loader="Eliminando…">
+                            Eliminar
+                        </a>
+                        ` : ''}`
                     }
                 ],
                 language: {
@@ -312,6 +333,40 @@
                 }
             });
         });
+    </script>
+
+    <script>
+        document.addEventListener('click', async function(e) {
+            const a = e.target.closest('a[data-sigi-confirm]');
+            if (!a) return;
+
+            e.preventDefault(); // no navegar aún
+
+            const href = a.getAttribute('href');
+            const title = a.getAttribute('data-sigi-title') || '¿Estás seguro?';
+            const text = a.getAttribute('data-sigi-text') || 'Confirma para continuar.';
+            const confirmText = a.getAttribute('data-sigi-confirm-text') || 'Si, eliminar';
+            const cancelText = a.getAttribute('data-sigi-cancel-text') || 'No, cancelar';
+            const loaderText = a.getAttribute('data-sigi-loader') || 'Eliminando…';
+
+            const result = await Swal.fire({
+                title,
+                text,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: confirmText,
+                cancelButtonText: cancelText,
+                reverseButtons: true,
+                allowOutsideClick: true
+            });
+
+            if (result.isConfirmed) {
+                if (window.SIGI_LOADER) window.SIGI_LOADER.show(loaderText);
+                window.location.href = href;
+            } else {
+                if (window.SIGI_LOADER) window.SIGI_LOADER.hide();
+            }
+        }, true);
     </script>
 <?php else: ?>
     <div class="alert alert-danger mt-4">

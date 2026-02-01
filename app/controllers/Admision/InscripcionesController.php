@@ -363,4 +363,104 @@ class InscripcionesController extends Controller
         $pdf->writeHTML($html, true, false, true, false, '');
         $pdf->Output('Ficha_Inscripcion.pdf', 'I');
     }
+
+
+    public function pdfCarnet($id)
+    {
+        require_once __DIR__ . '/../../../vendor/autoload.php';
+        $inscripcion = $this->model->find($id);
+        $datosSistema = $this->datosSistema->buscar();
+        $datosSede = $this->sedes->find($_SESSION['sigi_sede_actual']);
+        $procesoAdmision = $this->procesosAdmision->find($inscripcion['id_proceso_admision']);
+        $departamento = '';
+        $provincia = '';
+        $distrito = '';
+
+        if (!empty($inscripcion['distrito_nacimiento'])) {
+            $parts = explode('-', $inscripcion['distrito_nacimiento']);
+            if (count($parts) >= 3) {
+                $departamento = $parts[0];
+                $provincia = $parts[1];
+                $distrito = $parts[2];
+            }
+        }
+        // Assign to inscripcion so form_fields can use them
+        $inscripcion['departamento'] = $departamento;
+        $inscripcion['provincia'] = $provincia;
+        $inscripcion['distrito'] = $distrito;
+
+        /* PDF */
+        //$pdf = new \TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
+        $pdf = new \TCPDF('L', 'mm', array(85.6, 54), true, 'UTF-8', false);
+        $pdf->SetTitle("Carné de Inscripcion");
+        $pdf->setPrintHeader(false);
+        $pdf->SetMargins(0, 0, 0);
+        $pdf->SetAutoPageBreak(false, 0);
+        $pdf->AddPage();
+        $template = __DIR__ . '/../../../public/images/plantilla_carnet.png';
+        $pdf->Image($template, 0, 0, 85.6, 54, '', '', '', false, 300, '', false, false, 0, false, false, false);
+        // 2) Texto encima (usa coordenadas en mm)
+        $pdf->SetTextColor(0, 0, 0);
+        $pdf->SetFont('helvetica', 'B', 5);
+
+        $pdf->SetXY(35, 20.5);
+        $pdf->MultiCell(50, 5, $datosSede['nombre'], 0, 'C', false, 1);
+        $pdf->SetXY(35, 22.5);
+        $pdf->MultiCell(50, 5, "PROCESO DE ADMISIÓN: " . $procesoAdmision['nombre'], 0, 'C', false, 1);
+        $pdf->SetXY(35, 24.5);
+        $pdf->MultiCell(50, 5, $inscripcion['tipo_modalidad_nombre'] . ' - ' . $inscripcion['modalidad_nombre'], 0, 'C', false, 1);
+        $pdf->SetFont('helvetica', 'B', 9);
+        $pdf->SetXY(36, 29);
+        $pdf->MultiCell(50, 5, $inscripcion['usuario_dni'], 0, 'L', false, 1);
+        $pdf->SetXY(36, 32.5);
+        $pdf->MultiCell(50, 5, $inscripcion['apellido_paterno'], 0, 'L', false, 1);
+        $pdf->SetXY(36, 36);
+        $pdf->MultiCell(50, 5, $inscripcion['apellido_materno'], 0, 'L', false, 1);
+        $pdf->SetXY(36, 39.5);
+        $pdf->MultiCell(50, 5, $inscripcion['nombres'], 0, 'L', false, 1);
+
+
+        $pdf->SetXY(32, 46);
+        // Valor del código
+        $codigo = $inscripcion['usuario_dni'];
+
+        // Estilo del barcode
+        $style = array(
+            'position' => '',
+            'align' => 'C',
+            'stretch' => false,
+            'fitwidth' => true,
+            'cellfitalign' => '',
+            'border' => false,
+            'hpadding' => 0,
+            'vpadding' => 0,
+            'fgcolor' => array(0, 0, 0),
+            'bgcolor' => false,
+            'text' => false,      // muestra texto debajo del barcode
+            'font' => 'helvetica',
+            'fontsize' => 7,
+            'stretchtext' => 4
+        );
+
+        $pdf->write1DBarcode(
+            $codigo,
+            'C128',
+            45,
+            46.3,
+            50,
+            4.5,
+            0.4,
+            $style,
+            'N'
+        );
+
+        $pdf->SetFont('helvetica', 'B', 4);
+        $pdf->SetXY(2, 47.5);
+        $pdf->MultiCell(32, 6, $inscripcion['programa_estudio_nombre'], 0, 'C', false, 1);
+
+        $foto = BASE_URL . '/' . $inscripcion['foto'];
+        $pdf->Image($foto, 7.3, 21, 21, 20.5, '', '', '', false, 300);
+
+        $pdf->Output('Ficha_Inscripcion.pdf', 'I');
+    }
 }

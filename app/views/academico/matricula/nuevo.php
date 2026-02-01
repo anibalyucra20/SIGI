@@ -166,7 +166,10 @@
                 if (!idPlan || !idSemestre || !turno || !seccion) return;
 
                 fetch('<?= BASE_URL ?>/academico/matricula/udsProgramadas?plan=' + idPlan + '&semestre=' + idSemestre + '&turno=' + turno + '&seccion=' + seccion)
-                    .then(res => { if (!res.ok) throw new Error('Error de red'); return res.json(); })
+                    .then(res => {
+                        if (!res.ok) throw new Error('Error de red');
+                        return res.json();
+                    })
                     .then(data => {
                         let cont = document.getElementById('ud-programadas-list');
                         cont.innerHTML = '';

@@ -48,8 +48,8 @@
 <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap4.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
 <!-- Si vas a usar imprimir/copiar: -->
- <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script> 
- <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.colVis.min.js"></script> 
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.colVis.min.js"></script>
 
 <!-- ============================= -->
 <!-- Plugins de tu tema (después)  -->
@@ -59,7 +59,186 @@
 <script src="<?= BASE_URL ?>/assets/js/waves.js"></script>
 <script src="<?= BASE_URL ?>/assets/js/theme.js"></script>
 <script src="<?= BASE_URL ?>/assets/js/sweetalert2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+<!-- LOADER GLOBAL -->
+<div id="global-loader" class="gl-overlay" aria-hidden="true">
+    <div class="gl-box">
+        <div class="gl-spinner" role="status" aria-label="Cargando"></div>
+        <div class="gl-text">Procesando…</div>
+    </div>
+</div>
+
+<style>
+    .gl-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, .35);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 99999;
+    }
+
+    .gl-overlay.is-active {
+        display: flex;
+    }
+
+    .gl-box {
+        background: #fff;
+        padding: 18px 22px;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, .25);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 220px;
+    }
+
+    .gl-spinner {
+        width: 24px;
+        height: 24px;
+        border: 3px solid #ddd;
+        border-top-color: #333;
+        border-radius: 50%;
+        animation: glspin 0.9s linear infinite;
+    }
+
+    .gl-text {
+        font-size: 14px;
+        color: #222;
+    }
+
+    @keyframes glspin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+</style>
+
+<script>
+    (function() {
+        const overlay = document.getElementById('global-loader');
+        let counter = 0;
+        let showTimer = null;
+
+        function showLoader(text) {
+            counter++;
+            // Evita parpadeo: muestra tras 150ms si sigue activo
+            if (!showTimer) {
+                showTimer = setTimeout(() => {
+                    if (counter > 0) {
+                        if (text) overlay.querySelector('.gl-text').textContent = text;
+                        overlay.classList.add('is-active');
+                        overlay.setAttribute('aria-hidden', 'false');
+                    }
+                    showTimer = null;
+                }, 150);
+            }
+        }
+
+        function hideLoader() {
+            counter = Math.max(0, counter - 1);
+            if (counter === 0) {
+                overlay.classList.remove('is-active');
+                overlay.setAttribute('aria-hidden', 'true');
+            }
+        }
+
+        // Exponer por si quieres usarlo manualmente
+        window.SIGI_LOADER = {
+            show: showLoader,
+            hide: hideLoader
+        };
+
+        // Ocultar al cargar la página (por si quedó activo)
+        window.addEventListener('pageshow', () => {
+            counter = 0;
+            overlay.classList.remove('is-active');
+            overlay.setAttribute('aria-hidden', 'true');
+        });
+
+        // 1) Mostrar en submit de cualquier form
+        document.addEventListener('submit', function(e) {
+            const form = e.target;
+            if (form && form.tagName === 'FORM') {
+                showLoader('Procesando…');
+            }
+        }, true);
+
+        // 2) Mostrar al hacer click en links que navegan
+        document.addEventListener('click', function(e) {
+            const a = e.target.closest('a');
+            if (!a) return;
+
+            if (a.hasAttribute('data-sigi-confirm')) return;
+
+            const href = a.getAttribute('href') || '';
+            const target = (a.getAttribute('target') || '').toLowerCase();
+
+            // Ignorar anclas, javascript, vacío, nueva pestaña
+            if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
+            if (target === '_blank') return;
+
+            // Si es un link a descarga, igual muestra (puede quedarse activo si no navega)
+            // Si te molesta, comenta esta línea.
+            showLoader('Cargando…');
+        }, true);
+
+        // 3) jQuery AJAX global (si usas jQuery/DataTables)
+        if (window.jQuery) {
+            jQuery(document).ajaxStart(function() {
+                showLoader('Procesando…');
+            });
+            jQuery(document).ajaxStop(function() {
+                hideLoader();
+            });
+            jQuery(document).ajaxError(function() {
+                hideLoader();
+            });
+        }
+
+        // 4) Parche global para fetch
+        if (window.fetch) {
+            const _fetch = window.fetch;
+            window.fetch = function() {
+                showLoader('Procesando…');
+                return _fetch.apply(this, arguments)
+                    .then(res => {
+                        hideLoader();
+                        return res;
+                    })
+                    .catch(err => {
+                        hideLoader();
+                        throw err;
+                    });
+            }
+        }
+
+        // 5) Parche global para XHR (por si hay libs sin jQuery)
+        (function(open, send) {
+            XMLHttpRequest.prototype.open = function() {
+                this._sigi_loader_track = true;
+                return open.apply(this, arguments);
+            };
+            XMLHttpRequest.prototype.send = function() {
+                if (this._sigi_loader_track) showLoader('Procesando…');
+                this.addEventListener('loadend', function() {
+                    if (this._sigi_loader_track) hideLoader();
+                });
+                return send.apply(this, arguments);
+            };
+        })(XMLHttpRequest.prototype.open, XMLHttpRequest.prototype.send);
+
+        // 6) DataTables processing (si quieres que se prenda cuando está “Processing…”)
+        if (window.jQuery) {
+            jQuery(document).on('processing.dt', function(e, settings, processing) {
+                if (processing) showLoader('Cargando tabla…');
+                else hideLoader();
+            });
+        }
+    })();
+</script>
 
 
 </body>

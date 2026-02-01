@@ -136,7 +136,16 @@
                         render: function(data, type, row) {
                             return `
                         <a href="<?= BASE_URL ?>/academico/matricula/ver/${row.id}" class="btn btn-primary btn-sm">Ver</a>
-                        <a href="<?= BASE_URL ?>/academico/matricula/eliminar/${row.id}" class="btn btn-danger btn-sm">Elimnar</a>
+                        <a href="<?= BASE_URL ?>/academico/matricula/eliminar/${row.id}" target="_blank"
+                            class="btn btn-danger btn-sm m-1"
+                            data-sigi-confirm="1"
+                            data-sigi-title="¿Eliminar matrícula?"
+                            data-sigi-text="Se eliminará la matrícula de ${row.apellidos_nombres}. \n Esta acción no se puede deshacer."
+                            data-sigi-confirm-text="Sí, eliminar"
+                            data-sigi-cancel-text="No, cancelar"
+                            data-sigi-loader="Eliminando…">
+                            Eliminar
+                        </a>
                     `;
                         }
                     }
@@ -183,6 +192,39 @@
             });
 
         });
+    </script>
+    <script>
+        document.addEventListener('click', async function(e) {
+            const a = e.target.closest('a[data-sigi-confirm]');
+            if (!a) return;
+
+            e.preventDefault(); // no navegar aún
+
+            const href = a.getAttribute('href');
+            const title = a.getAttribute('data-sigi-title') || '¿Estás seguro?';
+            const text = a.getAttribute('data-sigi-text') || 'Confirma para continuar.';
+            const confirmText = a.getAttribute('data-sigi-confirm-text') || 'Si, eliminar';
+            const cancelText = a.getAttribute('data-sigi-cancel-text') || 'No, cancelar';
+            const loaderText = a.getAttribute('data-sigi-loader') || 'Eliminando…';
+
+            const result = await Swal.fire({
+                title,
+                text,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: confirmText,
+                cancelButtonText: cancelText,
+                reverseButtons: true,
+                allowOutsideClick: true
+            });
+
+            if (result.isConfirmed) {
+                if (window.SIGI_LOADER) window.SIGI_LOADER.show(loaderText);
+                window.location.href = href;
+            } else {
+                if (window.SIGI_LOADER) window.SIGI_LOADER.hide();
+            }
+        }, true);
     </script>
 <?php else: ?>
     <p>El módulo solo es para rol de Administrador Académico.</p>
