@@ -83,6 +83,7 @@ class DatosSistemaController extends Controller
                 'duracion_sesion'  => $_POST['duracion_sesion'],
                 'permisos_inicial_docente' => $permisosJson,
                 'permisos_inicial_estudiante' => $permisosEstudianteJson,
+                'fondo_carnet' => $_POST['fondo_carnet'],
                 'token_sistema'    => $_POST['token_sistema'],
             ];
 
@@ -122,6 +123,13 @@ class DatosSistemaController extends Controller
                 $filename = 'logo.' . $ext;
                 move_uploaded_file($_FILES['logo_file']['tmp_name'], __DIR__ . '/../../../public/images/' . $filename);
                 $data['logo'] = $filename;
+            }
+            // Subida de Fondo Carnet
+            if (!empty($_FILES['fondo_carnet_file']['name'])) {
+                $ext = pathinfo($_FILES['fondo_carnet_file']['name'], PATHINFO_EXTENSION);
+                $filename = 'fondo_carnet.' . $ext;
+                move_uploaded_file($_FILES['fondo_carnet_file']['tmp_name'], __DIR__ . '/../../../public/images/' . $filename);
+                $data['fondo_carnet'] = $filename;
             }
             $this->model->guardar($data);
             $_SESSION['flash_success'] = "Datos del sistema guardados correctamente.";

@@ -127,43 +127,7 @@ class InscripcionesController extends Controller
     public function guardar()
     {
         if (\Core\Auth::esAdminAdmision()):
-            $fotoPath = '';
-            if (isset($_POST['foto_actual'])) {
-                $fotoPath = $_POST['foto_actual'];
-            }
 
-            $uploadDir = __DIR__ . '/../../../public/uploads/admision/fotos/';
-            if (!is_dir($uploadDir)) {
-                mkdir($uploadDir, 0755, true);
-            }
-
-            // check base64 first
-            if (!empty($_POST['foto_capture_base64'])) {
-                $data = $_POST['foto_capture_base64'];
-                if (preg_match('/^data:image\/(\w+);base64,/', $data, $type)) {
-                    $data = substr($data, strpos($data, ',') + 1);
-                    $type = strtolower($type[1]); // jpg, png, etc.
-                    if (!in_array($type, ['jpg', 'jpeg', 'gif', 'png'])) {
-                        // invalid file type
-                    }
-                    $data = base64_decode($data);
-                    if ($data !== false) {
-                        $filename = uniqid('foto_cam_') . '.' . $type;
-                        $targetFile = $uploadDir . $filename;
-                        if (file_put_contents($targetFile, $data)) {
-                            $fotoPath = 'public/uploads/admision/fotos/' . $filename;
-                        }
-                    }
-                }
-            }
-            // Fallback to normal upload
-            elseif (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
-                $filename = uniqid('foto_') . '_' . basename($_FILES['foto']['name']);
-                $targetFile = $uploadDir . $filename;
-                if (move_uploaded_file($_FILES['foto']['tmp_name'], $targetFile)) {
-                    $fotoPath = 'public/uploads/admision/fotos/' . $filename;
-                }
-            }
 
             $id_usuario = $_POST['id_usuario_sigi'];
 
@@ -202,6 +166,45 @@ class InscripcionesController extends Controller
             $requisitos = '';
             if (isset($_POST['requisitos_adjuntos']) && is_array($_POST['requisitos_adjuntos'])) {
                 $requisitos = implode(',', $_POST['requisitos_adjuntos']);
+            }
+
+            //cargar foto
+            $fotoPath = '';
+            if (isset($_POST['foto_actual'])) {
+                $fotoPath = $_POST['foto_actual'];
+            }
+
+            $uploadDir = __DIR__ . '/../../../public/uploads/admision/fotos/';
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+
+            // check base64 first
+            if (!empty($_POST['foto_capture_base64'])) {
+                $data = $_POST['foto_capture_base64'];
+                if (preg_match('/^data:image\/(\w+);base64,/', $data, $type)) {
+                    $data = substr($data, strpos($data, ',') + 1);
+                    $type = strtolower($type[1]); // jpg, png, etc.
+                    if (!in_array($type, ['jpg', 'jpeg', 'gif', 'png'])) {
+                        // invalid file type
+                    }
+                    $data = base64_decode($data);
+                    if ($data !== false) {
+                        $filename = uniqid('foto_cam_') . '.' . $type;
+                        $targetFile = $uploadDir . $filename;
+                        if (file_put_contents($targetFile, $data)) {
+                            $fotoPath = 'public/uploads/admision/fotos/' . $filename;
+                        }
+                    }
+                }
+            }
+            // Fallback to normal upload
+            elseif (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
+                $filename = uniqid('foto_') . '_' . basename($_FILES['foto']['name']);
+                $targetFile = $uploadDir . $filename;
+                if (move_uploaded_file($_FILES['foto']['tmp_name'], $targetFile)) {
+                    $fotoPath = 'public/uploads/admision/fotos/' . $filename;
+                }
             }
 
             $data = [
@@ -397,17 +400,22 @@ class InscripcionesController extends Controller
         $pdf->SetMargins(0, 0, 0);
         $pdf->SetAutoPageBreak(false, 0);
         $pdf->AddPage();
-        $template = __DIR__ . '/../../../public/images/plantilla_carnet.png';
+        if ($datosSistema['fondo_carnet_postulante']) {
+            $template = __DIR__ . '/../../../public/images/' . $datosSistema['fondo_carnet_postulante'];
+        }else {
+            $template = __DIR__ . '/../../../public/img/plantilla_carnet.png';
+        }
+
         $pdf->Image($template, 0, 0, 85.6, 54, '', '', '', false, 300, '', false, false, 0, false, false, false);
         // 2) Texto encima (usa coordenadas en mm)
         $pdf->SetTextColor(0, 0, 0);
         $pdf->SetFont('helvetica', 'B', 5);
 
-        $pdf->SetXY(35, 20.5);
-        $pdf->MultiCell(50, 5, $datosSede['nombre'], 0, 'C', false, 1);
-        $pdf->SetXY(35, 22.5);
+        $pdf->SetXY(35, 21);
+        $pdf->MultiCell(50, 5, "SEDE " . $datosSede['nombre'], 0, 'C', false, 1);
+        $pdf->SetXY(35, 23);
         $pdf->MultiCell(50, 5, "PROCESO DE ADMISIÓN: " . $procesoAdmision['nombre'], 0, 'C', false, 1);
-        $pdf->SetXY(35, 24.5);
+        $pdf->SetXY(35, 25);
         $pdf->MultiCell(50, 5, $inscripcion['tipo_modalidad_nombre'] . ' - ' . $inscripcion['modalidad_nombre'], 0, 'C', false, 1);
         $pdf->SetFont('helvetica', 'B', 9);
         $pdf->SetXY(36, 29);
@@ -454,8 +462,8 @@ class InscripcionesController extends Controller
             'N'
         );
 
-        $pdf->SetFont('helvetica', 'B', 4);
-        $pdf->SetXY(2, 47.5);
+        $pdf->SetFont('helvetica', 'B', 5);
+        $pdf->SetXY(2, 46.5);
         $pdf->MultiCell(32, 6, $inscripcion['programa_estudio_nombre'], 0, 'C', false, 1);
 
         $foto = BASE_URL . '/' . $inscripcion['foto'];

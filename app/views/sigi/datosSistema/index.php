@@ -139,7 +139,21 @@
                 <label class="form-label">Token Sistema *</label>
                 <textarea name="token_sistema" class="form-control" maxlength="1000" required readonly><?= htmlspecialchars($sistema['token_sistema'] ?? '') ?></textarea>
             </div>
-
+            <div class="mb-3">
+                <label class="form-label">Fondo Carnet Postulante *</label>
+                <?php if ($sistema['fondo_carnet_postulante'] != ''): ?>
+                    <div>
+                        <img src="<?= BASE_URL ?>/images/<?= htmlspecialchars($sistema['fondo_carnet_postulante']) ?>" alt="fondo_carnet_postulante" style="height:62px;">
+                    </div>
+                <?php else: ?>
+                    <div>
+                        <img src="<?= BASE_URL ?>/img/plantilla_carnet.png" alt="logo" style="height:100px;">
+                    </div>
+                <?php endif; ?>
+                <input type="file" name="fondo_carnet_file" class="form-control d-none" maxlength="100"
+                    value="<?= htmlspecialchars($sistema['fondo_carnet_postulante'] ?? '') ?>" readonly accept="image/png,image/jpeg,image/svg+xml">
+                <input type="hidden" name="fondo_carnet" value="<?= htmlspecialchars($sistema['fondo_carnet_postulante'] ?? '') ?>">
+            </div>
             <div class="mt-3 text-end">
                 <button type="submit" class="btn btn-primary px-4 d-none" id="btn-guardar-ds">Guardar</button>
                 <button type="button" class="btn btn-secondary d-none" id="btn-cancelar-ds">Cancelar</button>
@@ -181,7 +195,7 @@
                 PermisosDocente.classList.toggle('d-none', !editable);
                 PermisosEstudiante.classList.toggle('d-none', !editable);
                 btnEditar.classList.toggle('d-none', editable);
-                
+
             }
 
             btnEditar.addEventListener('click', function() {

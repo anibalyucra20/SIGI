@@ -39,6 +39,7 @@ class DatosSistema extends Model
                     duracion_sesion = :duracion_sesion,
                     permisos_inicial_docente = :permisos_inicial_docente,
                     permisos_inicial_estudiante = :permisos_inicial_estudiante,
+                    fondo_carnet_postulante = :fondo_carnet,
                     token_sistema = :token_sistema
                 WHERE id = :id";
         $stmt = self::$db->prepare($sql);
