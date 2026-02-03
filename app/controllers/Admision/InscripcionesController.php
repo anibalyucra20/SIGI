@@ -397,7 +397,7 @@ class InscripcionesController extends Controller
         $pdf = new \TCPDF('P', 'mm', array(297, 210), true, 'UTF-8', false);
         $pdf->SetTitle("Carné de Inscripcion");
         $pdf->setPrintHeader(false);
-        $pdf->SetMargins(0, 0, 0);
+        $pdf->SetMargins(20, 20, 20);
         $pdf->SetAutoPageBreak(false, 0);
         $pdf->AddPage();
         if ($datosSistema['fondo_carnet_postulante']) {
@@ -406,29 +406,29 @@ class InscripcionesController extends Controller
             $template = __DIR__ . '/../../../public/img/plantilla_carnet.png';
         }
 
-        $pdf->Image($template, 0, 0, 85.6, 54, '', '', '', false, 300, '', false, false, 0, false, false, false);
+        $pdf->Image($template, 5, 5, 85.6, 54, '', '', '', false, 300, '', false, false, 0, false, false, false);
         // 2) Texto encima (usa coordenadas en mm)
         $pdf->SetTextColor(0, 0, 0);
         $pdf->SetFont('helvetica', 'B', 5);
 
-        $pdf->SetXY(35, 21);
+        $pdf->SetXY(40, 26);
         $pdf->MultiCell(50, 5, "SEDE " . $datosSede['nombre'], 0, 'C', false, 1);
-        $pdf->SetXY(35, 23);
+        $pdf->SetXY(40, 28);
         $pdf->MultiCell(50, 5, "PROCESO DE ADMISIÓN: " . $procesoAdmision['nombre'], 0, 'C', false, 1);
-        $pdf->SetXY(35, 25);
+        $pdf->SetXY(40, 30);
         $pdf->MultiCell(50, 5, $inscripcion['tipo_modalidad_nombre'] . ' - ' . $inscripcion['modalidad_nombre'], 0, 'C', false, 1);
         $pdf->SetFont('helvetica', 'B', 9);
-        $pdf->SetXY(36, 29);
+        $pdf->SetXY(41, 34);
         $pdf->MultiCell(50, 5, $inscripcion['usuario_dni'], 0, 'L', false, 1);
-        $pdf->SetXY(36, 32.5);
+        $pdf->SetXY(41, 37.5);
         $pdf->MultiCell(50, 5, $inscripcion['apellido_paterno'], 0, 'L', false, 1);
-        $pdf->SetXY(36, 36);
+        $pdf->SetXY(41, 41);
         $pdf->MultiCell(50, 5, $inscripcion['apellido_materno'], 0, 'L', false, 1);
-        $pdf->SetXY(36, 39.5);
+        $pdf->SetXY(41, 44.5);
         $pdf->MultiCell(50, 5, $inscripcion['nombres'], 0, 'L', false, 1);
 
 
-        $pdf->SetXY(32, 46);
+        $pdf->SetXY(37, 51);
         // Valor del código
         $codigo = $inscripcion['usuario_dni'];
 
@@ -453,8 +453,8 @@ class InscripcionesController extends Controller
         $pdf->write1DBarcode(
             $codigo,
             'C128',
-            5,
-            46.4,
+            10,
+            51.4,
             25.5,
             4.5,
             0.4,
@@ -463,11 +463,11 @@ class InscripcionesController extends Controller
         );
 
         $pdf->SetFont('helvetica', 'B', 5);
-        $pdf->SetXY(35, 46.2);
+        $pdf->SetXY(40, 51.2);
         $pdf->MultiCell(49.5, 6, $inscripcion['programa_estudio_nombre'], 0, 'C', false, 1);
 
         $foto = BASE_URL . '/' . $inscripcion['foto'];
-        $pdf->Image($foto, 7.3, 21, 21, 20.5, '', '', '', false, 300);
+        $pdf->Image($foto, 12.3, 26, 21, 20.5, '', '', '', false, 300);
 
         $pdf->Output('Ficha_Inscripcion.pdf', 'I');
     }
