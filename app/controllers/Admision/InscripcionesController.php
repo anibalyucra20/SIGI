@@ -394,7 +394,7 @@ class InscripcionesController extends Controller
 
         /* PDF */
         //$pdf = new \TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
-        $pdf = new \TCPDF('L', 'mm', array(85.6, 54), true, 'UTF-8', false);
+        $pdf = new \TCPDF('P', 'mm', array(297, 210), true, 'UTF-8', false);
         $pdf->SetTitle("Carné de Inscripcion");
         $pdf->setPrintHeader(false);
         $pdf->SetMargins(0, 0, 0);
@@ -453,9 +453,9 @@ class InscripcionesController extends Controller
         $pdf->write1DBarcode(
             $codigo,
             'C128',
-            45,
-            46.3,
-            50,
+            5,
+            46.4,
+            25.5,
             4.5,
             0.4,
             $style,
@@ -463,8 +463,8 @@ class InscripcionesController extends Controller
         );
 
         $pdf->SetFont('helvetica', 'B', 5);
-        $pdf->SetXY(2, 46.5);
-        $pdf->MultiCell(32, 6, $inscripcion['programa_estudio_nombre'], 0, 'C', false, 1);
+        $pdf->SetXY(35, 46.2);
+        $pdf->MultiCell(49.5, 6, $inscripcion['programa_estudio_nombre'], 0, 'C', false, 1);
 
         $foto = BASE_URL . '/' . $inscripcion['foto'];
         $pdf->Image($foto, 7.3, 21, 21, 20.5, '', '', '', false, 300);
