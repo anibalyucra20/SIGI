@@ -411,18 +411,18 @@ class InscripcionesController extends Controller
         $pdf->SetTextColor(0, 0, 0);
         $pdf->SetFont('helvetica', 'B', 5);
 
-        $pdf->SetXY(40, 26);
+        $pdf->SetXY(40, 24);
         $pdf->MultiCell(50, 5, "SEDE " . $datosSede['nombre'], 0, 'C', false, 1);
-        $pdf->SetXY(40, 28);
+        $pdf->SetXY(40, 26);
         $pdf->MultiCell(50, 5, "PROCESO DE ADMISIÓN: " . $procesoAdmision['nombre'], 0, 'C', false, 1);
-        $pdf->SetXY(40, 30);
+        $pdf->SetXY(40, 28);
         $pdf->MultiCell(50, 5, $inscripcion['tipo_modalidad_nombre'] . ' - ' . $inscripcion['modalidad_nombre'], 0, 'C', false, 1);
-        $pdf->SetFont('helvetica', 'B', 9);
-        $pdf->SetXY(41, 34);
+        $pdf->SetFont('helvetica', 'B', 10);
+        $pdf->SetXY(41, 31);
         $pdf->MultiCell(50, 5, $inscripcion['usuario_dni'], 0, 'L', false, 1);
-        $pdf->SetXY(41, 37.5);
+        $pdf->SetXY(41, 35.5);
         $pdf->MultiCell(50, 5, $inscripcion['apellido_paterno'], 0, 'L', false, 1);
-        $pdf->SetXY(41, 41);
+        $pdf->SetXY(41, 40);
         $pdf->MultiCell(50, 5, $inscripcion['apellido_materno'], 0, 'L', false, 1);
         $pdf->SetXY(41, 44.5);
         $pdf->MultiCell(50, 5, $inscripcion['nombres'], 0, 'L', false, 1);
