@@ -395,14 +395,14 @@ class InscripcionesController extends Controller
         /* PDF */
         //$pdf = new \TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
         $pdf = new \TCPDF('P', 'mm', array(297, 210), true, 'UTF-8', false);
-        $pdf->SetTitle("Carné de Inscripcion");
+        $pdf->SetTitle("Carnet de Inscripcion");
         $pdf->setPrintHeader(false);
         $pdf->SetMargins(20, 20, 20);
         $pdf->SetAutoPageBreak(false, 0);
         $pdf->AddPage();
         if ($datosSistema['fondo_carnet_postulante']) {
             $template = __DIR__ . '/../../../public/images/' . $datosSistema['fondo_carnet_postulante'];
-        }else {
+        } else {
             $template = __DIR__ . '/../../../public/img/plantilla_carnet.png';
         }
 
@@ -449,26 +449,33 @@ class InscripcionesController extends Controller
             'fontsize' => 7,
             'stretchtext' => 4
         );
+        // Guardar estado + rotar
+        $pdf->StartTransform();
 
+        // Rota 90 grados alrededor del punto (x,y)
+        $x = 7.5;  // mm
+        $y = 48;  // mm
+        $pdf->Rotate(90, $x, $y);
         $pdf->write1DBarcode(
             $codigo,
             'C128',
-            10,
-            51.4,
+            $x,
+            $y,
             25.5,
             4.5,
             0.4,
             $style,
             'N'
         );
+        $pdf->StopTransform();
 
-        $pdf->SetFont('helvetica', 'B', 5);
-        $pdf->SetXY(40, 51.2);
-        $pdf->MultiCell(49.5, 6, $inscripcion['programa_estudio_nombre'], 0, 'C', false, 1);
+        $pdf->SetFont('helvetica', 'B', 6.5);
+        $pdf->SetXY(7, 50.8);
+        $pdf->MultiCell(81.5, 6, $inscripcion['programa_estudio_nombre'], 0, 'C', false, 1);
 
         $foto = BASE_URL . '/' . $inscripcion['foto'];
-        $pdf->Image($foto, 12.3, 26, 21, 20.5, '', '', '', false, 300);
+        $pdf->Image($foto, 15.1, 26, 21, 20.5, '', '', '', false, 300);
 
-        $pdf->Output('Ficha_Inscripcion.pdf', 'I');
+        $pdf->Output('Carnet Inscripcion '.$inscripcion['usuario_dni'].'.pdf', 'I');
     }
 }
