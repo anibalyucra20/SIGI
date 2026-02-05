@@ -152,24 +152,26 @@ ob_start();
                     <td class="input-box" colspan="3"><?= $inscripcion['usuario_nombre'] ?></td>
                 </tr>
                 <tr>
+                    <td class="label" width="20%">TIPO DOC.:</td>
+                    <td class="input-box"><?= $inscripcion['tipo_doc'] ?></td>
                     <td class="label" width="20%">DOC. IDENTIDAD:</td>
                     <td class="input-box"><?= $inscripcion['usuario_dni'] ?></td>
+                </tr>
+                <tr>
                     <td class="label" width="20%">GENERO:</td>
                     <td class="input-box"><?= $inscripcion['genero'] == 'M' ? 'MASCULINO' : 'FEMENINO' ?></td>
-                </tr>
-                <tr>
                     <td class="label" width="20%">EDAD:</td>
                     <td class="input-box"><?= $inscripcion['create_at'] - $inscripcion['fecha_nacimiento'] ?></td>
+                </tr>
+                <tr>
                     <td class="label" width="20%">FECHA DE NACIMIENTO:</td>
                     <td class="input-box"><?= date('d/m/Y', strtotime($inscripcion['fecha_nacimiento'])) ?></td>
-                </tr>
-                <tr>
                     <td class="label" width="20%">DPTO.NAC:</td>
                     <td class="input-box"><?= $inscripcion['departamento'] ?></td>
-                    <td class="label" width="20%">PROV.NAC:</td>
-                    <td class="input-box"><?= $inscripcion['provincia'] ?></td>
                 </tr>
                 <tr>
+                    <td class="label" width="20%">PROV.NAC:</td>
+                    <td class="input-box"><?= $inscripcion['provincia'] ?></td>
                     <td class="label" width="20%">DIST.NAC:</td>
                     <td class="input-box"><?= $inscripcion['distrito'] ?></td>
                 </tr>
