@@ -188,13 +188,35 @@
         // 3) jQuery AJAX global (si usas jQuery/DataTables)
         if (window.jQuery) {
             jQuery(document).ajaxStart(function() {
-                showLoader('Procesando…');
+                //showLoader('Procesando…');
             });
             jQuery(document).ajaxStop(function() {
                 hideLoader();
             });
-            jQuery(document).ajaxError(function() {
-                hideLoader();
+            jQuery(document).ajaxComplete(function(e, jqXHR, settings) {
+                const hdr = (settings && settings.headers) ? settings.headers : {};
+                const isDataTables = hdr['X-SIGI-DT'] === '1' || hdr['x-sigi-dt'] === '1';
+
+                if (!isDataTables) hideLoader();
+            });
+
+            jQuery(document).ajaxError(function(e, jqXHR, settings) {
+                const hdr = (settings && settings.headers) ? settings.headers : {};
+                const isDataTables = hdr['X-SIGI-DT'] === '1' || hdr['x-sigi-dt'] === '1';
+
+                if (!isDataTables) hideLoader();
+            });
+            jQuery(document).ajaxSend(function(e, jqXHR, settings) {
+                const isDT = jqXHR && jqXHR.getResponseHeader ?
+                    false // aún no hay headers de respuesta
+                    :
+                    false;
+
+                // Detecta DataTables por nuestro header de REQUEST (settings.headers)
+                const hdr = (settings && settings.headers) ? settings.headers : {};
+                const isDataTables = hdr['X-SIGI-DT'] === '1' || hdr['x-sigi-dt'] === '1';
+
+                if (!isDataTables) showLoader('Procesando…');
             });
         }
 
@@ -216,19 +238,27 @@
         }
 
         // 5) Parche global para XHR (por si hay libs sin jQuery)
-        (function(open, send) {
+        (function(open, send, setHeader) {
             XMLHttpRequest.prototype.open = function() {
                 this._sigi_loader_track = true;
+                this._sigi_is_dt = false;
                 return open.apply(this, arguments);
             };
+
+            XMLHttpRequest.prototype.setRequestHeader = function(k, v) {
+                if (String(k).toLowerCase() === 'x-sigi-dt') this._sigi_is_dt = true;
+                return setHeader.apply(this, arguments);
+            };
+
             XMLHttpRequest.prototype.send = function() {
-                if (this._sigi_loader_track) showLoader('Procesando…');
+                if (this._sigi_loader_track && !this._sigi_is_dt) showLoader('Procesando…');
                 this.addEventListener('loadend', function() {
-                    if (this._sigi_loader_track) hideLoader();
+                    if (this._sigi_loader_track && !this._sigi_is_dt) hideLoader();
                 });
                 return send.apply(this, arguments);
             };
-        })(XMLHttpRequest.prototype.open, XMLHttpRequest.prototype.send);
+        })(XMLHttpRequest.prototype.open, XMLHttpRequest.prototype.send, XMLHttpRequest.prototype.setRequestHeader);
+
 
         // 6) DataTables processing (si quieres que se prenda cuando está “Processing…”)
         if (window.jQuery) {
@@ -237,6 +267,7 @@
                 else hideLoader();
             });
         }
+
     })();
 </script>
 

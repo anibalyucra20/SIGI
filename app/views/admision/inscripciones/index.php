@@ -37,6 +37,9 @@
                 ajax: {
                     url: '<?= BASE_URL ?>/admision/inscripciones/data',
                     type: 'GET',
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader('X-SIGI-DT', '1');
+                    }
                 },
                 columns: [{
                         data: null,
