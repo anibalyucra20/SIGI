@@ -137,12 +137,12 @@ class Docente extends Model
     public function nuevo($data)
     {
         $sql = "INSERT INTO sigi_usuarios
-        (dni, apellidos_nombres, correo, password,
+        (tipo_doc,dni, apellidos_nombres, correo, password,
          discapacidad, genero, fecha_nacimiento,distrito_nacimiento, direccion, telefono,
          id_rol, id_sede, id_programa_estudios, id_periodo_registro,
          reset_password, token_password, estado)
         VALUES
-        (:dni, :apellidos_nombres, :correo, :password,
+        (:tipo_doc,:dni, :apellidos_nombres, :correo, :password,
          :discapacidad, :genero, :fecha_nacimiento,:distrito_nacimiento, :direccion, :telefono,
          :id_rol, :id_sede, :id_programa_estudios, :id_periodo_registro,
          :reset_password, :token_password, :estado)";

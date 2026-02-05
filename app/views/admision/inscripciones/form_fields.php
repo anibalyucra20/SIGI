@@ -12,9 +12,19 @@
             </div>
         <?php } ?>
         <div class="col-md-4 mb-2">
-            <label class="form-label">DNI Postulante *</label>
+            <label class="form-label">Tipo Documento *</label>
             <div class="input-group">
-                <input type="text" name="dni_postulante" id="dni_postulante" class="form-control" placeholder="Ingrese DNI" required
+                <select name="tipo_doc_postulante" id="tipo_doc_postulante"  class="form-control"  required  <?= isset($inscripcion['id']) ? 'disabled' : '' ?>>
+                    <option value="DNI" <?= (isset($inscripcion['tipo_doc']) && $inscripcion['tipo_doc'] == 'DNI') ? 'selected' : '' ?>>DNI</option>
+                    <option value="CE" <?= (isset($inscripcion['tipo_doc']) && $inscripcion['tipo_doc'] == 'CE') ? 'selected' : '' ?>>CARNET DE EXTRANJERIA</option>
+                    <option value="PASAPORTE" <?= (isset($inscripcion['tipo_doc']) && $inscripcion['tipo_doc'] == 'PASAPORTE') ? 'selected' : '' ?>>PASAPORTE</option>
+                </select>
+            </div>
+        </div>
+        <div class="col-md-4 mb-2">
+            <label class="form-label">Número de Documento*</label>
+            <div class="input-group">
+                <input type="text" name="dni_postulante" id="dni_postulante" class="form-control" placeholder="Ingrese número" required
                     value="<?= htmlspecialchars($inscripcion['usuario_dni'] ?? '') ?>" <?= isset($inscripcion['id']) ? 'readonly' : '' ?>>
                 <?php if (!isset($inscripcion['id'])): ?>
                     <button type="button" class="btn btn-outline-primary" id="btn-buscar-dni" title="Buscar"><i class="fas fa-search"></i></button>

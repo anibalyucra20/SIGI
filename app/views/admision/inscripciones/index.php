@@ -10,7 +10,8 @@
                 <thead class="table-light">
                     <tr>
                         <th>#</th>
-                        <th>Documento</th>
+                        <th>Doc.</th>
+                        <th>Número</th>
                         <th>Apellidos y Nombres</th>
                         <th>Proceso Admision</th>
                         <th>Tipo Modalidad</th>
@@ -42,6 +43,9 @@
                         render: function(data, type, row, meta) {
                             return meta.row + 1 + meta.settings._iDisplayStart;
                         }
+                    },
+                    {
+                        data: 'tipo_doc'
                     },
                     {
                         data: 'dni'

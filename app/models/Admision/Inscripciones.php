@@ -13,13 +13,14 @@ class Inscripciones extends Model
     {
         $columnas = [
             0 => 'id',
-            1 => 'u.dni',
-            2 => 'u.apellidos_nombres',
-            3 => 'pad.nombre',
-            4 => 't.nombre',
-            5 => 'm.nombre',
-            6 => 'pe.nombre',
-            7 => 'i.fecha_inscripcion',
+            1 => 'u.tipo_doc',
+            2 => 'u.dni',
+            3 => 'u.apellidos_nombres',
+            4 => 'pad.nombre',
+            5 => 't.nombre',
+            6 => 'm.nombre',
+            7 => 'pe.nombre',
+            8 => 'i.fecha_inscripcion',
         ];
         $ordenarPor = $columnas[$orderCol] ?? 'id';
 
@@ -37,7 +38,7 @@ class Inscripciones extends Model
 
         $sqlWhere = $where ? ("WHERE " . implode(" AND ", $where)) : "";
 
-        $sql = "SELECT i.*, u.dni, u.apellidos_nombres, pa.nombre AS periodo_nombre, s.nombre AS sede_nombre, pad.nombre AS proceso_admision_nombre, t.nombre AS tipo_modalidad_nombre, pe.nombre AS programa_estudio_nombre, m.nombre AS modalidad_nombre
+        $sql = "SELECT i.*, u.tipo_doc, u.dni, u.apellidos_nombres, pa.nombre AS periodo_nombre, s.nombre AS sede_nombre, pad.nombre AS proceso_admision_nombre, t.nombre AS tipo_modalidad_nombre, pe.nombre AS programa_estudio_nombre, m.nombre AS modalidad_nombre
                 FROM admision_inscripcion i
                 JOIN sigi_usuarios u ON u.id = i.id_usuario_sigi
                 JOIN admision_proceso_admision pad ON pad.id = i.id_proceso_admision
@@ -83,7 +84,7 @@ class Inscripciones extends Model
 
     public function find($id)
     {
-        $stmt = self::$db->prepare("SELECT i.*, u.dni AS usuario_dni, u.apellidos_nombres AS usuario_nombre, u.genero AS genero, u.fecha_nacimiento AS fecha_nacimiento, u.direccion AS direccion, u.telefono AS telefono, u.correo AS correo, u.distrito_nacimiento AS distrito_nacimiento, pa.nombre AS periodo_nombre, s.nombre AS sede_nombre, pad.nombre AS proceso_admision_nombre, t.nombre AS tipo_modalidad_nombre, pe.nombre AS programa_estudio_nombre, m.nombre AS modalidad_nombre,m.id_tipo_modalidad AS id_tipo_modalidad, t.nombre AS tipo_modalidad_nombre
+        $stmt = self::$db->prepare("SELECT i.*, u.tipo_doc, u.dni AS usuario_dni, u.apellidos_nombres AS usuario_nombre, u.genero AS genero, u.fecha_nacimiento AS fecha_nacimiento, u.direccion AS direccion, u.telefono AS telefono, u.correo AS correo, u.distrito_nacimiento AS distrito_nacimiento, pa.nombre AS periodo_nombre, s.nombre AS sede_nombre, pad.nombre AS proceso_admision_nombre, t.nombre AS tipo_modalidad_nombre, pe.nombre AS programa_estudio_nombre, m.nombre AS modalidad_nombre,m.id_tipo_modalidad AS id_tipo_modalidad, t.nombre AS tipo_modalidad_nombre
                 FROM admision_inscripcion i
                 LEFT JOIN sigi_usuarios u ON u.id = i.id_usuario_sigi
                 JOIN admision_proceso_admision pad ON pad.id = i.id_proceso_admision

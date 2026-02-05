@@ -134,6 +134,7 @@ class InscripcionesController extends Controller
             // Si no hay ID de usuario pero hay DNI y Nombre (caso nuevo desde API), crear usuario
             if (empty($id_usuario) && !empty($_POST['dni_postulante']) && !empty($_POST['apellido_paterno_postulante']) && !empty($_POST['apellido_materno_postulante']) && !empty($_POST['nombres_postulante'])) {
                 $newUserData = [
+                    'tipo_doc' => $_POST['tipo_doc_postulante'],
                     'dni' => $_POST['dni_postulante'],
                     'apellidos_nombres' => strtoupper($_POST['apellido_paterno_postulante'] . '_' . $_POST['apellido_materno_postulante'] . '_' . $_POST['nombres_postulante']),
                     'genero' => $_POST['genero'],
