@@ -64,12 +64,11 @@ class DocentesController extends Controller
     {
         if (\Core\Auth::esAdminSigi()):
             $docentes = $this->model->getAllDocente();
-
             //para actualizar permisos de docente
-            foreach ($docentes as $docente) {
+            /*foreach ($docentes as $docente) {
                 //var_dump($docente['id']);
                 $this->registrar_permiso_inicial($docente['id']);
-            }
+            }*/
         endif;
         $this->view('sigi/docentes/index', ['docentes' => $docentes]);
         exit;
@@ -281,7 +280,7 @@ class DocentesController extends Controller
             }
             $model = new Docente();
             $model->update($id, $data);
-            $_SESSION['flash_success'] .= "Docente actualizado correctamente.";
+            $_SESSION['flash_success'] = "Docente actualizado correctamente.";
             // Separar Nombres y Apellidos
             $parts = explode('_', $data['apellidos_nombres']);
             if (count($parts) >= 3) {
@@ -469,7 +468,7 @@ class DocentesController extends Controller
         $passwordPlano = \Core\Auth::crearPassword(8);
         $password = password_hash($passwordPlano, PASSWORD_DEFAULT);
         $this->model->updatePassword($id, $password);
-        $_SESSION['flash_success'] .= "Contraseña actualizada correctamente para el docente " . $firstname . " " . $lastname . ". La contraseña es: " . $passwordPlano;
+        $_SESSION['flash_success'] = "Contraseña actualizada correctamente para el docente " . $firstname . " " . $lastname . ". La contraseña es: " . $passwordPlano;
         // =======================================================
         // INICIO INTEGRACIÓN (Actualización)
         // =======================================================

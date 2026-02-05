@@ -431,8 +431,6 @@ class Docente extends Model
             $permisos = $permisosParsed;
         }
 
-        $db = $this->getDB();
-
         // 1. Borra todos los permisos anteriores
         $stmt = self::$db->prepare("DELETE FROM sigi_permisos_usuarios WHERE id_usuario = ?");
         $stmt->execute([$id_usuario]);
