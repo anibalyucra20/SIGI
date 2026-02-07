@@ -100,6 +100,7 @@ class DocentesController extends Controller
             \Core\Auth::start();
             $idPeriodo = $_SESSION['sigi_periodo_actual_id'] ?? null;
             $data = [
+                'tipo_doc'            => $_POST['tipo_doc'],
                 'dni'                 => $_POST['dni'],
                 'apellidos_nombres'   => $_POST['ApellidoPaterno'] . '_' . $_POST['ApellidoMaterno'] . '_' . $_POST['Nombres'],
                 'correo'              => $_POST['correo'],
@@ -244,6 +245,7 @@ class DocentesController extends Controller
             \Core\Auth::start();
             $data = [
                 'id'                  => $id,
+                'tipo_doc'            => $_POST['tipo_doc'],
                 'dni'                 => $_POST['dni'],
                 'apellidos_nombres'   => $_POST['ApellidoPaterno'] . '_' . $_POST['ApellidoMaterno'] . '_' . $_POST['Nombres'],
                 'correo'              => $_POST['correo'],
@@ -468,7 +470,7 @@ class DocentesController extends Controller
         $passwordPlano = \Core\Auth::crearPassword(8);
         $password = password_hash($passwordPlano, PASSWORD_DEFAULT);
         $this->model->updatePassword($id, $password);
-        $_SESSION['flash_success'] = "Contraseña actualizada correctamente para el docente " . $firstname . " " . $lastname . ". La contraseña es: " . $passwordPlano;
+        $_SESSION['flash_success'] = "Contraseña actualizada correctamente para: " . $firstname . " " . $lastname . ". La contraseña es: " . $passwordPlano;
         // =======================================================
         // INICIO INTEGRACIÓN (Actualización)
         // =======================================================

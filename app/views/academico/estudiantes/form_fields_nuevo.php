@@ -1,5 +1,13 @@
 <div class="row">
     <div class="col-md-3 mb-2">
+        <label class="form-label">Tipo Documento</label>
+        <select name="tipo_doc" id="tipo_doc" class="form-control" required>
+            <option value="DNI" <?= (isset($estudiante['tipo_doc']) && $estudiante['tipo_doc'] == 'DNI') ? 'selected' : '' ?>>DNI</option>
+            <option value="CE" <?= (isset($estudiante['tipo_doc']) && $estudiante['tipo_doc'] == 'CE') ? 'selected' : '' ?>>CARNET DE EXTRANJERIA</option>
+            <option value="PASAPORTE" <?= (isset($estudiante['tipo_doc']) && $estudiante['tipo_doc'] == 'PASAPORTE') ? 'selected' : '' ?>>PASAPORTE</option>
+        </select>
+    </div>
+    <div class="col-md-3 mb-2">
         <label class="form-label">DNI *</label>
         <input type="text" name="dni" class="form-control" maxlength="20" required value="<?= htmlspecialchars($estudiante['dni'] ?? '') ?>">
     </div>

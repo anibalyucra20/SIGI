@@ -12,15 +12,16 @@ class Estudiantes extends Model
     {
         $columnas = [
             0 => 'u.id',
-            1 => 'u.dni',
-            2 => 'u.apellidos_nombres',
-            3 => 's.nombre',
-            4 => 'p.nombre',
-            5 => 'pl.nombre',
-            6 => 'per.nombre',
-            7 => 'u.correo',
-            8 => 'u.telefono',
-            9 => 'u.estado'
+            1 => 'u.tipo_doc',
+            2 => 'u.dni',
+            3 => 'u.apellidos_nombres',
+            4 => 's.nombre',
+            5 => 'p.nombre',
+            6 => 'pl.nombre',
+            7 => 'per.nombre',
+            8 => 'u.correo',
+            9 => 'u.telefono',
+            10 => 'u.estado'
         ];
         $ordenarPor = $columnas[$orderCol] ?? 'u.apellidos_nombres';
 
@@ -53,7 +54,7 @@ class Estudiantes extends Model
 
         $sqlWhere = $where ? ("WHERE " . implode(" AND ", $where)) : "";
 
-        $sql = "SELECT u.id, u.dni, u.apellidos_nombres, u.correo, u.telefono, u.estado,
+        $sql = "SELECT u.id, u.tipo_doc, u.dni, u.apellidos_nombres, u.correo, u.telefono, u.estado,
                        s.nombre AS sede_nombre,
                        p.nombre AS programa_nombre,
                        pl.nombre AS plan_nombre,
@@ -164,6 +165,7 @@ class Estudiantes extends Model
         if (!empty($data['id'])) {
             // UPDATE usuario
             $sql = "UPDATE sigi_usuarios SET 
+                        tipo_doc = :tipo_doc,
                         dni = :dni,
                         apellidos_nombres = :apellidos_nombres,
                         genero = :genero,
@@ -177,6 +179,7 @@ class Estudiantes extends Model
                         estado = :estado
                     WHERE id = :id";
             $params = [
+                ':tipo_doc' => $data['tipo_doc'],
                 ':dni' => $data['dni'],
                 ':apellidos_nombres' => $data['apellidos_nombres'],
                 ':genero' => $data['genero'],
@@ -212,6 +215,7 @@ class Estudiantes extends Model
                     VALUES
                         (:dni, :apellidos_nombres, :genero, :fecha_nacimiento, :direccion, :correo, :telefono, :id_periodo_registro, :id_programa_estudios, :discapacidad, :id_rol, :id_sede, :estado, :password, :reset_password, :token_password)";
             $params = [
+                ':tipo_doc' => $data['tipo_doc'],
                 ':dni' => $data['dni'],
                 ':apellidos_nombres' => $data['apellidos_nombres'],
                 ':genero' => $data['genero'],

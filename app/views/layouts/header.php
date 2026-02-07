@@ -136,7 +136,7 @@ endif;
               </button>
               <div class="dropdown-menu dropdown-menu-right">
                 <a class="dropdown-item d-flex align-items-center justify-content-between"
-                  href="<?= BASE_URL ?>/perfil">
+                  href="<?= BASE_URL ?>/intranet/perfil">
                   <span>Mi perfil</span>
                 </a>
                 <a class="dropdown-item d-flex align-items-center justify-content-between"

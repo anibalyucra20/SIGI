@@ -3,6 +3,14 @@
 $isEdit = $isEdit ?? false;
 ?>
 <div class="row">
+  <div class="col-md-3 mb-3">
+    <label class="form-label">Tipo Documento</label>
+    <select name="tipo_doc" id="tipo_doc" class="form-control" required>
+      <option value="DNI" <?= (isset($docente['tipo_doc']) && $docente['tipo_doc'] == 'DNI') ? 'selected' : '' ?>>DNI</option>
+      <option value="CE" <?= (isset($docente['tipo_doc']) && $docente['tipo_doc'] == 'CE') ? 'selected' : '' ?>>CARNET DE EXTRANJERIA</option>
+      <option value="PASAPORTE" <?= (isset($docente['tipo_doc']) && $docente['tipo_doc'] == 'PASAPORTE') ? 'selected' : '' ?>>PASAPORTE</option>
+    </select>
+  </div>
   <!-- DNI -->
   <div class="col-md-3 mb-3">
     <label class="form-label">DNI</label>

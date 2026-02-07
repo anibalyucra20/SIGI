@@ -25,7 +25,8 @@
       <thead>
         <tr>
           <th>Nro</th>
-          <th>DNI</th>
+          <th>Doc.</th>
+          <th>Número</th>
           <th>Apellidos y Nombres</th>
           <th>Email</th>
           <th>Estado</th>
@@ -63,6 +64,8 @@
               // _iDisplayStart = primer índice de la página actual
               return meta.row + 1 + meta.settings._iDisplayStart;
             }
+          },  {
+            data: 'tipo_doc'
           }, {
             data: 'dni'
           }, {

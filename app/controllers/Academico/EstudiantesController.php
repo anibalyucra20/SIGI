@@ -168,6 +168,7 @@ class EstudiantesController extends Controller
             $password_secure = password_hash($password, PASSWORD_DEFAULT);
             $data = [
                 'id'                  => $_POST['id'] ?? null,
+                'tipo_doc'            => trim($_POST['tipo_doc']),
                 'dni'                 => trim($_POST['dni']),
                 'apellidos_nombres'   => trim($_POST['ApellidoPaterno']) . '_' . trim($_POST['ApellidoMaterno']) . '_' . trim($_POST['Nombres']),
                 'genero'              => $_POST['genero'],

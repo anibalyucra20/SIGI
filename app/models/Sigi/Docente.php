@@ -15,6 +15,7 @@ class Docente extends Model
         $sql = "
             SELECT 
               u.id,
+              u.tipo_doc,
               u.dni,
               u.apellidos_nombres,
               u.correo,
@@ -158,6 +159,7 @@ class Docente extends Model
     public function update($id, $data)
     {
         $sql = "UPDATE sigi_usuarios SET
+          tipo_doc = :tipo_doc,
           dni = :dni,
           apellidos_nombres = :apellidos_nombres,
           correo = :correo,
@@ -230,9 +232,11 @@ class Docente extends Model
         // Mapear columna DataTables → columna BD
         $cols = [
             0 => 'u.id',
-            1 => 'u.dni',
-            2 => 'u.apellidos_nombres',
-            3 => 'u.estado'
+            1 => 'u.tipo_doc',
+            2 => 'u.dni',
+            3 => 'u.apellidos_nombres',
+            4 => 'u.correo',
+            5 => 'u.estado'
         ];
         $orderBy = $cols[$orderCol] ?? 'u.apellidos_nombres';
 
@@ -271,6 +275,7 @@ class Docente extends Model
         $sql = "
             SELECT 
                 u.id,
+                u.tipo_doc,
                 u.dni,
                 u.apellidos_nombres,
                 u.correo,
@@ -307,7 +312,6 @@ class Docente extends Model
         return ['data' => $data, 'total' => $total];
     }
 
-
     public function validar($data, $isEdit = false, $id = null)
     {
         $errores = [];
@@ -322,9 +326,14 @@ class Docente extends Model
         }
 
         // 2. Formato
-        if (!empty($data['dni']) && !preg_match('/^\d{8}$/', $data['dni'])) {
-            $errores[] = "El DNI debe tener 8 dígitos numéricos.";
+        if ($data['tipo_doc'] === 'DNI' && !preg_match('/^\d{8}$/', $data['dni'])) {
+            $errores['dni'] = 'El DNI debe tener exactamente 8 dígitos.';
         }
+
+        if ($data['tipo_doc'] !== 'DNI' && !preg_match('/^\d{8,}$/', $data['dni'])) {
+            $errores['dni'] = 'El documento debe tener al menos 8 dígitos.';
+        }
+
         if (!empty($data['correo']) && !filter_var($data['correo'], FILTER_VALIDATE_EMAIL)) {
             $errores[] = "El correo electrónico no es válido.";
         }

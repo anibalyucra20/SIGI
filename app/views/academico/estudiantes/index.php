@@ -62,7 +62,8 @@
                 <thead class="table-light">
                     <tr>
                         <th>#</th>
-                        <th>DNI</th>
+                        <th>Doc.</th>
+                        <th>Número</th>
                         <th>Apellidos y Nombres</th>
                         <th>Sede</th>
                         <th>Programa</th>
@@ -117,6 +118,9 @@
                 columns: [{
                         data: null,
                         render: (data, type, row, meta) => meta.row + 1 + meta.settings._iDisplayStart
+                    },
+                    {
+                        data: 'tipo_doc'
                     },
                     {
                         data: 'dni'
