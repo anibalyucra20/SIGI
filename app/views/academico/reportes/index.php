@@ -17,7 +17,7 @@
             <?php include_once(__DIR__ . '/modals/modal_reporte_auditoria.php'); ?>
         </div>
     <?php endif; ?>
-    <?php if (\Core\Auth::esCoordinadorPEAcademico()): ?>
+    <?php if (\Core\Auth::esCoordinadorPEAcademico() || \Core\Auth::esAdminAcademico()): ?>
 
         <div class="col-md-3">
             <div class="card text-center">

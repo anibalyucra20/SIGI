@@ -32,6 +32,16 @@ class Programa extends Model
         $stmt->execute([$id_sede]);
         return array_column($stmt->fetchAll(\PDO::FETCH_ASSOC), 'id_programa_estudio');
     }
+    public function getProgramasPorSedes($id_sede)
+    {
+        $sql = "SELECT pe.id, pe.nombre FROM sigi_programa_estudios pe 
+        INNER JOIN sigi_programa_sede ps ON ps.id_programa_estudio = pe.id
+        WHERE ps.id_sede = ?
+        ORDER BY pe.nombre";
+        $stmt = self::$db->prepare($sql);
+        $stmt->execute([$id_sede]);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
     public function find($id)
     {
         $stmt = self::$db->prepare("SELECT * FROM sigi_programa_estudios WHERE id = ?");

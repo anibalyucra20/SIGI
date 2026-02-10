@@ -6,12 +6,14 @@ use Core\Controller;
 
 require_once __DIR__ . '/../../../app/models/Academico/Reportes.php';
 require_once __DIR__ . '/../../../app/models/Academico/Calificaciones.php';
+require_once __DIR__ . '/../../../app/models/Sigi/Programa.php';
 require_once __DIR__ . '/../../../app/models/Sigi/CoordinadorPeriodo.php';
 require_once __DIR__ . '/../../../app/models/Sigi/Semestre.php';
 require_once __DIR__ . '/../../../app/models/Sigi/DatosSistema.php';
 
 use App\Models\Academico\Reportes;
 use App\Models\Academico\Calificaciones;
+use App\Models\Sigi\Programa;
 use App\Models\Sigi\CoordinadorPeriodo;
 use App\Models\Sigi\Semestre;
 use App\Models\Sigi\DatosSistema;
@@ -21,6 +23,7 @@ class ReportesController extends Controller
 {
     protected $model;
     protected $objCalificacion;
+    protected $objPrograma;
     protected $objCoordinador;
     protected $objSemestre;
     protected $objDatosSistema;
@@ -30,6 +33,7 @@ class ReportesController extends Controller
         parent::__construct();
         $this->model = new Reportes();
         $this->objCalificacion = new Calificaciones();
+        $this->objPrograma = new Programa();
         $this->objCoordinador = new CoordinadorPeriodo();
         $this->objSemestre = new Semestre();
         $this->objDatosSistema = new DatosSistema();
@@ -40,7 +44,13 @@ class ReportesController extends Controller
         $usuario_id = $_SESSION['sigi_user_id'];
         $periodo_id = $_SESSION['sigi_periodo_actual_id'];
         $sede_id    = $_SESSION['sigi_sede_actual'];
-        $programas = $this->objCoordinador->getProgramasAsignados($usuario_id, $periodo_id, $sede_id);
+        if (\Core\Auth::esAdminAcademico()) {
+            $programas = $this->objPrograma->getProgramasPorSedes($sede_id);
+        }
+        if (\Core\Auth::esCoordinadorPEAcademico()) {
+            $programas = $this->objCoordinador->getProgramasAsignados($usuario_id, $periodo_id, $sede_id);
+        }
+        
         // Puedes pasar $periodo si lo necesitas para la lógica JS de acciones.
         $this->view('academico/reportes/index', [
             'programas' => $programas,
