@@ -8,7 +8,7 @@
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <form method="POST" action="<?= BASE_URL ?>/academico/reportes/pdfNominaMatricula" target="_blank">
+            <form method="POST" action="<?= BASE_URL ?>/academico/reportes/pdfNominaMatricula" data-no-loader="1" target="_blank">
                 <div class="modal-body">
                     <div class="form-group">
                         <label for="programa_reporte_nommina">Programa de Estudios</label>

@@ -161,6 +161,7 @@
         // 1) Mostrar en submit de cualquier form
         document.addEventListener('submit', function(e) {
             const form = e.target;
+            if (form.hasAttribute('data-no-loader')) return;
             if (form && form.tagName === 'FORM') {
                 showLoader('Procesando…');
             }
