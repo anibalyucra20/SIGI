@@ -34,8 +34,8 @@ class Integrator
             curl_setopt($ch, CURLOPT_URL, $url);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, INTEGRACIONES_SSL_VERIFY);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, INTEGRACIONES_SSL_VERIFY);
             curl_setopt($ch, CURLOPT_HTTPHEADER, [
                 'Content-Type: application/json',
                 'X-Api-Key: ' . $apiKey
@@ -60,8 +60,8 @@ class Integrator
             curl_setopt($ch, CURLOPT_URL, $url);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, INTEGRACIONES_SSL_VERIFY);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, INTEGRACIONES_SSL_VERIFY);
             curl_setopt($ch, CURLOPT_HTTPHEADER, [
                 'Content-Type: application/json',
                 'X-Api-Key: ' . $apiKey
@@ -111,8 +111,8 @@ class Integrator
             curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
 
             // OJO: En producción idealmente deberías verificar SSL, pero lo dejamos false como pediste
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, INTEGRACIONES_SSL_VERIFY);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, INTEGRACIONES_SSL_VERIFY);
 
             curl_setopt($ch, CURLOPT_HTTPHEADER, [
                 'Content-Type: application/json',
@@ -185,8 +185,8 @@ class Integrator
             curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
 
             // OJO: En producción idealmente deberías verificar SSL, pero lo dejamos false como pediste
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, INTEGRACIONES_SSL_VERIFY);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, INTEGRACIONES_SSL_VERIFY);
 
             curl_setopt($ch, CURLOPT_HTTPHEADER, [
                 'Content-Type: application/json',
@@ -257,8 +257,8 @@ class Integrator
         curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
 
         // OJO: En producción idealmente deberías verificar SSL, pero lo dejamos false como pediste
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, INTEGRACIONES_SSL_VERIFY);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, INTEGRACIONES_SSL_VERIFY);
 
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Content-Type: application/json',
@@ -320,8 +320,8 @@ class Integrator
         curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
 
         // OJO: En producción idealmente deberías verificar SSL, pero lo dejamos false como pediste
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, INTEGRACIONES_SSL_VERIFY);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, INTEGRACIONES_SSL_VERIFY);
 
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Content-Type: application/json',
@@ -383,8 +383,8 @@ class Integrator
         curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
 
         // OJO: En producción idealmente deberías verificar SSL, pero lo dejamos false como pediste
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, INTEGRACIONES_SSL_VERIFY);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, INTEGRACIONES_SSL_VERIFY);
 
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Content-Type: application/json',
@@ -415,5 +415,167 @@ class Integrator
             'message' => $jsonResp['message'],
             'cantDesmatriculas' => $jsonResp['cantDesmatriculas']
         ];
+    }
+
+
+
+    //=========================traer datos de seccion de curso 
+    public function getSectionData($id_section, $courseid)
+    {
+        if (INTEGRACIONES_SYNC_ACTIVE) {
+            $ds = $this->objDatosSistema->buscar();
+            $apiKey = $ds['token_sistema'];
+            $url = API_BASE_URL . "/api/integracion/getSectionData";
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, INTEGRACIONES_SSL_VERIFY);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, INTEGRACIONES_SSL_VERIFY);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Content-Type: application/json',
+                'X-Api-Key: ' . $apiKey
+            ]);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
+                'id_section' => $id_section,
+                'courseid' => $courseid
+            ]));
+            $response = curl_exec($ch);
+            curl_close($ch);
+            return json_decode($response, true);
+        } else {
+            return ['success' => false, 'details' => 'Integraciones no activadas'];
+        }
+    }
+
+    public function getEnabledModules()
+    {
+        if (INTEGRACIONES_SYNC_ACTIVE) {
+            $ds = $this->objDatosSistema->buscar();
+            $apiKey = $ds['token_sistema'];
+            $url = API_BASE_URL . "/api/integracion/getEnabledModules";
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, INTEGRACIONES_SSL_VERIFY);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, INTEGRACIONES_SSL_VERIFY);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Content-Type: application/json',
+                'X-Api-Key: ' . $apiKey
+            ]);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([]));
+            $response = curl_exec($ch);
+            curl_close($ch);
+            return json_decode($response, true);
+        } else {
+            return ['success' => false, 'details' => 'Integraciones no activadas'];
+        }
+    }
+
+    public function createModuleMoodle($courseid, $id_seccion_moodle, $modname, $moodle_params)
+    {
+        // Verificar constante de activación
+        if (!defined('INTEGRACIONES_SYNC_ACTIVE') || !INTEGRACIONES_SYNC_ACTIVE) {
+            return ['success' => false, 'details' => 'Integraciones no activadas'];
+        }
+
+        // Obtener Token de la BD
+        $ds = $this->objDatosSistema->buscar();
+        $apiKey = $ds['token_sistema'];
+        if (empty($apiKey)) {
+            return [
+                'success' => false,
+                'details' => 'No se encontró token_sistema en datos del sistema'
+            ];
+        }
+
+        // Asumimos que el endpoint en tu API SIGI se llama "createModuleMoodle"
+        $url = API_BASE_URL . "/api/integracion/createModuleMoodle";
+
+        // Empaquetamos la data para la API
+        $payload = [
+            'courseid' => $courseid,
+            'id_seccion_moodle' => $id_seccion_moodle,
+            'modname' => $modname,
+            'moodle_params' => $moodle_params
+        ];
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, INTEGRACIONES_SSL_VERIFY);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, INTEGRACIONES_SSL_VERIFY);
+
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'X-Api-Key: ' . $apiKey
+        ]);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+        if (curl_errno($ch)) {
+            $error = curl_error($ch);
+            curl_close($ch);
+            return ['success' => false, 'details' => "Error cURL: " . $error];
+        }
+        curl_close($ch);
+
+        $jsonResp = json_decode($response, true);
+
+        if ($httpCode === 200 && isset($jsonResp['success']) && $jsonResp['success']) {
+            return [
+                'success' => true,
+                // Asumimos que la API devuelve los IDs generados (cmid, url, etc) en 'data' o similar
+                'data' => $jsonResp['data'] ?? [],
+                'details' => $jsonResp['details'] ?? $jsonResp['message'] ?? 'Módulo creado exitosamente'
+            ];
+        } else {
+            $msg = $jsonResp['details'] ?? $jsonResp['message'] ?? 'Error desconocido en API Master';
+            return [
+                'success' => false,
+                'details' => "Fallo ($httpCode): " . $msg,
+                'raw_response' => $jsonResp
+            ];
+        }
+        /*return [
+            $payload
+        ];*/
+    }
+
+
+    public function uploadFile($filePath, $fileName)
+    {
+        if (!defined('INTEGRACIONES_SYNC_ACTIVE') || !INTEGRACIONES_SYNC_ACTIVE) return null;
+
+        $ds = $this->objDatosSistema->buscar();
+        $apiKey = $ds['token_sistema'];
+        $url = API_BASE_URL . "/api/integracion/uploadFileMoodle";
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, INTEGRACIONES_SSL_VERIFY);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-Api-Key: ' . $apiKey]);
+        curl_setopt($ch, CURLOPT_POST, true);
+
+        // Enviamos el archivo físico usando CURLFile
+        curl_setopt($ch, CURLOPT_POSTFIELDS, [
+            'file' => new \CURLFile($filePath, null, $fileName),
+            'filename' => $fileName
+        ]);
+
+        $response = curl_exec($ch);
+        curl_close($ch);
+        $res = json_decode($response, true);
+
+        return (isset($res['success']) && $res['success']) ? $res['itemid'] : null;
     }
 }

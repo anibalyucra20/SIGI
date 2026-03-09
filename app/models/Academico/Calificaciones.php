@@ -265,6 +265,10 @@ class Calificaciones extends Model
             ORDER BY u.apellidos_nombres");
         $stmt->execute([$id_programacion_ud]);
         $estudiantes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($estudiantes as $key => $value) {
+            $apellidos_nombres = explode('_', trim($value['apellidos_nombres']));
+            $estudiantes[$key]['apellidos_nombres'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ' ' . $apellidos_nombres[2];
+        }
 
         // 3. Evaluaciones y criterios de CADA estudiante (lo que soluciona el bug visual)
         $evaluacionesEstudiante = [];
@@ -405,6 +409,110 @@ class Calificaciones extends Model
         return $ok;
     }
 
+    public function agregarCriterioMasivoConNombre($ids_eval, $nombre)
+    {
+        $ok = true;
+        $id_eval_referencia = $ids_eval[0];
+
+        // 1. Obtener el mayor 'orden' actual para continuar la secuencia
+        $stmt = self::$db->prepare("SELECT MAX(orden) FROM acad_criterio_evaluacion WHERE id_evaluacion = ?");
+        $stmt->execute([$id_eval_referencia]);
+        $max_orden = (int)$stmt->fetchColumn();
+        $nuevo_orden = $max_orden + 1;
+
+        // 2. Insertar el criterio para todos los estudiantes en esa evaluación
+        foreach ($ids_eval as $id_eval) {
+            $stmtIns = self::$db->prepare("INSERT INTO acad_criterio_evaluacion (id_evaluacion, detalle, orden, calificacion) VALUES (?, ?, ?, '')");
+            $ok = $ok && $stmtIns->execute([$id_eval, $nombre, $nuevo_orden]);
+        }
+
+        // 3. Si todo salió bien, averiguar el nro_calificacion al que pertenece
+        if ($ok) {
+            $stmtNro = self::$db->prepare("
+                SELECT ac.nro_calificacion 
+                FROM acad_evaluacion ae 
+                INNER JOIN acad_calificacion ac ON ae.id_calificacion = ac.id 
+                WHERE ae.id = ?");
+            $stmtNro->execute([$id_eval_referencia]);
+            $nro_calif = $stmtNro->fetchColumn();
+
+            // Retornamos los datos clave para que el controlador arme el idnumber y el vínculo
+            return [
+                'orden' => $nuevo_orden,
+                'nro_calificacion' => $nro_calif
+            ];
+        }
+
+        return false;
+    }
+
+    /**
+     * Registra el vínculo entre SIGI y un módulo de Moodle
+     * Punto 4: Valida que solo exista un registro con graded = 1 por criterio
+     */
+    public function registrarVinculoMoodle($data)
+    {
+        // Validar si ya existe un módulo calificable para este criterio específico
+        if ($data['graded'] == 1) {
+            $stmtCheck = self::$db->prepare("SELECT COUNT(*) FROM acad_moodle_vinculo_criterio 
+                WHERE id_programacion_ud = ? 
+                AND nro_calificacion = ? 
+                AND evaluacion_detalle = ? 
+                AND criterio_orden = ? 
+                AND graded = 1");
+            $stmtCheck->execute([
+                $data['id_programacion_ud'],
+                $data['nro_calificacion'],
+                $data['evaluacion_detalle'],
+                $data['criterio_orden']
+            ]);
+
+            if ($stmtCheck->fetchColumn() > 0) {
+                // Devolvemos false en 'ok' para que el controlador lo entienda
+                return false;
+            }
+        }
+
+        // Inserción en la tabla acad_moodle_vinculo_criterio
+        $sql = "INSERT INTO acad_moodle_vinculo_criterio 
+                (id_programacion_ud, nro_calificacion, evaluacion_detalle, criterio_orden, moodle_course_id, moodle_cmid, moodle_url, graded, moodle_grade_item_id, created_at) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        $stmt = self::$db->prepare($sql);
+        $ok = $stmt->execute([
+            $data['id_programacion_ud'],
+            $data['nro_calificacion'],
+            $data['evaluacion_detalle'],
+            $data['criterio_orden'],
+            $data['moodle_course_id'],
+            $data['moodle_cmid'],
+            $data['moodle_url'],
+            $data['graded'],
+            $data['moodle_grade_item_id'],
+            $data['created_at'] ?? date('Y-m-d H:i:s')
+        ]);
+
+        return $ok;
+    }
+
+    // Nueva función para verificar si existe un módulo calificable (usada por el controlador)
+    public function existeModuloCalificable($id_programacion_ud, $nro_calificacion, $evaluacion_detalle, $criterio_orden)
+    {
+        $stmtCheck = self::$db->prepare("SELECT COUNT(*) FROM acad_moodle_vinculo_criterio 
+            WHERE id_programacion_ud = ? 
+            AND nro_calificacion = ? 
+            AND evaluacion_detalle = ? 
+            AND criterio_orden = ? 
+            AND graded = 1");
+        $stmtCheck->execute([
+            $id_programacion_ud,
+            $nro_calificacion,
+            $evaluacion_detalle,
+            $criterio_orden
+        ]);
+
+        return $stmtCheck->fetchColumn() > 0;
+    }
 
 
 
@@ -448,5 +556,16 @@ class Calificaciones extends Model
         WHERE ae.id = ?");
         $stmt->execute([$id_evaluacion]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    // buscar calificaciones de programacion
+    public function getCalificacionesProgramacion($id_programacion)
+    {
+        $stmt = self::$db->prepare("SELECT calif.* 
+        FROM acad_calificacion calif 
+        INNER JOIN acad_detalle_matricula adm ON adm.id = calif.id_detalle_matricula
+        WHERE adm.id_programacion_ud = ?");
+        $stmt->execute([$id_programacion]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

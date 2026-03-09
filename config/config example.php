@@ -12,3 +12,7 @@ const DB_PASS = 'root';
 
 // Configuración de Integración 
 const INTEGRACIONES_SYNC_ACTIVE = true; // Interruptor general para apagar la sincro si api se cae
+const INTEGRACIONES_MOODLE_ACTIVE = true;
+const INTEGRACIONES_M365_ACTIVE = true;
+
+const INTEGRACIONES_SSL_VERIFY = false;

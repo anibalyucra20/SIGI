@@ -16,6 +16,8 @@ require_once __DIR__ . '/../../../app/models/Sigi/DatosSistema.php';
 require_once __DIR__ . '/../../../app/models/Sigi/IndicadorLogroCapacidad.php';
 
 require_once __DIR__ . '/../../../vendor/autoload.php';
+//integraciones
+require_once __DIR__ . '/../../helpers/Integrator.php';
 
 use App\Models\Academico\Calificaciones;
 use App\Models\Academico\ProgramacionUnidadDidactica;
@@ -33,6 +35,8 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
+use App\Helpers\Integrator;
+
 use TCPDF;
 
 class CalificacionesController extends Controller
@@ -47,6 +51,7 @@ class CalificacionesController extends Controller
     protected $objSilabo;
     protected $objMatricula;
     protected $objReporte;
+    protected $objIntegrator;
 
     public function __construct()
     {
@@ -61,6 +66,7 @@ class CalificacionesController extends Controller
         $this->objSilabo = new Silabos();
         $this->objMatricula = new Matricula();
         $this->objReporte = new Reportes();
+        $this->objIntegrator = new Integrator();
     }
     public function evaluar($id_programacion_ud, $nro_calificacion)
     {
@@ -76,6 +82,13 @@ class CalificacionesController extends Controller
         $programacion = $this->objProgramacionUD->find($id_programacion_ud);
         $periodo_vigente = $this->objPeriodoAcademico->getPeriodoVigente($programacion['id_periodo_academico']);
 
+        $id_ud = $programacion['id_unidad_didactica'];
+        $indicadores = $this->objIndLogroCapacidad->getIndicadoresLogroCapacidad($id_ud);
+        $indicadores_capacidad = [];
+        foreach ($indicadores as $value) {
+            $indicadores_capacidad[$value['codigo']] = $value['descripcion'];
+        }
+
         $datos = $this->model->getDatosEvaluacion($id_programacion_ud, $nro_calificacion);
         $estudiantes = $datos['estudiantes'];
         $estudiantes_inhabilitados = [];
@@ -86,15 +99,81 @@ class CalificacionesController extends Controller
             $inhabilitado = $this->model->inhabilitadoPorInasistencia($id_detalle);
             $estudiantes_inhabilitados[$id_detalle] = $inhabilitado;
         }
+        $secciones_moodle = json_decode($programacion['secciones_moodle'], true);
+        $id_seccion_moodle = 0;
+        foreach ($secciones_moodle as $seccion) {
+            if ($seccion['section'] == $nro_calificacion) {
+                $id_seccion_moodle = $seccion['id'];
+            }
+        }
+        $modulos_moodle_disponibles = $this->objIntegrator->getEnabledModules();
+        if ($modulos_moodle_disponibles['success']) {
+            $datos_modulos_disponibles = $modulos_moodle_disponibles['message']['modules'] ?? [];
+        } else {
+            $datos_modulos_disponibles = [];
+        }
 
+        $config_path = __DIR__ . '/../../../config/moodle_modules.php';
+        if (!file_exists($config_path)) {
+            return [
+                'success' => false,
+                'message' => 'Configuración de módulos no encontrada en SIGI'
+            ];
+        }
+        $moodle_config = require $config_path;
 
+        $final_modules = [];
+        if (is_array($datos_modulos_disponibles)) {
+            foreach ($datos_modulos_disponibles as $modData) {
+
+                // EXTRAEMOS EL NOMBRE TÉCNICO (ej: 'assign', 'quiz')
+                $modname = $modData['name'];
+
+                $is_supported = isset($moodle_config['types'][$modname]);
+                $campos_completos = [];
+
+                if ($is_supported) {
+                    $campos_completos = array_merge(
+                        array_values($moodle_config['common']),
+                        array_values($moodle_config['types'][$modname]['fields'])
+                    );
+                }
+
+                $final_modules[] = [
+                    'modname'   => $modname,
+                    'label'     => $is_supported ? $moodle_config['types'][$modname]['label'] : $modData['label'],
+                    'supported' => $is_supported,
+                    'fields'    => $campos_completos
+                ];
+            }
+        }
+
+        // buscar seccion de moodle
+        if ($id_seccion_moodle > 0 && $programacion['id_moodle'] > 0) {
+            $datos_seccion_moodle = $this->objIntegrator->getSectionData($id_seccion_moodle, $programacion['id_moodle']);
+        } else {
+            $datos_seccion_moodle = [];
+        }
+
+        /*echo "<pre>";
+        print_r($final_modules);
+        echo "</pre>";
+        
+        echo "<pre>";
+        print_r($datos_seccion_moodle);
+        echo "</pre>";*/
         $this->view('academico/calificaciones/evaluar', array_merge([
+            'module' => 'academico',
             'id_programacion_ud' => $id_programacion_ud,
+            'programacion' => $programacion,
+            'indicadores_capacidad' => $indicadores_capacidad,
             'periodo_vigente' => $periodo_vigente,
             'nro_calificacion' => $nro_calificacion,
             'estudiantes_inhabilitados' => $estudiantes_inhabilitados,
             'nota_inasistencia' => $nota_inasistencia,
-            'permitido' => $permitido
+            'permitido' => $permitido,
+            'final_modules' => $final_modules,
+            'datos_seccion_moodle' => $datos_seccion_moodle
         ], $datos));
     }
 
@@ -133,6 +212,13 @@ class CalificacionesController extends Controller
         $mostrar_calificaciones = $this->model->getMostrarCalificaciones($id_programacion_ud, $datos['nros_calificacion']);
         $mostrar_promedio_todos = $this->model->todosMostrarPromedio($id_programacion_ud);
 
+        $id_ud = $datos['idUnidadDidactica'];
+        $indicadores = $this->objIndLogroCapacidad->getIndicadoresLogroCapacidad($id_ud);
+        $indicadores_capacidad = [];
+        foreach ($indicadores as $value) {
+            $indicadores_capacidad[$value['codigo']] = $value['descripcion'];
+        }
+
         $estudiantes = $datos['estudiantes'];
         $estudiantes_inhabilitados = [];
         $nota_inasistencia = $this->objDatosSistema->getNotaSiInasistencia();
@@ -145,6 +231,7 @@ class CalificacionesController extends Controller
 
         $this->view('academico/calificaciones/ver', [
             'id_programacion_ud' => $id_programacion_ud,
+            'indicadores_capacidad' => $indicadores_capacidad,
             'permitido' => $permitido,
             'periodo_vigente' => $periodo_vigente,
             'nombreUnidadDidactica' => $datos['nombreUnidadDidactica'],
@@ -217,6 +304,307 @@ class CalificacionesController extends Controller
         echo json_encode(['ok' => $ok]);
         exit;
     }
+
+    public function agregarCriterioConMoodle()
+    {
+        // 1. Recibir datos desde $_POST (necesario ya que el JS ahora envía FormData)
+        if (empty($_POST)) {
+            echo json_encode(['ok' => false, 'msg' => 'No se recibieron datos en el servidor']);
+            exit;
+        }
+
+        $nombre         = trim($_POST['nombre'] ?? '');
+        $ids_eval       = explode(',', $_POST['ids_eval'] ?? '');
+
+        // FormData envía booleanos como strings "true"/"false", los convertimos a bool real
+        $crear_moodle   = ($_POST['crear_moodle'] === 'true');
+        $vincular_sigi  = ($_POST['vincular_sigi'] === 'true');
+        $es_calificable = ($_POST['es_calificable'] === 'true');
+
+        $section        = $_POST['section'] ?? 0;
+        $moodle_type    = $_POST['moodle_type'] ?? '';
+
+        $moodle_data    = json_decode($_POST['moodle_data'] ?? '{}', true);
+        $courseid       = $_POST['courseid'] ?? 0;
+
+        // 2. CREAR EL CRITERIO EN SIGI (Tu lógica intacta)
+        if ($vincular_sigi) {
+            $criterioGenerado = $this->model->agregarCriterioMasivoConNombre($ids_eval, $nombre);
+
+            if (!$criterioGenerado) {
+                echo json_encode(['ok' => false, 'msg' => 'Error al crear el criterio en SIGI']);
+                exit;
+            }
+        }
+
+        // 3. SI EL SWITCH MOODLE ESTÁ ACTIVO -> CREAR EN MOODLE
+        if ($crear_moodle) {
+
+            // --- INICIO PROCESAMIENTO DE ARCHIVO ---
+            if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
+                $itemid = $this->objIntegrator->uploadFile(
+                    $_FILES['file']['tmp_name'],
+                    $_FILES['file']['name']
+                );
+
+                if ($itemid) {
+                    // Mapeo dinámico para inyectar el itemid en el campo que Moodle espera
+                    $map = [
+                        'assign'      => 'files_filemanager',
+                        'h5pactivity' => 'packagepath',
+                        'scorm'       => 'packagefile',
+                        'resource'    => 'files_filemanager',
+                        'imscp'       => 'package_filemanager',
+                        'folder'      => 'files_filemanager'
+                    ];
+
+                    if (isset($map[$moodle_type])) {
+                        $moodle_data[$map[$moodle_type]] = $itemid;
+                        // si 'files_filemanager' no es procesado por el plugin local.
+                        if ($map[$moodle_type] === 'files_filemanager') {
+                            $moodle_data['files'] = $itemid;
+                        }
+                    }
+                }
+            }
+            // --- FIN PROCESAMIENTO DE ARCHIVO ---
+
+            // Obtener datos base para armar el IDnumber y el registro (Tu lógica intacta)
+            $prog_data = $this->model->obtenerProgPorIdEvaluacion($ids_eval[0]);
+            $id_programacion_ud = $prog_data['id_programacion_ud'];
+
+            $programacion = $this->objProgramacionUD->find($id_programacion_ud);
+            $secciones_moodle = json_decode($programacion['secciones_moodle'], true) ?? [];
+
+            $realSectionId = 0;
+            $id_seccion_seleccionada = (int)($_POST['section_moodle_id'] ?? 0);
+
+            if ($id_seccion_seleccionada > 0) {
+                // Si el usuario eligió una opción del select, usamos ese ID directamente
+                $realSectionId = $id_seccion_seleccionada;
+            } else {
+                // Lógica de respaldo: buscar por nro_calificacion si no se envió un ID específico
+                $sectionNumber = (int)($section ?? 0);
+                foreach ($secciones_moodle as $sec) {
+                    if ((int)$sec['section'] === $sectionNumber) {
+                        $realSectionId = (int)$sec['id'];
+                        break;
+                    }
+                }
+            }
+
+            if ($realSectionId <= 0) {
+                echo json_encode([
+                    'ok' => false,
+                    'msg' => "Error: No se encontró el ID para la sección $sectionNumber."
+                ]);
+                exit;
+            }
+
+            // Solo generamos idnumber si existe vínculo con SIGI
+            if ($vincular_sigi && $criterioGenerado) {
+                $idnumber = "SIGI-UD{$id_programacion_ud}-C{$criterioGenerado['nro_calificacion']}-O{$criterioGenerado['orden']}";
+                $moodle_data['idnumber'] = $idnumber;
+            }
+            $moodle_data['name'] = $nombre;
+
+            // --- LIMPIEZA DE PARÁMETROS PARA MOODLE (Tu lógica intacta) ---
+            $campos_fecha = [
+                'allowsubmissionsfromdate',
+                'duedate',
+                'cutoffdate',
+                'timeopen',
+                'timeclose',
+                'available',
+                'deadline',
+                'submissionstart',
+                'submissionend',
+                'assessmentstart',
+                'assessmentend',
+                'timeavailablefrom',
+                'timeavailableto',
+                'timeviewfrom',
+                'timeviewto'
+            ];
+
+            foreach ($moodle_data as $key => $value) {
+                if (in_array($key, $campos_fecha)) {
+                    if (!empty($value)) {
+                        $moodle_data[$key] = is_numeric($value) ? (int)$value : strtotime($value);
+                    } else {
+                        $moodle_data[$key] = 0;
+                    }
+                }
+                if ($value === 'false' || $value === false) {
+                    $moodle_data[$key] = 0;
+                } elseif ($value === 'true' || $value === true) {
+                    $moodle_data[$key] = 1;
+                }
+            }
+
+            // Llamada a la API Moodle
+            $resultado_moodle = $this->objIntegrator->createModuleMoodle($courseid, $realSectionId, $moodle_type, $moodle_data);
+
+            if ($resultado_moodle['success']) {
+                $moodle_resp = $resultado_moodle['data'] ?? $resultado_moodle['message'];
+
+                if ($vincular_sigi && $criterioGenerado) {
+                    $graded_final = $es_calificable ? 1 : 0;
+                    $data_vinculo = [
+                        'id_programacion_ud' => $id_programacion_ud,
+                        'nro_calificacion'   => $criterioGenerado['nro_calificacion'],
+                        'evaluacion_detalle' => $nombre,
+                        'criterio_orden'     => $criterioGenerado['orden'],
+                        'moodle_course_id'   => $courseid,
+                        'moodle_cmid'        => $moodle_resp['cmid'],
+                        'moodle_url'         => $moodle_resp['url'] ?? '',
+                        'graded'             => $graded_final,
+                        'moodle_grade_item_id' => $moodle_resp['gradeitemid'] ?? null,
+                    ];
+                    $this->model->registrarVinculoMoodle($data_vinculo);
+                }
+            } else {
+                echo json_encode([
+                    'ok' => false,
+                    'msg' => 'Criterio creado en SIGI, pero falló Moodle: ' . ($resultado_moodle['details'] ?? ''),
+                    'raw_response' => $resultado_moodle
+                ]);
+                exit;
+            }
+        }
+        echo json_encode(['ok' => true]);
+        exit;
+    }
+
+    /**
+     * Procesa la vinculación de un criterio SIGI con un módulo de Moodle
+     * Maneja la creación en Moodle y el registro en la tabla acad_moodle_vinculo_criterio
+     */
+    public function vincularCriterioMoodle()
+    {
+        // 1. Validaciones de Seguridad y Periodo (Siguiendo tu estilo)
+        $id_programacion_ud = $_POST['id_programacion_ud'] ?? 0;
+        $permitido = $this->model->puedeVerCalificaciones($id_programacion_ud);
+        $programacion = $this->objProgramacionUD->find($id_programacion_ud);
+        $periodo_vigente = $this->objPeriodoAcademico->getPeriodoVigente($programacion['id_periodo_academico']);
+
+        if (!$permitido || !$periodo_vigente) {
+            echo json_encode(['success' => false, 'message' => 'No tiene permisos o el periodo no está vigente.']);
+            exit;
+        }
+
+        // 2. Recolección de datos base
+        $nro_calificacion   = $_POST['nro_calificacion'];
+        $evaluacion_detalle = $_POST['evaluacion_detalle']; // Este es el nombre del criterio en SIGI
+        $criterio_orden     = $_POST['criterio_orden'];
+        $modname            = $_POST['modname'];
+        $id_seccion_moodle  = $_POST['id_seccion_moodle'];
+
+        // Puntos 2, 3 y 4 de tu lista
+        $vincular_sigi  = isset($_POST['vincular_sigi']) && $_POST['vincular_sigi'] == '1';
+        $es_calificable = isset($_POST['es_calificable']) && $_POST['es_calificable'] == '1' ? 1 : 0;
+
+        // --- VALIDACIÓN PUNTO 4: Solo un calificable por criterio ---
+        if ($vincular_sigi && $es_calificable == 1) {
+            $existe = $this->model->existeModuloCalificable(
+                $id_programacion_ud,
+                $nro_calificacion,
+                $evaluacion_detalle,
+                $criterio_orden
+            );
+            if ($existe) {
+                echo json_encode(['success' => false, 'message' => 'Ya existe un módulo marcado como CALIFICABLE para este criterio.']);
+                exit;
+            }
+        }
+
+        // 3. Preparación de parámetros para Moodle (Punto 1 y conversión de fechas)
+        $moodle_params = $this->prepararParametrosMoodle($_POST);
+
+        // 4. Llamada al Integrator para crear el módulo en Moodle
+        $resultado_moodle = $this->objIntegrator->createModuleMoodle(
+            $programacion['id_moodle'], // id_course_moodle
+            $id_seccion_moodle,
+            $modname,
+            $moodle_params
+        );
+
+        if ($resultado_moodle['success']) {
+            $moodle_data = $resultado_moodle['message']; // Contiene cmid e id (instance)
+
+            // 5. Registro en tu tabla acad_moodle_vinculo_criterio
+            // Si vincular_sigi es falso (Punto 3), graded siempre va como 0
+            $graded_final = ($vincular_sigi) ? $es_calificable : 0;
+
+
+            $data_vinculo = [
+                'id_programacion_ud' => $id_programacion_ud,
+                'nro_calificacion'   => $nro_calificacion,
+                'evaluacion_detalle' => $evaluacion_detalle,
+                'criterio_orden'     => $criterio_orden,
+                'moodle_course_id'   => $programacion['id_moodle'],
+                'moodle_cmid'        => $moodle_data['cmid'],
+                'graded'             => $graded_final,
+                'moodle_grade_item_id' => $moodle_data['gradeitemid'] ?? null,
+                'created_at'         => date('Y-m-d H:i:s')
+            ];
+
+            $ok = $this->model->registrarVinculoMoodle($data_vinculo);
+
+            echo json_encode([
+                'success' => $ok,
+                'message' => $ok ? 'Vinculación exitosa' : 'Error al registrar vínculo en SIGI',
+                'moodle_cmid' => $moodle_data['cmid']
+            ]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Error Moodle: ' . $resultado_moodle['message']]);
+        }
+        exit;
+    }
+
+    /**
+     * Limpia y convierte los parámetros del POST al formato que Moodle entiende
+     */
+    private function prepararParametrosMoodle($post)
+    {
+        $params = [];
+        // Filtramos solo los campos que pertenecen al prefijo del formulario dinámico
+        // Supongamos que en el JS los envías como moodle_field[nombre]
+        if (isset($post['moodle_field'])) {
+            foreach ($post['moodle_field'] as $key => $value) {
+                // Punto 1: Convertir fechas a UNIX Timestamp
+                if ($this->esCampoFecha($key) && !empty($value)) {
+                    $params[$key] = strtotime($value);
+                } else {
+                    $params[$key] = $value;
+                }
+            }
+        }
+        return $params;
+    }
+
+    private function esCampoFecha($key)
+    {
+        $campos_fecha = [
+            'allowsubmissionsfromdate',
+            'duedate',
+            'cutoffdate',
+            'timeopen',
+            'timeclose',
+            'available',
+            'deadline',
+            'submissionstart',
+            'submissionend',
+            'assessmentstart',
+            'assessmentend',
+            'timeavailablefrom',
+            'timeavailableto',
+            'timeviewfrom',
+            'timeviewto'
+        ];
+        return in_array($key, $campos_fecha);
+    }
+
 
     public function guardarRecuperacion()
     {

@@ -158,6 +158,15 @@
             overlay.setAttribute('aria-hidden', 'true');
         });
 
+        // ==========================================
+        // NUEVO: Mostrar al recargar con F5 o salir de la página
+        // ==========================================
+        window.addEventListener('beforeunload', function() {
+            // No forzamos un texto específico para no sobreescribir si ya decía "Guardando..."
+            showLoader('Cargando…');
+        });
+        // ==========================================
+
         // 1) Mostrar en submit de cualquier form
         document.addEventListener('submit', function(e) {
             const form = e.target;

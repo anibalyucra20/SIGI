@@ -8,15 +8,14 @@ require __DIR__ . '/../../layouts/header.php';
         <div class="col-4 col-md-2 mb-3">
             <a class="btn btn-danger mb-3 col-12" href="<?= BASE_URL; ?>/academico/calificaciones/ver/<?php echo $id_programacion_ud; ?>">Regresar</a>
             <a class="btn btn-info btn-sm btn-block mb-2 col-12" target="_blank" href="<?= BASE_URL ?>/academico/calificaciones/registroAuxiliar/<?= $id_programacion_ud ?>/<?= $nro_calificacion ?>">Imprimir</a>
-            </div>
-            <h5 class="text-center font-weight-bold mb-4" style="color:#607d8b;">
-                Evaluación - Indicador <?= $nro_calificacion ?>
-                <?php if (!empty($nombreIndicador)) : ?>
-                    - <?= $nombreIndicador ?>
-                <?php endif; ?>
-                - <span style="color:#4153a1;"><?php echo strtoupper($nombreUnidadDidactica ?? ''); ?></span>
-            </h5>
-        
+        </div>
+        <h5 class="text-center font-weight-bold mb-4" style="color:#607d8b;">
+            Evaluación - Indicador <?= $nro_calificacion ?>
+
+            - <span style="color:#4153a1;"><?php echo strtoupper($nombreUnidadDidactica ?? ''); ?></span>
+        </h5>
+        <h6 class="text-center mb-4"><b>Indicador de Logro: </b><?= $indicadores_capacidad['I' . $nro_calificacion] ?></h6>
+
         <div class="table-responsive">
             <table class="table table-bordered" style="font-size:14px;">
                 <thead>
@@ -100,7 +99,11 @@ require __DIR__ . '/../../layouts/header.php';
                     ?>
 
                     <tr>
-                        <?php foreach ($anyEv as $iEval => $eval): ?>
+                        <?php
+                        $cont = 0;
+                        foreach ($anyEv as $iEval => $eval):
+                            $cont++;
+                        ?>
                             <?php foreach ($eval['criterios'] as $iCrit => $criterio): ?>
                                 <?php
                                 // Obtiene todos los IDs de la columna
@@ -110,9 +113,38 @@ require __DIR__ . '/../../layouts/header.php';
                                 ?>
                                 <th class="text-center criterio-header p-0" style="width: 40px;">
                                     <?php if ($periodo_vigente['vigente']): ?>
+                                        <button class="btn btn-warning mb-1 btn-sm btn-vinculo-moodle-criterio" data-toggle="modal"
+                                            data-target=".bd-example-modal-lg-<?= $cont  ?>" data-ids-criterio="<?= $ids ?>"><i class="fas fa-link"></i></button><br>
                                         <button class="btn btn-info mb-1 btn-sm btn-editar-criterio"
                                             data-ids-criterio="<?= $ids ?>"><i class="fa fa-pen"></i></button>
+                                        <!-- Modal para moodle -->
+                                        <div class="modal fade bd-example-modal-lg-<?= $cont ?>" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+                                            <div class="modal-dialog modal-lg">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title h4" id="myLargeModalLabel">Configuración con Moodle</h5>
+                                                        <button type="button" class="close waves-effect waves-light" data-dismiss="modal" aria-label="Close">
+                                                            <span aria-hidden="true">&times;</span>
+                                                        </button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <div class="row col-12">
+                                                            <div class="form-group row col-md-12">
+                                                                <label class="col-4 col-form-label">Vincular Criterio con :</label>
+                                                                <div class="col-8">
+                                                                    <select name="criterio-moodle-<?= $cont ?>" id="criterio-moodle-<?= $cont ?>" class="form-control" data-ids-criterio="<?= $ids ?>">
+                                                                        <option value="">Ninguna</option>
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                     <?php endif; ?>
+                                    <br>
                                     <span class="criterio-detalle" style="width:40px; writing-mode: vertical-lr; transform: rotate(180deg);"><?= htmlspecialchars($criterio['detalle']) ?></span>
                                 </th>
                             <?php endforeach; ?>
@@ -180,6 +212,99 @@ require __DIR__ . '/../../layouts/header.php';
                 <center><a class="btn btn-success mb-3 col-6 col-md-2" href="<?= BASE_URL; ?>/academico/calificaciones/evaluar/<?= $id_programacion_ud; ?>/<?= $nro_calificacion; ?>">Guardar</a></center>
             <?php endif; ?>
 
+        </div>
+        <div class="modal fade" id="modalAgregarCriterioMoodle" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title"><i class="fas fa-plus-circle"></i> Nuevo Criterio de Evaluación</h5>
+                        <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label class="font-weight-bold">Nombre del Criterio o Actividad:</label>
+                            <input type="text" id="nuevo-criterio-nombre" class="form-control border-primary" placeholder="Ej: Tarea 1, Examen Parcial...">
+                        </div>
+
+                        <hr>
+
+                        <div class="custom-control custom-switch mb-3">
+                            <input type="checkbox" class="custom-control-input" id="switchMoodle">
+                            <label class="custom-control-label font-weight-bold text-primary" for="switchMoodle">
+                                <i class="fas fa-graduation-cap"></i> ¿Desea Registrar en el Aula Virtual (Moodle)?
+                            </label>
+                        </div>
+
+                        <div id="moodle-options-container" style="display:none;" class="bg-light p-3 rounded border mb-3">
+                            <div class="row">
+                                <div class="col-md-6 border-right">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="vincular_sigi" name="vincular_sigi" value="0">
+                                        <label class="custom-control-label font-weight-bold" for="vincular_sigi">Vincular con Registro SIGI</label>
+                                    </div>
+                                    <small class="text-muted d-block mt-1">
+                                        <strong>Activado:</strong> Crea columna de notas en SIGI.<br>
+                                        <strong>Desactivado:</strong> Solo existirá en Moodle (Material de apoyo).
+                                    </small>
+                                </div>
+                                <div class="col-md-6" id="container-calificable">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="es_calificable" name="es_calificable" value="1">
+                                        <label class="custom-control-label font-weight-bold text-danger" for="es_calificable">Actividad Calificable</label>
+                                    </div>
+                                    <small class="text-muted d-block mt-1">Permite importar las notas automáticas desde Moodle a SIGI.</small>
+                                </div>
+                            </div>
+
+                            <hr>
+
+                            <div class="form-group mb-0">
+                                <label class="small font-weight-bold text-uppercase">Tipo de Actividad en Moodle:</label>
+                                <select id="select-modname-dinamico" class="form-control form-control-sm shadow-sm">
+                                    <option value="">-- Seleccione tipo de actividad --</option>
+                                    <?php foreach ($final_modules as $fm): ?>
+                                        <?php if ($fm['supported']): ?>
+                                            <option value="<?= $fm['modname'] ?>"><?= $fm['label'] ?></option>
+                                        <?php endif; ?>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label class="small font-weight-bold text-primary">Ubicar en:</label>
+                                <select id="select-seccion-moodle" class="form-control form-control-sm m-input" name="section_moodle_id">
+                                    <option value="<?= $datos_seccion_moodle['id_principal'] ?? 0 ?>" data-type="main" selected>
+                                        Raíz de la Sección (Indicador <?= $nro_calificacion ?>)
+                                    </option>
+
+                                    <?php foreach ($datos_seccion_moodle['message'] as $modulo): ?>
+                                        <?php if ($modulo['modname'] === 'subsection'): ?>
+                                            <?php
+                                            $customData = json_decode($modulo['customdata'], true);
+                                            $subSectionId = $customData['sectionid'] ?? 0;
+                                            ?>
+                                            <option value="<?= $subSectionId ?>" data-type="subsection">
+                                                Subsección: <?= htmlspecialchars($modulo['name']) ?>
+                                            </option>
+                                        <?php endif; ?>
+                                    <?php endforeach; ?>
+                                </select>
+                                <small class="text-muted">Seleccione si desea crearlo dentro de una subsección específica de Moodle.</small>
+                            </div>
+                        </div>
+
+                        <div id="seccion-moodle-dinamica" style="display:none;" class="border-left border-primary pl-3">
+
+                            <div id="render-campos-moodle" class="row"></div>
+                        </div>
+
+                        <input type="hidden" id="hidden-eval-ids">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-success" id="btn-confirmar-todo">Guardar Criterio</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -311,7 +436,9 @@ require __DIR__ . '/../../layouts/header.php';
                                 });
                                 span.style.display = '';
                                 input.remove();
-                                location.reload();
+                                // Mostrar loader antes de recargar
+                                if (window.SIGI_LOADER) window.SIGI_LOADER.show('Actualizando vista...');
+                                setTimeout(() => location.reload(), 50);
                             } else {
                                 alert('Error al guardar');
                                 span.style.display = '';
@@ -391,7 +518,9 @@ require __DIR__ . '/../../layouts/header.php';
                                 });
                                 spanPonderado.style.display = '';
                                 input.remove();
-                                location.reload();
+                                // Mostrar loader antes de recargar
+                                if (window.SIGI_LOADER) window.SIGI_LOADER.show('Actualizando vista...');
+                                setTimeout(() => location.reload(), 50);
                             } else {
                                 alert('Error al guardar');
                                 spanPonderado.style.display = '';
@@ -409,7 +538,7 @@ require __DIR__ . '/../../layouts/header.php';
             });
         });
 
-        document.querySelectorAll('.btn-agregar-criterio').forEach(function(btn) {
+        /*document.querySelectorAll('.btn-agregar-criterio').forEach(function(btn) {
             btn.addEventListener('click', function(e) {
                 e.preventDefault();
                 if (!confirm('¿Desea agregar un nuevo criterio de evaluación para todos los estudiantes en esta evaluación?')) return;
@@ -433,10 +562,442 @@ require __DIR__ . '/../../layouts/header.php';
                         }
                     });
             });
+        });*/
+    </script>
+    <script>
+        // Inyección de configuración desde PHP
+        const moodleConfig = <?= json_encode(array_values($final_modules)) ?>;
+
+        // Inicializar botones de agregar criterio para abrir el modal
+        document.querySelectorAll('.btn-agregar-criterio').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                // Limpiar y preparar el modal para un nuevo registro
+                document.getElementById('hidden-eval-ids').value = this.dataset.evalIds;
+                document.getElementById('nuevo-criterio-nombre').value = '';
+                document.getElementById('switchMoodle').checked = false;
+
+                // AJUSTE PARA ESCENARIOS: Reset de estados y contenedores nuevos
+                document.getElementById('vincular_sigi').checked = false;
+                document.getElementById('es_calificable').checked = false;
+                document.getElementById('moodle-options-container').style.display = 'none';
+
+                document.getElementById('seccion-moodle-dinamica').style.display = 'none';
+                document.getElementById('select-modname-dinamico').value = '';
+                document.getElementById('render-campos-moodle').innerHTML = '';
+
+                $('#modalAgregarCriterioMoodle').modal('show');
+            });
+        });
+
+        // Control del Switch Moodle para mostrar/ocultar configuración
+        document.getElementById('switchMoodle').addEventListener('change', function() {
+            // AJUSTE PARA ESCENARIOS: Controlar el contenedor de opciones (gris) y la sección dinámica
+            const optionsContainer = document.getElementById('moodle-options-container');
+            const seccionMoodle = document.getElementById('seccion-moodle-dinamica');
+
+            const displayValue = this.checked ? 'block' : 'none';
+            optionsContainer.style.display = displayValue;
+            seccionMoodle.style.display = displayValue;
+
+            if (!this.checked) {
+                document.getElementById('render-campos-moodle').innerHTML = '';
+                document.getElementById('select-modname-dinamico').value = '';
+            }
+        });
+
+        // Renderizado dinámico de campos según el tipo de módulo seleccionado
+        document.getElementById('select-modname-dinamico').addEventListener('change', function() {
+            const modname = this.value;
+            const renderContainer = document.getElementById('render-campos-moodle');
+            renderContainer.innerHTML = '';
+
+            if (!modname) return;
+
+            const modInfo = moodleConfig.find(m => m.modname === modname);
+            if (!modInfo || !modInfo.fields) return;
+
+            modInfo.fields.forEach(field => {
+                // --- 1. FILTRO DE CAMPOS OCULTOS ---
+                // Mantenemos estos campos como hidden para que viajen con sus valores por defecto
+                const camposOcultos = ['introformat', 'contentformat', 'showdescription', 'grade', 'maxgrade', 'groupmode', 'anonymous', 'numbering', 'forcesubscribe'];
+
+                if (camposOcultos.includes(field.name)) {
+                    const hidden = document.createElement('input');
+                    hidden.type = 'hidden';
+                    hidden.name = field.name;
+                    hidden.className = 'm-input'; // Importante para la recolección
+                    hidden.value = field.default !== undefined ? (typeof field.default === 'boolean' ? (field.default ? 1 : 0) : field.default) : 1;
+                    renderContainer.appendChild(hidden);
+                    return;
+                }
+
+                const col = document.createElement('div');
+                col.className = (field.type === 'editor' || field.name === 'intro') ? 'col-12 mb-3' : 'col-md-6 mb-3';
+
+                const defaultValue = field.default !== undefined ? field.default : '';
+                const requiredAttr = field.required ? 'required' : ''; // Atributo HTML5
+                const labelText = `<label class="small font-weight-bold mb-1">${field.label} ${field.required ? '<span class="text-danger">*</span>' : ''}</label>`;
+
+                let inputElement = '';
+
+                // --- 2. MANEJO DE INPUTS (Mejorado para priorizar configuración) ---
+
+                // NUEVO: Si el campo tiene opciones definidas en el PHP, las usamos primero.
+                // Esto evita el cruce de 'display' en URL u otros módulos.
+                if (field.options) {
+                    inputElement = `<select name="${field.name}" class="form-control form-control-sm m-input" ${requiredAttr}>`;
+                    for (const [val, text] of Object.entries(field.options)) {
+                        inputElement += `<option value="${val}" ${val == defaultValue ? 'selected' : ''}>${text}</option>`;
+                    }
+                    inputElement += `</select>`;
+                }
+                // Lógica original de Moodle (para campos sin opciones explícitas en config)
+                else if (field.name === 'groupmode') {
+                    inputElement = `
+            <select name="${field.name}" class="form-control form-control-sm m-input" ${requiredAttr}>
+                <option value="0" ${defaultValue == 0 ? 'selected' : ''}>No hay grupos</option>
+                <option value="1" ${defaultValue == 1 ? 'selected' : ''}>Grupos separados</option>
+                <option value="2" ${defaultValue == 2 ? 'selected' : ''}>Grupos visibles</option>
+            </select>`;
+                } else if (field.name === 'anonymous') {
+                    inputElement = `
+            <select name="${field.name}" class="form-control form-control-sm m-input" ${requiredAttr}>
+                <option value="1" ${defaultValue == 1 ? 'selected' : ''}>Anónimo</option>
+                <option value="2" ${defaultValue == 2 ? 'selected' : ''}>Nombres de usuarios</option>
+            </select>`;
+                } else if (field.name === 'display' || field.name === 'numbering') {
+                    inputElement = `
+            <select name="${field.name}" class="form-control form-control-sm m-input" ${requiredAttr}>
+                <option value="0" ${defaultValue == 0 ? 'selected' : ''}>Automático / Ninguno</option>
+                <option value="1" ${defaultValue == 1 ? 'selected' : ''}>Incrustar / Numérico</option>
+                <option value="2" ${defaultValue == 2 ? 'selected' : ''}>Forzar descarga / Viñetas</option>
+            </select>`;
+                } else if (field.name === 'forcesubscribe') {
+                    inputElement = `
+            <select name="${field.name}" class="form-control form-control-sm m-input" ${requiredAttr}>
+                <option value="0" ${defaultValue == 0 ? 'selected' : ''}>Opcional</option>
+                <option value="1" ${defaultValue == 1 ? 'selected' : ''}>Forzada (Siempre)</option>
+                <option value="2" ${defaultValue == 2 ? 'selected' : ''}>Automática (Inicial)</option>
+                <option value="3" ${defaultValue == 3 ? 'selected' : ''}>Desactivada</option>
+            </select>`;
+                } else if (field.name === 'mainglossary') {
+                    inputElement = `
+            <select name="${field.name}" class="form-control form-control-sm m-input" ${requiredAttr}>
+                <option value="0" ${defaultValue == 0 ? 'selected' : ''}>Glosario Secundario</option>
+                <option value="1" ${defaultValue == 1 ? 'selected' : ''}>Glosario Principal</option>
+            </select>`;
+                } else if (field.name === 'wikimode') {
+                    inputElement = `
+            <select name="${field.name}" class="form-control form-control-sm m-input" ${requiredAttr}>
+                <option value="collaborative" ${defaultValue == 'collaborative' ? 'selected' : ''}>Wiki colaborativa</option>
+                <option value="individual" ${defaultValue == 'individual' ? 'selected' : ''}>Wiki individual</option>
+            </select>`;
+                } else {
+                    // --- 3. RENDERIZADO POR TIPO ---
+                    switch (field.type) {
+                        case 'url':
+                            inputElement = `<input type="url" name="${field.name}" class="form-control form-control-sm m-input" value="${defaultValue}" placeholder="https://" ${requiredAttr}>`;
+                            break;
+                        case 'select':
+                            inputElement = `<select name="${field.name}" class="form-control form-control-sm m-input" ${requiredAttr}>`;
+                            if (field.options) {
+                                for (const [val, text] of Object.entries(field.options)) {
+                                    inputElement += `<option value="${val}" ${val == defaultValue ? 'selected' : ''}>${text}</option>`;
+                                }
+                            }
+                            inputElement += `</select>`;
+                            break;
+
+                        case 'datetime':
+                            inputElement = `<input type="datetime-local" name="${field.name}" class="form-control form-control-sm m-input" ${requiredAttr}>`;
+                            break;
+
+                        case 'bool':
+                            inputElement = `
+                    <select name="${field.name}" class="form-control form-control-sm m-input" ${requiredAttr}>
+                        <option value="1" ${defaultValue == 1 ? 'selected' : ''}>Sí</option>
+                        <option value="0" ${defaultValue == 0 ? 'selected' : ''}>No</option>
+                    </select>`;
+                            break;
+
+                        case 'int':
+                            const isGrade = field.name === 'grade' || field.name === 'maxgrade';
+                            inputElement = `<input type="number" name="${field.name}" class="form-control form-control-sm m-input" 
+                        value="${defaultValue}" ${isGrade ? 'max="20" min="0"' : ''} ${requiredAttr}>`;
+                            break;
+
+                        case 'editor':
+                            inputElement = `<textarea name="${field.name}" class="form-control form-control-sm m-input" rows="3" ${requiredAttr} placeholder="Escriba la descripción aquí...">${defaultValue}</textarea>`;
+                            break;
+
+                        case 'file':
+                            // Definimos las extensiones según el tipo de módulo
+                            let acceptAttr = '';
+                            if (modname === 'h5pactivity') {
+                                acceptAttr = 'accept=".h5p"';
+                            } else if (modname === 'scorm' || modname === 'imscp') {
+                                acceptAttr = 'accept=".zip"';
+                            }
+                            inputElement = `
+                                <div class="custom-file">
+                                    <input type="file" name="${field.name}" class="custom-file-input m-input" id="file_${field.name}" ${requiredAttr} ${acceptAttr}>
+                                    <label class="custom-file-label col-form-label-sm" for="file_${field.name}">Elegir archivo...</label>
+                                </div>`;
+                            break;
+
+                        default:
+                            inputElement = `<input type="text" name="${field.name}" class="form-control form-control-sm m-input" 
+                        value="${defaultValue}" ${requiredAttr}>`;
+                    }
+                }
+
+                col.innerHTML = labelText + inputElement;
+                renderContainer.appendChild(col);
+
+                // --- SOLUCIÓN VISUAL: Actualizar nombre del archivo en el label ---
+                if (field.type === 'file') {
+                    const fileInput = col.querySelector('input[type="file"]');
+                    fileInput.addEventListener('change', function(e) {
+                        const fileName = e.target.files[0] ? e.target.files[0].name : "Elegir archivo...";
+                        const label = col.querySelector('.custom-file-label');
+                        if (label) label.textContent = fileName;
+                    });
+                }
+
+                if (field.name === 'name') {
+                    const nameInput = col.querySelector('input');
+                    const sigiNameInput = document.getElementById('nuevo-criterio-nombre');
+
+                    // Sincronizar valor inicial
+                    nameInput.value = sigiNameInput.value;
+
+                    // Sincronizar en cada cambio
+                    // Opcional: Ocultar el contenedor del input de Moodle para que no se vea doble
+                    col.style.display = 'none';
+                }
+            });
+            document.getElementById('nuevo-criterio-nombre').addEventListener('input', (e) => {
+                const moodleNameInput = document.querySelector('#render-campos-moodle input[name="name"]');
+                if (moodleNameInput) moodleNameInput.value = e.target.value;
+            });
+
+
+            // --- 4. LÓGICA ESPECIAL PARA CHOICE (CONSULTA) ---
+            if (modname === 'choice') {
+                const choiceDiv = document.createElement('div');
+                choiceDiv.className = 'col-12 border-top pt-3 mt-2';
+                choiceDiv.innerHTML = `
+            <label class="small font-weight-bold text-primary">Opciones de consulta (Mínimo 2):</label>
+            <div id="choice-options-wrapper">
+                <input type="text" name="optiontext[]" class="form-control form-control-sm m-input mb-1" placeholder="Opción 1" required>
+                <input type="text" name="optiontext[]" class="form-control form-control-sm m-input mb-1" placeholder="Opción 2" required>
+            </div>
+            <button type="button" class="btn btn-link btn-sm p-0" id="btn-add-option">+ Añadir opción</button>
+        `;
+                renderContainer.appendChild(choiceDiv);
+
+                document.getElementById('btn-add-option').addEventListener('click', function() {
+                    const wrapper = document.getElementById('choice-options-wrapper');
+                    const newInput = document.createElement('input');
+                    newInput.type = 'text';
+                    newInput.name = 'optiontext[]';
+                    newInput.className = 'form-control form-control-sm m-input mb-1';
+                    newInput.placeholder = 'Nueva opción';
+                    wrapper.appendChild(newInput);
+                });
+            }
+        });
+
+        // Acción de Guardar (SIGI + opcionalmente Moodle)
+        // Acción de Guardar (Maneja: Solo SIGI, Solo Moodle, o Ambos vinculados)
+        document.getElementById('btn-confirmar-todo').onclick = function() {
+            const courseIdMoodle = '<?= $programacion['id_moodle'] ?>';
+            const crearEnMoodle = document.getElementById('switchMoodle').checked;
+            const vincularSigi = document.getElementById('vincular_sigi').checked;
+            const nombre = document.getElementById('nuevo-criterio-nombre').value.trim();
+
+            // 1. VALIDACIÓN UNIVERSAL: El nombre siempre es obligatorio (sea para SIGI o Moodle)
+            if (!nombre) {
+                alert('Por favor, ingrese el nombre.');
+                return;
+            }
+
+            // 2. VALIDACIONES ESPECÍFICAS DE MOODLE
+            if (crearEnMoodle) {
+                // Validar que la UD tenga vínculo con Moodle
+                if (!courseIdMoodle || courseIdMoodle === "") {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Atención',
+                        text: 'Esta Unidad Didáctica no tiene un ID de Moodle vinculado. Sincroniza la programación primero.'
+                    });
+                    return;
+                }
+                // Validar que se haya seleccionado un tipo de actividad
+                if (!document.getElementById('select-modname-dinamico').value) {
+                    alert('Debe seleccionar un tipo de módulo para Moodle o desactivar la opción.');
+                    return;
+                }
+            }
+
+            const ids_eval = document.getElementById('hidden-eval-ids').value;
+            const moodleType = document.getElementById('select-modname-dinamico').value;
+
+            let moodleData = {};
+            let physicalFile = null; // Variable para capturar el archivo físico
+
+            if (crearEnMoodle) {
+                const inputs = document.querySelectorAll('.m-input');
+                let faltanObligatorios = false;
+
+                inputs.forEach(input => {
+                    let value = input.value;
+                    const name = input.name;
+
+                    // --- PROCESAMIENTO DE ARCHIVOS ---
+                    if (input.type === 'file') {
+                        if (input.files && input.files[0]) {
+                            const file = input.files[0];
+                            const fileName = file.name.toLowerCase();
+
+                            // VALIDACIÓN DE EXTENSIONES (H5P y SCORM/IMS)
+                            let errorExtension = false;
+                            if (moodleType === 'h5pactivity' && !fileName.endsWith('.h5p')) {
+                                errorExtension = "El módulo H5P solo acepta archivos con extensión .h5p";
+                            } else if ((moodleType === 'scorm' || moodleType === 'imscp') && !fileName.endsWith('.zip')) {
+                                errorExtension = "Este módulo solo acepta paquetes comprimidos en formato .zip";
+                            }
+
+                            if (errorExtension) {
+                                Swal.fire('Archivo no permitido', errorExtension, 'error');
+                                faltanObligatorios = true;
+                                input.classList.add('is-invalid');
+                                return;
+                            }
+
+                            physicalFile = file;
+                            input.classList.remove('is-invalid');
+                        }
+
+                        // Validar si el archivo es obligatorio según configuración
+                        if (input.hasAttribute('required') && (!input.files || input.files.length === 0)) {
+                            faltanObligatorios = true;
+                            input.classList.add('is-invalid');
+                        }
+                        return;
+                    }
+
+                    // --- VALIDACIÓN DE CAMPOS DE TEXTO/SELECT ---
+                    if (input.hasAttribute('required') && (!value || value.trim() === "")) {
+                        faltanObligatorios = true;
+                        input.classList.add('is-invalid');
+                    } else {
+                        input.classList.remove('is-invalid');
+
+                        if (name.includes('[]')) {
+                            const cleanName = name.replace('[]', '');
+                            if (!moodleData[cleanName]) moodleData[cleanName] = [];
+                            moodleData[cleanName].push(value);
+                        } else {
+                            // Conversión de Fechas
+                            if (input.type === 'datetime-local') {
+                                value = value ? Math.floor(new Date(value).getTime() / 1000) : 0;
+                            }
+                            // Conversión de Checkboxes
+                            if (input.type === 'checkbox') {
+                                value = input.checked ? 1 : 0;
+                            }
+
+                            if (name) {
+                                // CONVERSIÓN MINUTOS A SEGUNDOS (timelimit para Quiz/Lesson)
+                                if (name === 'timelimit') {
+                                    const minutos = parseInt(value) || 0;
+                                    moodleData[name] = minutos * 60;
+                                } else {
+                                    moodleData[name] = value;
+                                }
+                            }
+                        }
+                    }
+                });
+
+                if (faltanObligatorios) {
+                    Swal.fire('Atención', 'Por favor complete los campos marcados con (*).', 'warning');
+                    return;
+                }
+            }
+
+            // Bloquear botón para evitar doble envío
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+
+            // --- CONSTRUCCIÓN DE FORMDATA PARA LOS 3 ESCENARIOS ---
+            const formData = new FormData();
+            formData.append('nombre', nombre);
+            formData.append('ids_eval', ids_eval);
+            formData.append('crear_moodle', crearEnMoodle);
+
+            /**
+             * Lógica de escenarios:
+             * 1. Solo SIGI: crearEnMoodle es false. El backend creará el criterio.
+             * 2. Solo Moodle: crearEnMoodle es true, vincularSigi es false.
+             * 3. Ambos: crearEnMoodle es true, vincularSigi es true.
+             */
+            formData.append('vincular_sigi', crearEnMoodle ? vincularSigi : true);
+
+            formData.append('es_calificable', document.getElementById('es_calificable').checked);
+            formData.append('moodle_type', moodleType);
+            formData.append('moodle_data', JSON.stringify(moodleData));
+            formData.append('section', '<?= $nro_calificacion ?>');
+            formData.append('courseid', courseIdMoodle);
+            formData.append('section_moodle_id', document.getElementById('select-seccion-moodle').value);
+
+            if (physicalFile) {
+                formData.append('file', physicalFile);
+            }
+
+            fetch('<?= BASE_URL ?>/academico/calificaciones/agregarCriterioConMoodle', {
+                    method: 'POST',
+                    body: formData // Multipart automático
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.ok) {
+                        if (window.SIGI_LOADER) window.SIGI_LOADER.show('Actualizando calificaciones...');
+                        setTimeout(() => {
+                            location.reload();
+                        }, 50);
+                    } else {
+                        alert(data.msg || 'Error al procesar la solicitud.');
+                        this.disabled = false;
+                        this.innerHTML = 'Guardar Criterio';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error crítico en la comunicación con el servidor.');
+                    this.disabled = false;
+                    this.innerHTML = 'Guardar Criterio';
+                });
+        };
+
+        document.getElementById('vincular_sigi').addEventListener('change', function() {
+            const containerCalificable = document.getElementById('container-calificable');
+            const checkCalificable = document.getElementById('es_calificable');
+
+            if (this.checked) {
+                containerCalificable.style.opacity = "1";
+                checkCalificable.disabled = false;
+            } else {
+                containerCalificable.style.opacity = "0.5";
+                checkCalificable.checked = false;
+                checkCalificable.disabled = true;
+            }
         });
     </script>
 <?php else: ?>
-    <p>No tiene permisos para editar este sílabo o el periodo ya culminó.</p>
+    <p>No tiene permisos para editar Calificaciones o el periodo ya culminó.</p>
 <?php endif; ?>
 
 <?php require __DIR__ . '/../../layouts/footer.php'; ?>

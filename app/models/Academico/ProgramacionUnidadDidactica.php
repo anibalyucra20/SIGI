@@ -228,6 +228,12 @@ class ProgramacionUnidadDidactica extends Model
         $stmt = self::$db->prepare($sql);
         return $stmt->execute([$id_moodle, $id_programacion]);
     }
+    public function actualizarSeccionesMoodle($id_programacion, $secciones)
+    {
+        $sql = "UPDATE acad_programacion_unidad_didactica SET secciones_moodle = ? WHERE id = ?";
+        $stmt = self::$db->prepare($sql);
+        return $stmt->execute([$secciones, $id_programacion]);
+    }
 
     public function getIdDocente($id_programacion)
     {

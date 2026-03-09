@@ -51,7 +51,8 @@ require __DIR__ . '/../../layouts/header.php'; ?>
                                     <?php $mostrar = $mostrar_calificaciones[$nro] ?? 0; ?>
                                     <th class="text-center" style="min-width:110px;">
                                         I.L.° <?= $nro ?> <br>
-                                        <a href="<?= BASE_URL ?>/academico/calificaciones/evaluar/<?= $id_programacion_ud ?>/<?= $nro ?>" class="btn btn-primary btn-sm ml-2">
+
+                                        <a href="<?= BASE_URL ?>/academico/calificaciones/evaluar/<?= $id_programacion_ud ?>/<?= $nro ?>" class="btn btn-primary btn-sm ml-2 waves-effect waves-light" data-toggle="tooltip" data-placement="top" title data-original-title="<?= $indicadores_capacidad['I' . $nro] ?>" aria-describedby="tooltip280829">
                                             <i></i><?= ($periodo_vigente['vigente']) ? 'Evaluar' : 'Ver' ?>
                                         </a>
                                         <div>
