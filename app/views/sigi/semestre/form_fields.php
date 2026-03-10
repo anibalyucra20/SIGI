@@ -41,49 +41,49 @@
 <div class="mb-3">
     <label class="form-label">Descripción *</label>
     <input type="text" name="descripcion" class="form-control" maxlength="1000" required
-        value="<?= htmlspecialchars($semestre['descripcion'] ?? '') ?>">
+        value="<?= htmlspecialchars($semestre['descripcion'] ?? '') ?>" style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase()">
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    $('#id_programa_estudios').on('change', function () {
-        let idPrograma = $(this).val();
-        $('#id_plan_estudio').html('<option value="">Seleccione...</option>');
-        $('#id_modulo_formativo').html('<option value="">Seleccione...</option>');
-        if (idPrograma) {
-            $.getJSON('<?= BASE_URL ?>/sigi/planes/porPrograma/' + idPrograma, function (planes) {
-                planes.forEach(function (pl) {
-                    $('#id_plan_estudio').append('<option value="' + pl.id + '">' + pl.nombre + '</option>');
+    document.addEventListener('DOMContentLoaded', function() {
+        $('#id_programa_estudios').on('change', function() {
+            let idPrograma = $(this).val();
+            $('#id_plan_estudio').html('<option value="">Seleccione...</option>');
+            $('#id_modulo_formativo').html('<option value="">Seleccione...</option>');
+            if (idPrograma) {
+                $.getJSON('<?= BASE_URL ?>/sigi/planes/porPrograma/' + idPrograma, function(planes) {
+                    planes.forEach(function(pl) {
+                        $('#id_plan_estudio').append('<option value="' + pl.id + '">' + pl.nombre + '</option>');
+                    });
                 });
-            });
-        }
-    });
+            }
+        });
 
-    $('#id_plan_estudio').on('change', function () {
-        let idPlan = $(this).val();
-        $('#id_modulo_formativo').html('<option value="">Seleccione...</option>');
-        if (idPlan) {
-            $.getJSON('<?= BASE_URL ?>/sigi/moduloFormativo/porPlan/' + idPlan, function (modulos) {
-                modulos.forEach(function (m) {
-                    $('#id_modulo_formativo').append('<option value="' + m.id + '">' + m.descripcion + '</option>');
+        $('#id_plan_estudio').on('change', function() {
+            let idPlan = $(this).val();
+            $('#id_modulo_formativo').html('<option value="">Seleccione...</option>');
+            if (idPlan) {
+                $.getJSON('<?= BASE_URL ?>/sigi/moduloFormativo/porPlan/' + idPlan, function(modulos) {
+                    modulos.forEach(function(m) {
+                        $('#id_modulo_formativo').append('<option value="' + m.id + '">' + m.descripcion + '</option>');
+                    });
                 });
-            });
-        }
-    });
+            }
+        });
 
-    // Al editar: cargar dependientes
-    <?php if (!empty($id_programa_selected)): ?>
-        $('#id_programa_estudios').trigger('change');
-        <?php if (!empty($id_plan_selected)): ?>
-            setTimeout(function(){
-                $('#id_plan_estudio').val('<?= $id_plan_selected ?>').trigger('change');
-            }, 200);
+        // Al editar: cargar dependientes
+        <?php if (!empty($id_programa_selected)): ?>
+            $('#id_programa_estudios').trigger('change');
+            <?php if (!empty($id_plan_selected)): ?>
+                setTimeout(function() {
+                    $('#id_plan_estudio').val('<?= $id_plan_selected ?>').trigger('change');
+                }, 200);
+            <?php endif; ?>
+            <?php if (!empty($semestre['id_modulo_formativo'])): ?>
+                setTimeout(function() {
+                    $('#id_modulo_formativo').val('<?= $semestre['id_modulo_formativo'] ?>');
+                }, 400);
+            <?php endif; ?>
         <?php endif; ?>
-        <?php if (!empty($semestre['id_modulo_formativo'])): ?>
-            setTimeout(function(){
-                $('#id_modulo_formativo').val('<?= $semestre['id_modulo_formativo'] ?>');
-            }, 400);
-        <?php endif; ?>
-    <?php endif; ?>
-});
+    });
 </script>

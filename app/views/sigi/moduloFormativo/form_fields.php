@@ -27,7 +27,7 @@
 <div class="mb-3">
     <label class="form-label">Descripción *</label>
     <input type="text" name="descripcion" class="form-control" maxlength="1000" required
-        value="<?= htmlspecialchars($modulo['descripcion'] ?? '') ?>">
+        value="<?= htmlspecialchars($modulo['descripcion'] ?? '') ?>" style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase()">
 </div>
 <div class="mb-3">
     <label class="form-label">Nro. Módulo *</label>
