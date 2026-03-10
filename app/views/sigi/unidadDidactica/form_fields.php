@@ -54,8 +54,7 @@
 </div>
 <div class="mb-3">
     <label class="form-label">Nombre *</label>
-    <input type="text" name="nombre" class="form-control" maxlength="200" required
-        value="<?= htmlspecialchars($ud['nombre'] ?? '') ?>">
+    <input type="text" name="nombre" class="form-control" maxlength="200" required style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase()" value="<?= htmlspecialchars($ud['nombre'] ?? '') ?>">
 </div>
 <div class="mb-3 row">
     <div class="col-md-2">
