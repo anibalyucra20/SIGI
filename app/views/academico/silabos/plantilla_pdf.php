@@ -140,7 +140,7 @@ if (!$permitido) {
     <br>
     <table style="font-size: 10px;">
         <tr>
-            <th width="30%" >Competencia para la empleabilidad como contenido transversal</th>
+            <th width="30%">Competencia para la empleabilidad como contenido transversal</th>
             <th width="70%">Estrategias</th>
         </tr>
         <?php foreach ($competenciasTransversales as $ct): ?>
@@ -173,7 +173,10 @@ if (!$permitido) {
         $posicion = 0;
         $contar = 0;
         $anterior = "";
+        $conteo_semanas = array_count_values(array_column($sesiones, 'semana'));
+        $semanas_mostradas = [];
         foreach ($sesiones as $sesion):
+            $num_semana = $sesion['semana'];
             // calcular cantidad de semanas que tiene el mismo indicador de logro
             $actual = $sesion['codigo_ind_logro'];
             if ($anterior != $actual) {
@@ -192,7 +195,9 @@ if (!$permitido) {
 
         ?>
             <tr>
-                <td><?= htmlspecialchars($sesion['semana']) ?><br><?= htmlspecialchars($sesion['fecha']) ?></td>
+                <?php if (!in_array($num_semana, $semanas_mostradas)): ?>
+                    <td rowspan="<?= $conteo_semanas[$num_semana] ?>"><?= htmlspecialchars($sesion['semana']) ?><br><?= htmlspecialchars($sesion['fecha']) ?></td>
+                <?php endif; ?>
                 <?php if ($contar > 0) { ?>
                     <td rowspan="<?= $contar; ?>"><?= htmlspecialchars($sesion['codigo_ind_logro']) ?> - <?= htmlspecialchars(mb_substr($sesion['desc_ind_logro'], 0, 1000)) ?></td>
                 <?php } ?>
@@ -203,6 +208,8 @@ if (!$permitido) {
             </tr>
         <?php
             $contar = 0;
+            // Marcamos la semana como "ya dibujada"
+            $semanas_mostradas[] = $num_semana;
         endforeach; ?>
     </table>
     <br>

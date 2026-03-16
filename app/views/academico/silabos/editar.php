@@ -120,7 +120,7 @@ if (class_exists(\App\Helpers\HorarioHelper::class)) {
                                 </div>
                                 <div class="col-md-6">
                                     <label>Horario </label>
-                                    <textarea id="h-text" name="horario" rows="8" class="form-control" style="white-space:pre;"  maxlength="200"><?= htmlspecialchars($horarioPretty) ?></textarea>
+                                    <textarea id="h-text" name="horario" rows="8" class="form-control" style="white-space:pre;" maxlength="200"><?= htmlspecialchars($horarioPretty) ?></textarea>
                                 </div>
                             </div>
                         <?php else: ?>
@@ -228,16 +228,29 @@ if (class_exists(\App\Helpers\HorarioHelper::class)) {
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($sesiones as $sesion): ?>
+                    <?php
+                    $conteo_semanas = array_count_values(array_column($sesiones, 'semana'));
+                    $semanas_mostradas = [];
+                    foreach ($sesiones as $sesion):
+                        $num_semana = $sesion['semana'];
+
+                    ?>
                         <tr>
-                            <td>
-                                <?= htmlspecialchars($sesion['semana']) ?> <br>
-                                <?php if ($periodo_vigente): ?>
-                                    <input type="date" class="form-control" name="sesiones[<?= $sesion['id_actividad'] ?>][fecha]" value="<?= htmlspecialchars($sesion['fecha']) ?>">
-                                <?php else: ?>
-                                    <?= htmlspecialchars($sesion['fecha']) ?>
-                                <?php endif; ?>
-                            </td>
+                            <?php if (!in_array($num_semana, $semanas_mostradas)): ?>
+                                <td rowspan="<?= $conteo_semanas[$num_semana] ?>" style="vertical-align: middle; text-align: center;">
+                                    <strong>Semana <?= htmlspecialchars($num_semana) ?></strong> <br>
+
+                                    <?php if ($periodo_vigente): ?>
+                                        <input type="date" class="form-control" name="sesiones[<?= $sesion['id_actividad'] ?>][fecha]" value="<?= htmlspecialchars($sesion['fecha']) ?>">
+                                    <?php else: ?>
+                                        <?= htmlspecialchars($sesion['fecha']) ?>
+                                    <?php endif; ?>
+                                </td>
+                                <?php
+                                // Marcamos la semana como "ya dibujada"
+                                $semanas_mostradas[] = $num_semana;
+                                ?>
+                            <?php endif; ?>
                             <td>
                                 <?php if ($periodo_vigente): ?>
                                     <select name="sesiones[<?= $sesion['id_actividad'] ?>][id_ind_logro_aprendizaje]" class="form-control">
@@ -248,37 +261,35 @@ if (class_exists(\App\Helpers\HorarioHelper::class)) {
                                         <?php endforeach; ?>
                                     </select>
                                 <?php else: ?>
-                                    <?= (htmlspecialchars($sesion['desc_ind_logro'])) ?>
-                                <?php endif; ?>
-
-                            </td>
-                            <td>
-                                <?php if ($periodo_vigente): ?>
-                                    <textarea name="sesiones[<?= $sesion['id_actividad'] ?>][denominacion]" rows="5" class="form-control" style="width:100%; resize: none; height:auto;" maxlength="255"><?= (htmlspecialchars($sesion['denominacion'])) ?></textarea>
-                                <?php else: ?>
-                                    <?= (htmlspecialchars($sesion['denominacion'])) ?>
+                                    <?= htmlspecialchars($sesion['desc_ind_logro']) ?>
                                 <?php endif; ?>
                             </td>
                             <td>
                                 <?php if ($periodo_vigente): ?>
-                                    <textarea name="sesiones[<?= $sesion['id_actividad'] ?>][contenido]" rows="5" class="form-control" style="width:100%; resize: none; height:auto;" maxlength="1000"><?= (htmlspecialchars($sesion['contenidos_basicos'])) ?></textarea>
+                                    <textarea name="sesiones[<?= $sesion['id_actividad'] ?>][denominacion]" rows="5" class="form-control" style="width:100%; resize: none; height:auto;" maxlength="255"><?= htmlspecialchars($sesion['denominacion']) ?></textarea>
                                 <?php else: ?>
-                                    <?= (htmlspecialchars($sesion['contenidos_basicos'])) ?>
-                                <?php endif; ?>
-
-                            </td>
-                            <td>
-                                <?php if ($periodo_vigente): ?>
-                                    <textarea name="sesiones[<?= $sesion['id_actividad'] ?>][logro_sesion]" rows="5" class="form-control" style="width:100%; resize: none; height:auto;" maxlength="1000"><?= (htmlspecialchars($sesion['logro_sesion'])) ?></textarea>
-                                <?php else: ?>
-                                    <?= (htmlspecialchars($sesion['logro_sesion'])) ?>
+                                    <?= htmlspecialchars($sesion['denominacion']) ?>
                                 <?php endif; ?>
                             </td>
                             <td>
                                 <?php if ($periodo_vigente): ?>
-                                    <textarea name="sesiones[<?= $sesion['id_actividad'] ?>][tareas_previas]" rows="5" class="form-control" style="width:100%; resize: none; height:auto;" maxlength="500"><?= (htmlspecialchars($sesion['tareas_previas'])) ?></textarea>
+                                    <textarea name="sesiones[<?= $sesion['id_actividad'] ?>][contenido]" rows="5" class="form-control" style="width:100%; resize: none; height:auto;" maxlength="1000"><?= htmlspecialchars($sesion['contenidos_basicos']) ?></textarea>
                                 <?php else: ?>
-                                    <?= (htmlspecialchars($sesion['tareas_previas'])) ?>
+                                    <?= htmlspecialchars($sesion['contenidos_basicos']) ?>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <?php if ($periodo_vigente): ?>
+                                    <textarea name="sesiones[<?= $sesion['id_actividad'] ?>][logro_sesion]" rows="5" class="form-control" style="width:100%; resize: none; height:auto;" maxlength="1000"><?= htmlspecialchars($sesion['logro_sesion']) ?></textarea>
+                                <?php else: ?>
+                                    <?= htmlspecialchars($sesion['logro_sesion']) ?>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <?php if ($periodo_vigente): ?>
+                                    <textarea name="sesiones[<?= $sesion['id_actividad'] ?>][tareas_previas]" rows="5" class="form-control" style="width:100%; resize: none; height:auto;" maxlength="500"><?= htmlspecialchars($sesion['tareas_previas']) ?></textarea>
+                                <?php else: ?>
+                                    <?= htmlspecialchars($sesion['tareas_previas']) ?>
                                 <?php endif; ?>
                             </td>
                         </tr>
