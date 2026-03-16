@@ -250,20 +250,20 @@ if (class_exists(\App\Helpers\HorarioHelper::class)) {
                                 // Marcamos la semana como "ya dibujada"
                                 $semanas_mostradas[] = $num_semana;
                                 ?>
+                                <td>
+                                    <?php if ($periodo_vigente): ?>
+                                        <select name="sesiones[<?= $sesion['id_actividad'] ?>][id_ind_logro_aprendizaje]" class="form-control">
+                                            <?php foreach ($indicadoresLogroCapacidad as $ilc): ?>
+                                                <option value="<?= $ilc['id'] ?>" <?= ($sesion['id_ind_logro_aprendizaje'] == $ilc['id']) ? 'selected' : '' ?>>
+                                                    <?= htmlspecialchars($ilc['codigo_capacidad'] . '.' . $ilc['codigo']) ?> - <?= htmlspecialchars($ilc['descripcion']) ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    <?php else: ?>
+                                        <?= htmlspecialchars($sesion['desc_ind_logro']) ?>
+                                    <?php endif; ?>
+                                </td>
                             <?php endif; ?>
-                            <td>
-                                <?php if ($periodo_vigente): ?>
-                                    <select name="sesiones[<?= $sesion['id_actividad'] ?>][id_ind_logro_aprendizaje]" class="form-control">
-                                        <?php foreach ($indicadoresLogroCapacidad as $ilc): ?>
-                                            <option value="<?= $ilc['id'] ?>" <?= ($sesion['id_ind_logro_aprendizaje'] == $ilc['id']) ? 'selected' : '' ?>>
-                                                <?= htmlspecialchars($ilc['codigo_capacidad'] . '.' . $ilc['codigo']) ?> - <?= htmlspecialchars($ilc['descripcion']) ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                <?php else: ?>
-                                    <?= htmlspecialchars($sesion['desc_ind_logro']) ?>
-                                <?php endif; ?>
-                            </td>
                             <td>
                                 <?php if ($periodo_vigente): ?>
                                     <textarea name="sesiones[<?= $sesion['id_actividad'] ?>][denominacion]" rows="5" class="form-control" style="width:100%; resize: none; height:auto;" maxlength="255"><?= htmlspecialchars($sesion['denominacion']) ?></textarea>
