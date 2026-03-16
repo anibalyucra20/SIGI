@@ -250,7 +250,7 @@ if (class_exists(\App\Helpers\HorarioHelper::class)) {
                                 // Marcamos la semana como "ya dibujada"
                                 $semanas_mostradas[] = $num_semana;
                                 ?>
-                                <td>
+                                <td rowspan="<?= $conteo_semanas[$num_semana] ?>">
                                     <?php if ($periodo_vigente): ?>
                                         <select name="sesiones[<?= $sesion['id_actividad'] ?>][id_ind_logro_aprendizaje]" class="form-control">
                                             <?php foreach ($indicadoresLogroCapacidad as $ilc): ?>
