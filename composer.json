@@ -3,7 +3,7 @@
     "vlucas/phpdotenv": "^5.5",
     "phpmailer/phpmailer": "^6.9",
     "tecnickcom/tcpdf": "^6.6",
-    "phpoffice/phpspreadsheet": "^4.4"
+    "phpoffice/phpspreadsheet": "^5.2"
   },
   "autoload": {
     "psr-4": {
