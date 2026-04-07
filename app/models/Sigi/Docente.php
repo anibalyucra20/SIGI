@@ -425,6 +425,7 @@ class Docente extends Model
         }
     }
 
+
     public function actualizarPermisos($id_usuario, $permisos)
     {
         // Formatea array ["1-2", "2-4"] a [['id_sistema'=>1,'id_rol'=>2], ...] si fuera necesario
@@ -439,7 +440,6 @@ class Docente extends Model
             }
             $permisos = $permisosParsed;
         }
-
         // 1. Borra todos los permisos anteriores
         $stmt = self::$db->prepare("DELETE FROM sigi_permisos_usuarios WHERE id_usuario = ?");
         $stmt->execute([$id_usuario]);
