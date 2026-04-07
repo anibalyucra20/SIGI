@@ -411,10 +411,10 @@ class Docente extends Model
         if (empty($ids_sistema)) return;
         $sql = "INSERT IGNORE INTO sigi_permisos_usuarios (id_usuario, id_sistema, id_rol) VALUES (?, ?, ?)";
         $st = self::$db->prepare($sql);
-        /*foreach ($ids_sistema as $id_sis) {
-            $st->execute([$id_usuario, (int)$id_sis, (int)$id_rol]);
-        }*/
         foreach ($ids_sistema as $id_sis) {
+            $st->execute([$id_usuario, (int)$id_sis, (int)$id_rol]);
+        }
+        /*foreach ($ids_sistema as $id_sis) {
             $b = "SELECT * FROM sigi_permisos_usuarios WHERE id_usuario = ? AND id_sistema = ? AND id_rol= ?";
             $rb = self::$db->prepare($b);
             $rb->execute([$id_usuario, (int)$id_sis, (int)$id_rol]);
@@ -422,7 +422,7 @@ class Docente extends Model
             if ($cont == 0) {
                 $st->execute([$id_usuario, (int)$id_sis, (int)$id_rol]);
             }
-        }
+        }*/
     }
 
     public function actualizarPermisos($id_usuario, $permisos)
