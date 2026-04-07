@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models\Sigi;
 
 use Core\Model;
@@ -143,19 +144,37 @@ class Capacidades extends Model
         return $data['id'];
     }
 
-     // Trae capacidades y sus indicadores para la unidad didáctica
-     public function getCapacidadesUnidadDidactica($id_unidad_didactica)
-     {
-         $stmt = self::$db->prepare("SELECT id, descripcion FROM sigi_capacidades WHERE id_unidad_didactica = ?");
-         $stmt->execute([$id_unidad_didactica]);
-         $capacidades = $stmt->fetchAll(PDO::FETCH_ASSOC);
- 
-         foreach ($capacidades as &$cap) {
-             $stmt2 = self::$db->prepare("SELECT descripcion FROM sigi_ind_logro_capacidad WHERE id_capacidad = ? ORDER BY id");
-             $stmt2->execute([$cap['id']]);
-             $cap['indicadores'] = $stmt2->fetchAll(PDO::FETCH_ASSOC);
-         }
-         return $capacidades;
-     }
- 
+    // Trae capacidades y sus indicadores para la unidad didáctica
+    public function getCapacidadesUnidadDidactica($id_unidad_didactica)
+    {
+        $stmt = self::$db->prepare("SELECT id, descripcion FROM sigi_capacidades WHERE id_unidad_didactica = ?");
+        $stmt->execute([$id_unidad_didactica]);
+        $capacidades = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($capacidades as &$cap) {
+            $stmt2 = self::$db->prepare("SELECT descripcion FROM sigi_ind_logro_capacidad WHERE id_capacidad = ? ORDER BY id");
+            $stmt2->execute([$cap['id']]);
+            $cap['indicadores'] = $stmt2->fetchAll(PDO::FETCH_ASSOC);
+        }
+        return $capacidades;
+    }
+
+    public function eliminarCompleto($id)
+    {
+        //buscar indicadores de logro asociados a la capacidad
+        $stmt = self::$db->prepare("SELECT id FROM sigi_ind_logro_capacidad WHERE id_capacidad = ?");
+        $stmt->execute([$id]);
+
+        // eliminar indicadores de logro
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            // aliminar cada indicador de logro asociado a la capacidad
+
+            $stmt2 = self::$db->prepare("DELETE FROM sigi_ind_logro_capacidad WHERE id = ?");
+            $stmt2->execute([$row['id']]);
+        }
+
+        // eliminar la capacidad
+        $stmt = self::$db->prepare("DELETE FROM sigi_capacidades WHERE id = ?");
+        $stmt->execute([$id]);
+    }
 }

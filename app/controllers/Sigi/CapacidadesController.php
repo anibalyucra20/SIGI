@@ -182,6 +182,29 @@ class CapacidadesController extends Controller
         header('Location: ' . BASE_URL . '/sigi/indicadorLogroCapacidad/index/' . $id_capacidad);
         exit;
     }
+
+
+    public function eliminar($id)
+    {
+        if (\Core\Auth::esAdminSigi()):
+            $cap = $this->model->find($id);
+            if (!$cap) {
+                $_SESSION['flash_error'] = "Capacidad no encontrada.";
+                header('Location: ' . BASE_URL . '/sigi/capacidades');
+                exit;
+            }
+            try {
+                $this->model->eliminarCompleto($id);
+                $_SESSION['flash_success'] = "Capacidad eliminada correctamente.";
+            } catch (\Exception $e) {
+                $_SESSION['flash_error'] = "Error al eliminar capacidad: " . $e->getMessage();
+            }
+        endif;
+        // Redirige directamente a los indicadores de logro de capacidad
+        header('Location: ' . BASE_URL . '/sigi/capacidades');
+        exit;
+    }
+
     // --- ENDPOINTS PARA SELECTS DEPENDIENTES ---
 
 }

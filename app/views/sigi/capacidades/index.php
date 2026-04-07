@@ -180,6 +180,7 @@
                             return `
                         <a href="<?= BASE_URL ?>/sigi/capacidades/editar/${row.id}" class="btn btn-warning btn-sm">Editar</a>
                         <a href="<?= BASE_URL ?>/sigi/indicadorLogroCapacidad/index/${row.id}" class="btn btn-primary btn-sm">Indicadores</a>
+                        <a href="<?= BASE_URL ?>/sigi/capacidades/eliminar/${row.id}" class="btn btn-danger btn-sm" title="Eliminar" onclick="return confirm('¿Seguro de eliminar Capacidad ?');"><i class="fa fa-trash"></i></a>
                     `;
                         }
                     }

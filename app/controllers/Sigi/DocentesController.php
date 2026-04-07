@@ -65,10 +65,10 @@ class DocentesController extends Controller
         if (\Core\Auth::esAdminSigi()):
             $docentes = $this->model->getAllDocente();
             //para actualizar permisos de docente
-            /*foreach ($docentes as $docente) {
+            foreach ($docentes as $docente) {
                 //var_dump($docente['id']);
                 $this->registrar_permiso_inicial($docente['id']);
-            }*/
+            }
         endif;
         $this->view('sigi/docentes/index', ['docentes' => $docentes]);
         exit;

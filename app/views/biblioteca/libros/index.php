@@ -1,47 +1,83 @@
 <?php require __DIR__ . '/../../layouts/header.php'; ?>
+
+<style>
+    /* Estilos para emular la paginación circular */
+    .dataTables_wrapper .pagination .page-item .page-link {
+        border: none;
+        color: #555;
+        padding: 6px 12px;
+        margin: 0 2px;
+        cursor: pointer;
+        background: none;
+        font-weight: 500;
+    }
+    .dataTables_wrapper .pagination .page-item.active .page-link {
+        background-color: #007bff !important;
+        color: #fff !important;
+        border-radius: 50% !important;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .dataTables_wrapper .pagination .page-item.disabled .page-link {
+        color: #ccc;
+        cursor: not-allowed;
+    }
+</style>
+
 <div class="card p-3">
-    <div class="mr-3">
-        <a href="<?= BASE_URL . '/biblioteca/libros/nuevo' ?>" class="btn btn-primary mt-4">Nuevo</a>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="m-0">Biblioteca Virtual</h4>
+        <a href="<?= BASE_URL . '/biblioteca/libros/nuevo' ?>" class="btn btn-primary">Nuevo</a>
     </div>
-    <!-- Mis Libros -->
-    <div class="form-row mb-2">
-        <div class="col-md-3">
-            <label>Búsqueda</label>
-            <input type="text" id="mios-search" class="form-control" placeholder="título o autor...">
+
+    <div class="form-row mb-3">
+        <div class="col-md-5">
+            <label class="small font-weight-bold">Búsqueda rápida</label>
+            <input type="text" id="mios-search" class="form-control" placeholder="Título, autor o ISBN...">
+        </div>
+        <div class="col-md-4">
+            <label class="small font-weight-bold">Filtrar por Tipo</label>
+            <input type="text" id="mios-tipo" class="form-control" placeholder="p.e. PDF, EPUB">
         </div>
         <div class="col-md-3">
-            <label>Tipo</label>
-            <input type="text" id="mios-tipo" class="form-control" placeholder="p.e. PDF">
-        </div>
-        <div class="col-md-2">
-            <label>&nbsp;</label>
-            <button id="btnMiosCargar" class="btn btn-outline-primary btn-block">Cargar</button>
+            <label class="small font-weight-bold">Registros</label>
+            <select id="mios-per-page" class="form-control">
+                <option value="10">10 por página</option>
+                <option value="25">25 por página</option>
+                <option value="50">50 por página</option>
+            </select>
         </div>
     </div>
+
     <div class="table-responsive">
-        <table id="tbl-mios" class="table table-bordered table-hover table-sm" width="100%">
+        <table id="tbl-mios" class="table table-bordered table-hover table-sm mb-0" width="100%">
             <thead class="thead-light">
                 <tr>
-                    <th>ID</th>
+                    <th>#</th>
                     <th>Título</th>
                     <th>Autor</th>
                     <th>Tipo</th>
                     <th>Año</th>
                     <th>Portada</th>
                     <th>Archivo</th>
-                    <th>Acciones</th>
+                    <th class="text-center">Acciones</th>
                 </tr>
             </thead>
             <tbody></tbody>
         </table>
     </div>
+
     <input type="hidden" id="apiKey" value="<?= htmlspecialchars($sistema['token_sistema'] ?? '') ?>">
     <input type="hidden" id="apiBase" value="<?= rtrim(API_BASE_URL, '/') ?>/api">
 </div>
+
 <div class="modal fade" id="modalEditBook" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <form id="formEditBook" class="modal-content" enctype="multipart/form-data">
-            <div class="modal-header">
+            <div class="modal-header bg-light">
                 <h5 class="modal-title">Editar libro</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
                     <span aria-hidden="true">&times;</span>
@@ -92,32 +128,31 @@
                         <label>ISBN</label>
                         <input type="text" class="form-control" id="edit-isbn" maxlength="50">
                     </div>
-                    <div class="form-group col-md-4">
+                    <div class="form-group col-md-8">
                         <label>Tags</label>
                         <input type="text" class="form-control" id="edit-tags" maxlength="1000">
                     </div>
                     <div class="form-group col-md-12">
-                        <label>Temas relacionados</label><br>
-                        <textarea class="col-12" name="edit-temas_relacionados" id="edit-temas_relacionados" rows="7" maxlength="5000"></textarea>
+                        <label>Temas relacionados</label>
+                        <textarea class="form-control" id="edit-temas_relacionados" rows="3" maxlength="5000"></textarea>
                     </div>
-
                 </div>
                 <hr>
                 <div class="form-row">
                     <div class="form-group col-md-6">
-                        <label>Portada (opcional, reemplaza la actual)</label>
+                        <label>Portada</label>
                         <input type="file" class="form-control-file" id="edit-portada-file" accept="image/*">
-                        <small>Actual: <a href="#" id="edit-portada-link" target="_blank">ver portada</a></small>
+                        <small>Actual: <a href="#" id="edit-portada-link" target="_blank">ver</a></small>
                     </div>
                     <div class="form-group col-md-6">
-                        <label>Archivo del libro (PDF/EPUB) (opcional)</label>
-                        <input type="file" class="form-control-file" id="edit-libro-file" accept=".pdf,.epub,application/pdf,application/epub+zip">
+                        <label>Archivo del libro</label>
+                        <input type="file" class="form-control-file" id="edit-libro-file" accept=".pdf,.epub">
                         <small>Actual: <a href="#" id="edit-libro-link" target="_blank">descargar</a></small>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-light" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
                 <button type="submit" class="btn btn-primary">Guardar cambios</button>
             </div>
         </form>
@@ -125,163 +160,103 @@
 </div>
 
 <?php require __DIR__ . '/../../layouts/footer.php'; ?>
+
 <script>
-    (function(global) {
-        if (typeof global.cryptoRandom !== 'function') {
-            global.cryptoRandom = function() {
-                try {
-                    // UUID-like, usando Web Crypto si está disponible
-                    return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
-                        (c ^ global.crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
-                    );
-                } catch (e) {
-                    // Fallback
-                    return 'idem-' + Date.now() + '-' + Math.random().toString(16).slice(2);
-                }
+$(document).ready(function() {
+    const $apiBase = $('#apiBase').val().replace(/\/+$/, '');
+    const $apiKey = $('#apiKey').val();
+    let dtMios = null;
+
+    // Configuración de Seguridad para Ajax
+    $.ajaxSetup({
+        beforeSend: function(xhr, opts) {
+            if (opts.url.indexOf($apiBase) === 0 && $apiKey) {
+                xhr.setRequestHeader('X-Api-Key', $apiKey);
+            }
+        }
+    });
+
+    // Inicialización de DataTable con Server-Side real
+    dtMios = $('#tbl-mios').DataTable({
+        serverSide: true,
+        processing: true,
+        searching: false, // Desactivamos el search de DT para usar tus inputs personalizados
+        ordering: false,
+        lengthChange: false, // Usamos tu select personalizado
+        pageLength: 10,
+        language: { url: 'https://cdn.datatables.net/plug-ins/1.13.5/i18n/es-ES.json' },
+        ajax: async function(data, callback) {
+            const page = Math.floor(data.start / data.length) + 1;
+            const params = {
+                page: page,
+                per_page: data.length,
+                search: $('#mios-search').val().trim(),
+                tipo: $('#mios-tipo').val().trim()
             };
-        }
-    })(window);
-</script>
 
-<script>
-    (function() {
-        // ====== Helpers de config ======
-        const $apiKey = $('#apiKey');
-        const $apiBase = $('#apiBase');
+            try {
+                const res = await $.getJSON(`${$apiBase}/library/items?${$.param(params)}`);
+                const rows = res.data || [];
+                // Tu API devuelve total_records en pagination
+                const total = res.pagination?.total_records || rows.length;
 
-        // jQuery: inyectar X-Api-Key en cada AJAX hacia la API base
-        $(document).ajaxSend(function(_e, xhr, opts) {
-            const base = ($apiBase.val() || '').replace(/\/+$/, '');
-            if (opts.url && opts.url.indexOf(base) === 0) {
-                const k = ($apiKey.val() || '').trim();
-                if (k) xhr.setRequestHeader('X-Api-Key', k);
-                if ((opts.type || 'GET').toUpperCase() === 'POST') {
-                    const idem = (typeof window.cryptoRandom === 'function' ?
-                        window.cryptoRandom() :
-                        String(Date.now()));
-                    xhr.setRequestHeader('X-Idempotency-Key', idem);
-                }
+                callback({
+                    draw: data.draw,
+                    data: rows,
+                    recordsTotal: total,
+                    recordsFiltered: total
+                });
+            } catch (err) {
+                console.error("Error API", err);
+                callback({ draw: data.draw, data: [], recordsTotal: 0, recordsFiltered: 0 });
             }
-        });
-
-
-        // ====== DataTables ======
-        let dtMios = null,
-            dtBuscar = null,
-            dtAdopt = null;
-
-        function initOrReplace($table, rows, existingDtRef, columnDefs = []) {
-            if (existingDtRef) {
-                existingDtRef.clear();
-                existingDtRef.rows.add(rows).draw();
-                return existingDtRef;
+        },
+        columns: [
+            { 
+                data: null, 
+                render: (d, t, r, meta) => meta.row + meta.settings._iDisplayStart + 1 
+            },
+            { 
+                data: 'titulo', 
+                render: d => `<span class="font-weight-bold">${html(d)}</span>` 
+            },
+            { data: 'autor', render: d => html(d) },
+            { data: 'tipo_libro' },
+            { data: 'anio' },
+            { 
+                data: null, 
+                render: r => r.portada_url ? `<a href="${r.portada_url}" target="_blank" class="btn btn-xs btn-outline-info">Ver</a>` : 'N/A' 
+            },
+            { 
+                data: null, 
+                render: r => `<a href="${r.archivo_url}" target="_blank" class="btn btn-xs btn-outline-success">Descargar</a>` 
+            },
+            { 
+                data: null, 
+                class: 'text-center', 
+                render: r => `<button class="btn btn-xs btn-primary btn-edit-book" data-id="${r.id}"><i class="fa fa-edit"></i> Editar</button>` 
             }
-            return $table.DataTable({
-                data: rows,
-                columns: [{
-                        data: 'id'
-                    },
-                    {
-                        data: 'titulo'
-                    },
-                    {
-                        data: 'autor'
-                    },
-                    {
-                        data: 'tipo_libro'
-                    },
-                    {
-                        data: 'anio'
-                    },
-                    {
-                        data: null,
-                        orderable: false,
-                        render: r => r.portada_url ? `<a href="${r.portada_url}" target="_blank">Ver</a>` : ''
-                    },
-                    {
-                        data: null,
-                        orderable: false,
-                        render: r => `<a href="${r.archivo_url}" target="_blank">Descargar</a>`
-                    },
-                    {
-                        data: null,
-                        orderable: false,
-                        render: r => `
-                        <div class="btn-group btn-group-sm" role="group">
-                            <button class="btn btn-info btn-edit-book" data-id="${r.id}">Editar</button>
-                        </div>
-                        `
+        ]
+    });
 
-                    },
-                    ...(columnDefs.length ? columnDefs : [])
-                ],
-                language: {
-                    url: 'https://cdn.datatables.net/plug-ins/1.13.5/i18n/es-ES.json'
-                },
-                pageLength: 10,
-                ordering: true
-            });
-        }
+    // Controladores de Filtros (Recargan la tabla)
+    let searchTimer;
+    $('#mios-search, #mios-tipo').on('input', function() {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => dtMios.ajax.reload(), 500);
+    });
 
-        // ====== Carga paginada (mergea páginas hasta un tope) ======
-        async function fetchAllPaged(endpoint, params = {}, perPage = 50, maxPages = 10) {
-            const base = ($apiBase.val() || '').replace(/\/+$/, '');
-            const res = [];
-            for (let page = 1; page <= maxPages; page++) {
-                const qp = $.param(Object.assign({}, params, {
-                    page: page,
-                    per_page: perPage
-                }));
-                const url = `${base}${endpoint}?${qp}`;
-                try {
-                    const data = await $.getJSON(url);
-                    const rows = (data && data.data) ? data.data : [];
-                    res.push(...rows);
-                    if (rows.length < perPage) break; // última página
-                } catch (err) {
-                    console.error('Error GET', url, err);
-                    alert('Error al consultar la API: ' + (err?.responseJSON?.error?.message || err.statusText || ''));
-                    break;
-                }
-            }
-            return res;
-        }
+    $('#mios-per-page').on('change', function() {
+        dtMios.page.len($(this).val()).ajax.reload();
+    });
 
-        // ====== Mis Libros ======
-        $('#btnMiosCargar').on('click', async function() {
-            const q = $('#mios-search').val().trim();
-            const tipo = $('#mios-tipo').val().trim();
-            const rows = await fetchAllPaged('/library/items', {
-                search: q,
-                tipo: tipo
-            }, 50, 20);
-            dtMios = initOrReplace($('#tbl-mios'), rows, dtMios);
-        });
-        // utils
-        function html(s) {
-            return String(s || '').replace(/[&<>"']/g, m => ({
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                '"': '&quot;',
-                "'": '&#39;'
-            } [m]));
-        }
+    function html(s) { return String(s || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
-        // Cargar por defecto "Mis Libros"
-        $('#btnMiosCargar').click();
-    })();
-</script>
-
-
-<script>
-    // Abre modal y carga datos actuales
+    // Lógica del Modal (Show)
     $(document).on('click', '.btn-edit-book', async function() {
         const id = this.dataset.id;
-        const base = ($('#apiBase').val() || '').replace(/\/+$/, '');
-
         try {
-            const book = await $.getJSON(`${base}/library/show/${id}`);
+            const book = await $.getJSON(`${$apiBase}/library/show/${id}`);
             $('#edit-id').val(book.id);
             $('#edit-titulo').val(book.titulo || '');
             $('#edit-tipo_libro').val(book.tipo_libro || '');
@@ -294,98 +269,46 @@
             $('#edit-isbn').val(book.isbn || '');
             $('#edit-temas_relacionados').val(book.temas_relacionados || '');
             $('#edit-tags').val(book.tags || '');
-            // al cargar show/{id}
-            $('#edit-portada-link').attr('href', book.portada_url || '#')
-                .text(book.portada_url ? 'ver portada' : '—');
-            $('#edit-libro-link').attr('href', book.archivo_url || '#')
-                .text(book.archivo_url ? 'descargar' : '—');
+            $('#edit-portada-link').attr('href', book.portada_url || '#');
+            $('#edit-libro-link').attr('href', book.archivo_url || '#');
             $('#modalEditBook').modal('show');
-
-        } catch (err) {
-            const m = err?.responseJSON?.error?.message || err.statusText || 'No se pudo cargar el libro';
-            if (window.Swal) Swal.fire('Error', m, 'error');
-            else alert(m);
-        }
+        } catch (err) { alert('Error al cargar datos'); }
     });
 
-    // Envía cambios al Maestro
+    // Lógica del Modal (Update)
     $('#formEditBook').on('submit', async function(e) {
         e.preventDefault();
         const id = $('#edit-id').val();
-        const base = ($('#apiBase').val() || '').replace(/\/+$/, '');
+        const fd = new FormData();
+        
+        fd.append('titulo', $('#edit-titulo').val());
+        fd.append('tipo_libro', $('#edit-tipo_libro').val());
+        fd.append('autor', $('#edit-autor').val());
+        fd.append('editorial', $('#edit-editorial').val());
+        fd.append('edicion', $('#edit-edicion').val());
+        fd.append('tomo', $('#edit-tomo').val());
+        fd.append('paginas', $('#edit-paginas').val());
+        fd.append('anio', $('#edit-anio').val());
+        fd.append('isbn', $('#edit-isbn').val());
+        fd.append('temas_relacionados', $('#edit-temas_relacionados').val());
+        fd.append('tags', $('#edit-tags').val());
 
-        // Campos de texto
-        const payload = {
-            titulo: $('#edit-titulo').val().trim(),
-            tipo_libro: $('#edit-tipo_libro').val().trim(),
-            autor: $('#edit-autor').val().trim(),
-            editorial: $('#edit-editorial').val().trim(),
-            edicion: $('#edit-edicion').val().trim(),
-            tomo: $('#edit-tomo').val().trim(),
-            paginas: Number($('#edit-paginas').val() || 0),
-            anio: Number($('#edit-anio').val() || 0),
-            isbn: $('#edit-isbn').val().trim(),
-            temas_relacionados: $('#edit-temas_relacionados').val().trim(),
-            tags: $('#edit-tags').val().trim()
-        };
-        Object.keys(payload).forEach(k => { // envía solo cambios/no vacíos si quieres
-            if (payload[k] === '' || Number.isNaN(payload[k])) delete payload[k];
-        });
-
-        // Archivos seleccionados
-        const fPortada = $('#edit-portada-file')[0].files[0] || null;
-        const fLibro = $('#edit-libro-file')[0].files[0] || null;
-
-        const hasFiles = !!(fPortada || fLibro);
+        const fP = $('#edit-portada-file')[0].files[0];
+        const fL = $('#edit-libro-file')[0].files[0];
+        if (fP) fd.append('portada', fP);
+        if (fL) fd.append('libro', fL);
 
         try {
-            if (hasFiles) {
-                // multipart/form-data
-                const fd = new FormData();
-                Object.entries(payload).forEach(([k, v]) => fd.append(k, v));
-                if (fPortada) fd.append('portada', fPortada);
-                if (fLibro) fd.append('libro', fLibro);
-
-                await $.ajax({
-                    url: `${base}/library/update/${id}`,
-                    method: 'POST',
-                    data: fd,
-                    processData: false,
-                    contentType: false,
-                    beforeSend: (xhr) => {
-                        const idem = (typeof window.cryptoRandom === 'function' ?
-                            window.cryptoRandom() :
-                            String(Date.now()));
-                        xhr.setRequestHeader('X-Idempotency-Key', idem);
-                    }
-
-                });
-            } else {
-                // JSON puro
-                await $.ajax({
-                    url: `${base}/library/update/${id}`,
-                    method: 'POST',
-                    contentType: 'application/json; charset=utf-8',
-                    data: JSON.stringify(payload),
-                    beforeSend: (xhr) => {
-                        const idem = (typeof window.cryptoRandom === 'function' ?
-                            window.cryptoRandom() :
-                            String(Date.now()));
-                        xhr.setRequestHeader('X-Idempotency-Key', idem);
-                    }
-
-                });
-            }
-
+            await $.ajax({
+                url: `${$apiBase}/library/update/${id}`,
+                method: 'POST',
+                data: fd,
+                processData: false,
+                contentType: false
+            });
             $('#modalEditBook').modal('hide');
-            if (window.dtAdopt) cargarVinculados(); // refresca tu tabla
-            if (window.Swal) Swal.fire('Guardado', 'Datos actualizados correctamente.', 'success');
-
-        } catch (err) {
-            console.error('Update failed:', err);
-            const m = err?.responseJSON?.error?.message || err.statusText || 'No se pudo guardar';
-            if (window.Swal) Swal.fire('Error', m, 'error');
-            else alert(m);
-        }
+            dtMios.ajax.reload(null, false); // Refresca sin perder la página
+        } catch (err) { alert('Error al actualizar'); }
     });
+});
 </script>
