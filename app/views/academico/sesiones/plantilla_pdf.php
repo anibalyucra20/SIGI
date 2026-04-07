@@ -181,8 +181,8 @@ if (!$permitido) {
 <table>
     <tr>
         <td width="33%" align="center" style="border: 1px solid white;">______________________<br>Docente</td>
-        <td width="33%" align="center" style="border: 1px solid white;">______________________<br>Coordinador del PE</td>
-        <td width="33%" align="center" style="border: 1px solid white;">______________________<br>Jefe Unidad Académica</td>
+        <!--<td width="33%" align="center" style="border: 1px solid white;">______________________<br>Coordinador del PE</td>
+        <td width="33%" align="center" style="border: 1px solid white;">______________________<br>Jefe Unidad Académica</td>-->
     </tr>
 </table>
 
