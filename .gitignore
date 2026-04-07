@@ -12,3 +12,5 @@ public/images/*.docx
 public/images/*.docx
 
 public/uploads/*
+
+vendor/*
