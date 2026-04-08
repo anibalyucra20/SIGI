@@ -170,6 +170,7 @@ class DocentesController extends Controller
                             'dni' => $data['dni'],
                             'nombres' => $firstname,
                             'apellidos' => $lastname,
+                            'cambio_password' => true,
                             'passwordPlano' => $passwordPlano,
                             'programa_estudios' => $nombre_programa,
                             'tipo_usuario' => $tipo_usuario,
@@ -308,6 +309,7 @@ class DocentesController extends Controller
                         'dni' => $data['dni'],
                         'nombres' => $firstname,
                         'apellidos' => $lastname,
+                        'cambio_password' => false, // En actualización normal no forzamos cambio de contraseña
                         'passwordPlano' => null,
                         'programa_estudios' => $nombre_programa,
                         'tipo_usuario' => $tipo_usuario,
@@ -482,12 +484,16 @@ class DocentesController extends Controller
                     'dni' => $docente['dni'],
                     'nombres' => $firstname,
                     'apellidos' => $lastname,
+                    'cambio_password' => true,
                     'passwordPlano' => $passwordPlano,
                     'programa_estudios' => $docente['nombre_programa'],
                     'tipo_usuario' => $docente['nombre_rol'],
                     'estado' => $docente['estado']
                 ];
                 $response = $this->objIntegrator->sincronizarUsuarios($usuario);
+                echo '<pre>';
+                print_r($response);
+                echo '</pre>';
                 if ($response['data']['moodle']['message_success']) {
                     //actualizar usuarioen sigi
                     $this->model->updateUserMoodleId($id, $response['data']['moodle']['id']);
