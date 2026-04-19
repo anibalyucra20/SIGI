@@ -35,7 +35,7 @@ class Integrator
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, INTEGRACIONES_SSL_VERIFY);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, INTEGRACIONES_SSL_VERIFY);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, INTEGRACIONES_SSL_VERIFY ? 2 : 0);
             curl_setopt($ch, CURLOPT_HTTPHEADER, [
                 'Content-Type: application/json',
                 'X-Api-Key: ' . $apiKey
@@ -61,7 +61,7 @@ class Integrator
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, INTEGRACIONES_SSL_VERIFY);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, INTEGRACIONES_SSL_VERIFY);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, INTEGRACIONES_SSL_VERIFY ? 2 : 0);
             curl_setopt($ch, CURLOPT_HTTPHEADER, [
                 'Content-Type: application/json',
                 'X-Api-Key: ' . $apiKey
@@ -112,7 +112,7 @@ class Integrator
 
             // OJO: En producción idealmente deberías verificar SSL, pero lo dejamos false como pediste
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, INTEGRACIONES_SSL_VERIFY);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, INTEGRACIONES_SSL_VERIFY);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, INTEGRACIONES_SSL_VERIFY ? 2 : 0);
 
             curl_setopt($ch, CURLOPT_HTTPHEADER, [
                 'Content-Type: application/json',
@@ -186,7 +186,7 @@ class Integrator
 
             // OJO: En producción idealmente deberías verificar SSL, pero lo dejamos false como pediste
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, INTEGRACIONES_SSL_VERIFY);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, INTEGRACIONES_SSL_VERIFY);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, INTEGRACIONES_SSL_VERIFY ? 2 : 0);
 
             curl_setopt($ch, CURLOPT_HTTPHEADER, [
                 'Content-Type: application/json',
@@ -258,7 +258,7 @@ class Integrator
 
         // OJO: En producción idealmente deberías verificar SSL, pero lo dejamos false como pediste
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, INTEGRACIONES_SSL_VERIFY);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, INTEGRACIONES_SSL_VERIFY);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, INTEGRACIONES_SSL_VERIFY ? 2 : 0);
 
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Content-Type: application/json',
@@ -321,7 +321,8 @@ class Integrator
 
         // OJO: En producción idealmente deberías verificar SSL, pero lo dejamos false como pediste
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, INTEGRACIONES_SSL_VERIFY);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, INTEGRACIONES_SSL_VERIFY);
+        // En realidad, CURLOPT_SSL_VERIFYHOST espera un valor numérico (0, 1 o 2), no un booleano. Si INTEGRACIONES_SSL_VERIFY es false, deberías pasar 0. Si es true, deberías pasar 2.   
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, INTEGRACIONES_SSL_VERIFY ? 2 : 0);
 
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Content-Type: application/json',
@@ -384,7 +385,7 @@ class Integrator
 
         // OJO: En producción idealmente deberías verificar SSL, pero lo dejamos false como pediste
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, INTEGRACIONES_SSL_VERIFY);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, INTEGRACIONES_SSL_VERIFY);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, INTEGRACIONES_SSL_VERIFY ? 2 : 0);
 
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Content-Type: application/json',
@@ -431,7 +432,7 @@ class Integrator
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, INTEGRACIONES_SSL_VERIFY);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, INTEGRACIONES_SSL_VERIFY);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, INTEGRACIONES_SSL_VERIFY ? 2 : 0);
             curl_setopt($ch, CURLOPT_HTTPHEADER, [
                 'Content-Type: application/json',
                 'X-Api-Key: ' . $apiKey
@@ -460,7 +461,7 @@ class Integrator
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, INTEGRACIONES_SSL_VERIFY);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, INTEGRACIONES_SSL_VERIFY);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, INTEGRACIONES_SSL_VERIFY ? 2 : 0);
             curl_setopt($ch, CURLOPT_HTTPHEADER, [
                 'Content-Type: application/json',
                 'X-Api-Key: ' . $apiKey
@@ -509,7 +510,7 @@ class Integrator
         curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
 
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, INTEGRACIONES_SSL_VERIFY);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, INTEGRACIONES_SSL_VERIFY);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, INTEGRACIONES_SSL_VERIFY ? 2 : 0);
 
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Content-Type: application/json',

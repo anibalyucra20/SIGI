@@ -219,9 +219,9 @@ class MatriculaController extends Controller
                     echo "</pre>";*/
                     $moodle_create = $this->objIntegrator->SyncCreateMatricula($datos_moodle);
                     if ($moodle_create['success']):
-                        $_SESSION['flash_success'] .= $moodle_create['cantMatriculas'] . " Matrículas creadas en Moodle exitosamente.";
+                        $_SESSION['flash_success'] = $moodle_create['cantMatriculas'] . " Matrículas creadas en Moodle exitosamente.";
                     else:
-                        $_SESSION['flash_error'] .= "<br>No se pudo crear la matrícula en Moodle. " . implode(', ', $moodle_create['errores']);
+                        $_SESSION['flash_error'] = "<br>No se pudo crear la matrícula en Moodle. " . implode(', ', $moodle_create['errores']);
                     endif;
                     $_SESSION['flash_success'] .= "<br>¡Matrícula registrada correctamente!";
                     header('Location: ' . BASE_URL . '/academico/matricula/nuevo');
