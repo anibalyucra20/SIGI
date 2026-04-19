@@ -319,7 +319,6 @@ class EstudiantesController extends Controller
     public function descargarPlantillaCargaMasiva()
     {
         $id_sede = $_SESSION['sigi_sede_actual'] ?? 0;
-        $tipos_documento = ['DNI', 'CE', 'PASAPORTE'];
         // datos necesarios
         $programas = $this->objPrograma->getAllBySede($id_sede);
         $planes_estudio = $this->objPlan->getPlanes();
@@ -378,6 +377,16 @@ class EstudiantesController extends Controller
 
         // 5. Agrega validación de datos (listas desplegables) en columnas seleccionadas
         for ($row = 2; $row <= 41; $row++) { // 100 filas para ejemplo
+
+        // Tipo de documento
+            $validation = $mainSheet->getCell("A$row")->getDataValidation();
+            $validation->setType(DataValidation::TYPE_LIST)
+                ->setErrorStyle(DataValidation::STYLE_STOP)
+                ->setAllowBlank(true)
+                ->setShowInputMessage(true)
+                ->setShowErrorMessage(true)
+                ->setShowDropDown(true)
+                ->setFormula1('"DNI,CE,PASAPORTE"');
             // Género
             $validation = $mainSheet->getCell("F$row")->getDataValidation();
             $validation->setType(DataValidation::TYPE_LIST)
