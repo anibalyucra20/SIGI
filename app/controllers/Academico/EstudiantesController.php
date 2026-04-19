@@ -319,6 +319,7 @@ class EstudiantesController extends Controller
     public function descargarPlantillaCargaMasiva()
     {
         $id_sede = $_SESSION['sigi_sede_actual'] ?? 0;
+        $tipos_documento = ['DNI', 'CE', 'PASAPORTE'];
         // datos necesarios
         $programas = $this->objPrograma->getAllBySede($id_sede);
         $planes_estudio = $this->objPlan->getPlanes();
@@ -329,7 +330,8 @@ class EstudiantesController extends Controller
 
         // 2. Escribe encabezados
         $mainSheet->fromArray([
-            'DNI',
+            'Tipo Documento',
+            'Nro Documento',
             'Apellido Paterno',
             'Apellido Materno',
             'Nombres',
@@ -370,13 +372,14 @@ class EstudiantesController extends Controller
         $planSheet->setSheetState(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet::SHEETSTATE_HIDDEN);
 
         // 4. Listas para género y discapacidad directo en arrays
-        $mainSheet->setCellValue('E2', ''); // Género
-        $mainSheet->setCellValue('J2', ''); // Discapacidad
+        $mainSheet->setCellValue('F2', ''); // Género
+        $mainSheet->setCellValue('K2', ''); // Discapacidad
+        $mainSheet->setCellValue('A2', ''); // Tipo Documento
 
         // 5. Agrega validación de datos (listas desplegables) en columnas seleccionadas
         for ($row = 2; $row <= 41; $row++) { // 100 filas para ejemplo
             // Género
-            $validation = $mainSheet->getCell("E$row")->getDataValidation();
+            $validation = $mainSheet->getCell("F$row")->getDataValidation();
             $validation->setType(DataValidation::TYPE_LIST)
                 ->setErrorStyle(DataValidation::STYLE_STOP)
                 ->setAllowBlank(true)
@@ -386,7 +389,7 @@ class EstudiantesController extends Controller
                 ->setFormula1('"M,F"');
 
             // Discapacidad
-            $validation = $mainSheet->getCell("J$row")->getDataValidation();
+            $validation = $mainSheet->getCell("K$row")->getDataValidation();
             $validation->setType(DataValidation::TYPE_LIST)
                 ->setErrorStyle(DataValidation::STYLE_STOP)
                 ->setAllowBlank(true)
@@ -396,7 +399,7 @@ class EstudiantesController extends Controller
                 ->setFormula1('"SI,NO"');
 
             // Programa Estudio
-            $validation = $mainSheet->getCell("K$row")->getDataValidation();
+            $validation = $mainSheet->getCell("L$row")->getDataValidation();
             $validation->setType(DataValidation::TYPE_LIST)
                 ->setErrorStyle(DataValidation::STYLE_STOP)
                 ->setAllowBlank(true)
@@ -406,7 +409,7 @@ class EstudiantesController extends Controller
                 ->setFormula1("=Programas!B2:B100");
 
             // Planes de estudio
-            $validation = $mainSheet->getCell("L$row")->getDataValidation();
+            $validation = $mainSheet->getCell("M$row")->getDataValidation();
             $validation->setType(DataValidation::TYPE_LIST)
                 ->setErrorStyle(DataValidation::STYLE_STOP)
                 ->setAllowBlank(true)
@@ -476,11 +479,12 @@ class EstudiantesController extends Controller
                     foreach ($rows as $i => $row) {
                         if ($i === 1) continue; // encabezados
 
-                        $dni                 = trim($row['A']);
-                        $ApellidoPaterno     = trim($row['B']);
-                        $ApellidoMaterno     = trim($row['C']);
-                        $Nombres             = trim($row['D']);
-                        $genero              = strtoupper(trim($row['E']));
+                        $tipo_doc            = trim($row['A']);
+                        $dni                 = trim($row['B']);
+                        $ApellidoPaterno     = trim($row['C']);
+                        $ApellidoMaterno     = trim($row['D']);
+                        $Nombres             = trim($row['E']);
+                        $genero              = strtoupper(trim($row['F']));
                         $fecha_nac           = date('Y-m-d', strtotime($row['F']));
                         $direccion           = trim($row['G']);
                         $correo              = trim($row['H']);
@@ -541,6 +545,7 @@ class EstudiantesController extends Controller
                             $datosAInsertar[] = [
                                 'id'                   => ($id_usuario['id'] > 0) ? $id_usuario['id'] : null,
                                 'dni'                  => $dni,
+                                'tipo_doc'             => $tipo_doc, // <--- AGREGA ESTA LÍNEA
                                 'apellidos_nombres'    => $ApellidoPaterno . '_' . $ApellidoMaterno . '_' . $Nombres,
                                 'apellido_paterno'     => $ApellidoPaterno,
                                 'apellido_materno'     => $ApellidoMaterno,
@@ -702,7 +707,8 @@ class EstudiantesController extends Controller
             $mainSheet->setTitle('Estudiantes');
 
             $mainSheet->fromArray([
-                'DNI',
+                'Tipo Doc',
+                'Nro Documento',
                 'Apellidos',
                 'Nombres',
                 'Correo Institucional',
@@ -716,6 +722,7 @@ class EstudiantesController extends Controller
             $row = 2;
             foreach ($usuarios as $usuario) {
                 $mainSheet->fromArray([
+                    $usuario['tipo_doc'] ?? '',
                     $usuario['dni'] ?? '',
                     $usuario['apellidos'] ?? '',
                     $usuario['nombres'] ?? '',
