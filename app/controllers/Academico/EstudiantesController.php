@@ -378,7 +378,7 @@ class EstudiantesController extends Controller
         // 5. Agrega validación de datos (listas desplegables) en columnas seleccionadas
         for ($row = 2; $row <= 41; $row++) { // 100 filas para ejemplo
 
-        // Tipo de documento
+            // Tipo de documento
             $validation = $mainSheet->getCell("A$row")->getDataValidation();
             $validation->setType(DataValidation::TYPE_LIST)
                 ->setErrorStyle(DataValidation::STYLE_STOP)
@@ -488,19 +488,20 @@ class EstudiantesController extends Controller
                     foreach ($rows as $i => $row) {
                         if ($i === 1) continue; // encabezados
 
-                        $tipo_doc            = trim($row['A']);
-                        $dni                 = trim($row['B']);
-                        $ApellidoPaterno     = trim($row['C']);
-                        $ApellidoMaterno     = trim($row['D']);
-                        $Nombres             = trim($row['E']);
-                        $genero              = strtoupper(trim($row['F']));
-                        $fecha_nac           = date('Y-m-d', strtotime($row['G']));
-                        $direccion           = trim($row['H']);
-                        $correo              = trim($row['I']);
-                        $telefono            = trim($row['J']);
-                        $discapacidad        = strtoupper(trim($row['K']));
-                        $programa_estudios   = trim($row['L']);
-                        $plan_estudio        = trim($row['M']);
+                        $tipo_doc           = trim($row['A'] ?? '');
+                        $dni                = trim($row['B'] ?? '');
+                        $ApellidoPaterno    = trim($row['C'] ?? '');
+                        $ApellidoMaterno    = trim($row['D'] ?? '');
+                        $Nombres            = trim($row['E'] ?? '');
+                        $genero             = strtoupper(trim($row['F'] ?? ''));
+                        $fecha_raw          = $row['G'] ?? '';
+                        $fecha_nac          = (!empty($fecha_raw)) ? date('Y-m-d', strtotime($fecha_raw)) : null;
+                        $direccion           = trim($row['H'] ?? '');
+                        $correo              = trim($row['I'] ?? '');
+                        $telefono            = trim($row['J'] ?? '');
+                        $discapacidad        = strtoupper(trim($row['K'] ?? ''));
+                        $programa_estudios   = trim($row['L'] ?? '');
+                        $plan_estudio        = trim($row['M'] ?? '');
 
                         // Solo procesar filas "mínimas"
                         if ($dni != '' && $ApellidoPaterno != '' && $ApellidoMaterno != '' && $Nombres != '' && $genero != '') {

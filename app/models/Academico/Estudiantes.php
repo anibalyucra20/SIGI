@@ -211,9 +211,9 @@ class Estudiantes extends Model
         } else {
             // INSERT usuario
             $sql = "INSERT INTO sigi_usuarios
-                        (dni, apellidos_nombres, genero, fecha_nacimiento, direccion, correo, telefono, id_periodo_registro, id_programa_estudios, discapacidad, id_rol, id_sede, estado, password, reset_password, token_password)
+                        (tipo_doc, dni, apellidos_nombres, genero, fecha_nacimiento, direccion, correo, telefono, id_periodo_registro, id_programa_estudios, discapacidad, id_rol, id_sede, estado, password, reset_password, token_password)
                     VALUES
-                        (:dni, :apellidos_nombres, :genero, :fecha_nacimiento, :direccion, :correo, :telefono, :id_periodo_registro, :id_programa_estudios, :discapacidad, :id_rol, :id_sede, :estado, :password, :reset_password, :token_password)";
+                        (:tipo_doc, :dni, :apellidos_nombres, :genero, :fecha_nacimiento, :direccion, :correo, :telefono, :id_periodo_registro, :id_programa_estudios, :discapacidad, :id_rol, :id_sede, :estado, :password, :reset_password, :token_password)";
             $params = [
                 ':tipo_doc' => $data['tipo_doc'],
                 ':dni' => $data['dni'],
