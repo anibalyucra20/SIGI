@@ -717,7 +717,6 @@ class EstudiantesController extends Controller
             $mainSheet->setTitle('Estudiantes');
 
             $mainSheet->fromArray([
-                'Tipo Doc',
                 'Nro Documento',
                 'Apellidos',
                 'Nombres',
@@ -732,7 +731,6 @@ class EstudiantesController extends Controller
             $row = 2;
             foreach ($usuarios as $usuario) {
                 $mainSheet->fromArray([
-                    $usuario['tipo_doc'] ?? '',
                     $usuario['dni'] ?? '',
                     $usuario['apellidos'] ?? '',
                     $usuario['nombres'] ?? '',
