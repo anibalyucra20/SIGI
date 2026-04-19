@@ -494,13 +494,13 @@ class EstudiantesController extends Controller
                         $ApellidoMaterno     = trim($row['D']);
                         $Nombres             = trim($row['E']);
                         $genero              = strtoupper(trim($row['F']));
-                        $fecha_nac           = date('Y-m-d', strtotime($row['F']));
-                        $direccion           = trim($row['G']);
-                        $correo              = trim($row['H']);
-                        $telefono            = trim($row['I']);
-                        $discapacidad        = strtoupper(trim($row['J']));
-                        $programa_estudios   = trim($row['K']);
-                        $plan_estudio        = trim($row['L']);
+                        $fecha_nac           = date('Y-m-d', strtotime($row['G']));
+                        $direccion           = trim($row['H']);
+                        $correo              = trim($row['I']);
+                        $telefono            = trim($row['J']);
+                        $discapacidad        = strtoupper(trim($row['K']));
+                        $programa_estudios   = trim($row['L']);
+                        $plan_estudio        = trim($row['M']);
 
                         // Solo procesar filas "mínimas"
                         if ($dni != '' && $ApellidoPaterno != '' && $ApellidoMaterno != '' && $Nombres != '' && $genero != '') {
