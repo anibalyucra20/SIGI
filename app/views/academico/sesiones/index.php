@@ -80,7 +80,7 @@
                             <?php endif; ?>
                             acciones += `<a href="<?= BASE_URL ?>/academico/sesiones/pdf/${row.id}" class="btn btn-sm btn-outline-secondary" title="Imprimir" target="_blank"><i class="fa fa-print"></i></a> `;
                             <?php if ($periodo_vigente /*&& 100 > 1000*/): ?>
-                                acciones += `<a href="<?= BASE_URL ?>/academico/sesiones/duplicar/${row.id}" class="btn btn-sm btn-outline-success" title="Duplicar"  onclick="return confirm('¿Duplicar esta sesión?');"><i class="fa fa-copy"></i></a> `;
+                                //acciones += `<a href="<?= BASE_URL ?>/academico/sesiones/duplicar/${row.id}" class="btn btn-sm btn-outline-success" title="Duplicar"  onclick="return confirm('¿Duplicar esta sesión?');"><i class="fa fa-copy"></i></a> `;
                             <?php endif; ?>
                             // Eliminar solo si es la 2da o mayor sesión de esa semana
                             if (row._nroSesion > 1) {

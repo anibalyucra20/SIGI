@@ -79,6 +79,8 @@ class SilabosController extends Controller
             $datosGenerales['fecha_inicio'] = $sesiones[0]['fecha'];
             $datosGenerales['fecha_fin'] = $sesiones[$cant_ses]['fecha'];
         } else {
+            $permitido = false;
+            $periodo_vigente =false;
             $errores[] = "No existe un sílabo registrado para esta programación.";
             $datosGenerales = $competenciasUnidadDidactica = $capacidades = $competenciasTransversales = $sesiones = [];
         }

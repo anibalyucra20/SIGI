@@ -373,6 +373,10 @@ class Sesiones extends Model
     {
         self::$db->beginTransaction();
         try {
+            // 1. Eliminar asistencias
+            $stmt = self::$db->prepare("DELETE FROM acad_asistencia WHERE id_sesion_aprendizaje = ?");
+            $stmt->execute([$id_sesion]);
+
             // 1. Eliminar momentos
             $stmt = self::$db->prepare("DELETE FROM acad_momentos_sesion_aprendizaje WHERE id_sesion_aprendizaje = ?");
             $stmt->execute([$id_sesion]);
