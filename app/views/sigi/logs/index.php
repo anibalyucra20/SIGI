@@ -46,6 +46,7 @@
                 <thead class="table-light">
                     <tr>
                         <th>Fecha</th>
+                        <th>Tipo</th>
                         <th>Usuario</th>
                         <th>Acción</th>
                         <th>Tabla</th>
@@ -78,6 +79,9 @@
                 },
                 columns: [{
                         data: 'fecha'
+                    },
+                    {
+                        data: 'rol'
                     },
                     {
                         data: 'usuario'

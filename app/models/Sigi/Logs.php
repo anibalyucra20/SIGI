@@ -22,9 +22,10 @@ class Logs extends Model
         ];
         $ordenarPor = $columnas[$orderCol] ?? 'fecha';
 
-        $sql = "SELECT l.*, u.apellidos_nombres AS usuario 
+        $sql = "SELECT l.*, u.apellidos_nombres AS usuario, r.nombre AS rol 
                 FROM sigi_logs l
                 LEFT JOIN sigi_usuarios u ON u.id = l.id_usuario
+                LEFT JOIN sigi_roles r ON r.id = u.id_rol
                 WHERE 1=1";
 
         $params = [];

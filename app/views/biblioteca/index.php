@@ -25,7 +25,7 @@
   <?php endif; ?>
   <?php if (\Core\Auth::esAdminBiblioteca()): ?>
     <div class="col-md-3">
-      <a href="<?= BASE_URL ?>/academico/reportes">
+      <a href="<?= BASE_URL ?>/biblioteca/reportes">
         <div class="card text-center">
           <div class="card-body">
             <h5 class="card-title">reportes</h5>
