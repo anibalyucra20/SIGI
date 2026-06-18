@@ -124,9 +124,9 @@ class LecturasController extends Controller
     }
 
     /* ===================== ENDPOINT DATA: Server-Side Reporte Logs CORREGIDO ===================== */
+    /* ===================== ENDPOINT DATA: Server-Side Reporte Logs ===================== */
     public function data()
     {
-        // Forzar salida limpia JSON
         header('Content-Type: application/json; charset=utf-8');
 
         if (!\Core\Auth::esAdminBiblioteca()) {
@@ -134,55 +134,56 @@ class LecturasController extends Controller
             exit;
         }
 
-        // 1. Parámetros de DataTables
         $draw   = (int)($_GET['draw'] ?? 1);
         $start  = (int)($_GET['start'] ?? 0);
         $length = (int)($_GET['length'] ?? 10);
 
-        // 2. Mapeo de filtros de la interfaz
         $filtros = [
             'id_usuario' => !empty($_GET['filter_usuario']) ? (int)$_GET['filter_usuario'] : null,
-            'fecha_ini'  => (!empty($_GET['filter_fecha_ini']) && $_GET['filter_fecha_ini'] !== 'undefined') ? trim($_GET['filter_fecha_ini']) : null,
-            'fecha_fin'  => (!empty($_GET['filter_fecha_fin']) && $_GET['filter_fecha_fin'] !== 'undefined') ? trim($_GET['filter_fecha_fin']) : null,
+            'fecha_ini'  => !empty($_GET['filter_fecha_ini']) ? trim($_GET['filter_fecha_ini']) : null,
+            'fecha_fin'  => !empty($_GET['filter_fecha_fin']) ? trim($_GET['filter_fecha_fin']) : null,
         ];
 
-        // 3. Consultas a la Base de Datos Local
         $totalRegistros = (int)$this->model->contarLogs(null);
         $totalFiltrados = (int)$this->model->contarLogs($filtros);
         $logs = ($totalFiltrados > 0) ? $this->model->listarLogs($filtros, $start, $length) : [];
 
-        // 4. Batch Processing: Recolectar IDs usando el alias exacto del modelo 'id_registro'
+        // Extraer los IDs utilizando la columna real 'id_libro'
         $idLibros = [];
         foreach ($logs as $log) {
-            // Evaluamos ambas posibilidades por seguridad de la arquitectura
-            $idActual = !empty($log['id_registro']) ? $log['id_registro'] : ($log['id_libro'] ?? 0);
-            if ($idActual > 0) {
-                $idLibros[] = (int)$idActual;
+            if (!empty($log['id_libro'])) {
+                $idLibros[] = (int)$log['id_libro'];
             }
         }
         $idLibrosUnicos = array_values(array_unique($idLibros));
 
-        // Consumo eficiente de la API en un solo bloque
         $librosMaestros = $idLibrosUnicos ? $this->apiBatch($idLibrosUnicos) : [];
         $titulosPorId = array_column($librosMaestros, 'titulo', 'id');
 
-        // 5. Construcción del Response estructurado para tus 4 columnas de la vista
         $dataResult = [];
         foreach ($logs as $log) {
-            $idLibro = !empty($log['id_registro']) ? (int)$log['id_registro'] : (int)($log['id_libro'] ?? 0);
-
-            // Si la API encuentra el título lo muestra, de lo contrario deja un fallback elegante
+            $idLibro = (int)($log['id_libro'] ?? 0);
             $tituloLibro = isset($titulosPorId[$idLibro]) ? $titulosPorId[$idLibro] : 'Libro no especificado (ID: ' . $idLibro . ')';
+
+            // Mapeamos el rol numérico (id_rol) de tu base de datos a texto plano legible
+            $rolId = (int)($log['rol'] ?? 0);
+            $rolTexto = 'Estudiante';
+            if ($rolId === 1) $rolTexto = 'Administrador';
+            if ($rolId === 2) $rolTexto = 'Director';
+            if ($rolId === 3) $rolTexto = 'Secretario Académico';
+            if ($rolId === 4) $rolTexto = 'Jefe de Unidad Académica';
+            if ($rolId === 5) $rolTexto = 'Jefe de Area';
+            if ($rolId === 6) $rolTexto = 'Docente';
+
 
             $dataResult[] = [
                 'fecha'   => $log['fecha'] ?? '—',
-                'rol'     => $log['rol'] ?? 'Estudiante',
+                'rol'     => $rolTexto,
                 'usuario' => $log['usuario'] ?? 'Usuario',
-                'libro'   => $tituloLibro // Debe llamarse 'libro' idéntico a tu columna JS { data: 'libro' }
+                'libro'   => $tituloLibro // Alineado con la propiedad 'libro' de la vista
             ];
         }
 
-        // 6. Retorno de datos oficial para DataTables
         echo json_encode([
             "draw"            => $draw,
             "recordsTotal"    => $totalRegistros,

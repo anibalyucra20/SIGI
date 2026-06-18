@@ -8,7 +8,7 @@ use PDO;
 class Lecturas extends Model
 {
     /**
-     * Cuenta el total de registros aplicando filtros de forma segura
+     * Cuenta el total de lecturas aplicando los filtros de la interfaz
      */
     public function contarLogs(?array $filtros = null): int
     {
@@ -20,7 +20,6 @@ class Lecturas extends Model
                 $condiciones[] = "bl.id_usuario = ?";
                 $parametros[] = $filtros['id_usuario'];
             }
-            // Solo aplicamos el filtro si el usuario interactuó cambiando las fechas
             if (!empty($filtros['fecha_ini'])) {
                 $condiciones[] = "DATE(bl.fecha_registro) >= ?";
                 $parametros[] = $filtros['fecha_ini'];
@@ -48,7 +47,7 @@ class Lecturas extends Model
     }
 
     /**
-     * Lista los registros cruzando la fecha en formato DATE contra el TIMESTAMP
+     * Obtiene los registros paginados mapeando de forma nativa la columna id_libro
      */
     public function listarLogs(?array $filtros, int $start, int $length): array
     {
@@ -72,11 +71,12 @@ class Lecturas extends Model
 
         $where = implode(' AND ', $condiciones);
 
+        // Eliminamos el alias conflictivo id_registro y seleccionamos id_libro de forma directa
         $sql = "SELECT 
                     bl.fecha_registro AS fecha, 
-                    u.rol AS rol, 
+                    u.id_rol AS rol, 
                     u.apellidos_nombres AS usuario, 
-                    bl.id_libro AS id_registro
+                    bl.id_libro AS id_libro
                 FROM biblioteca_lecturas bl
                 INNER JOIN sigi_usuarios u ON bl.id_usuario = u.id
                 WHERE $where 
@@ -86,13 +86,25 @@ class Lecturas extends Model
         try {
             $st = self::$db->prepare($sql);
             $st->execute($parametros);
-            return $st->fetchAll(\PDO::FETCH_ASSOC);
+            $data = $st->fetchAll(\PDO::FETCH_ASSOC);
+            foreach ($data as $key => $value) {
+                $apellidos_nombres = explode('_', trim($value['usuario']));
+                $data[$key]['usuario'] = implode(' ', array_filter([
+                    $apellidos_nombres[0] ?? '',
+                    $apellidos_nombres[1] ?? '',
+                    $apellidos_nombres[2] ?? ''
+                ]));
+            }
+            return $data;
         } catch (\PDOException $e) {
             error_log("[LecturasModel@listarLogs] " . $e->getMessage());
             return [];
         }
     }
 
+    /**
+     * Carga y limpia los apellidos_nombres de la tabla sigi_usuarios
+     */
     public function getUsuarios(): array
     {
         try {

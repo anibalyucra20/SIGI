@@ -15,11 +15,11 @@
             </div>
             <div class="col-md-4 mb-2">
                 <label class="font-weight-bold small">Fecha Inicio:</label>
-                <input type="date" id="filter-fecha-ini" class="form-control form-control-sm" value="<?= date('Y-m-d', strtotime('-30 days')) ?>">
+                <input type="date" id="filter-fecha-ini" class="form-control form-control-sm" max="<?= date('Y-m-d', strtotime('-1 day')) ?>" value="<?= date('Y-m-d', strtotime('-30 days')) ?>">
             </div>
             <div class="col-md-4 mb-2">
                 <label class="font-weight-bold small">Fecha Fin:</label>
-                <input type="date" id="filter-fecha-fin" class="form-control form-control-sm" value="<?= date('Y-m-d') ?>">
+                <input type="date" id="filter-fecha-fin" class="form-control form-control-sm" value="<?= date('Y-m-d') ?>" max="<?= date('Y-m-d') ?>">
             </div>
             <input type="hidden" id="filter-tabla" value="biblioteca_libros">
         </div>
@@ -51,11 +51,9 @@
                     url: '<?= BASE_URL ?>/biblioteca/lecturas/data',
                     type: 'GET',
                     data: function(d) {
-                        // Forzamos el envío de valores limpios o nulos exactos
-                        d.filter_usuario   = $('#filter-usuario').val() || '';
+                        d.filter_usuario = $('#filter-usuario').val() || '';
                         d.filter_fecha_ini = $('#filter-fecha-ini').val() || '';
                         d.filter_fecha_fin = $('#filter-fecha-fin').val() || '';
-                        d.filter_tabla     = $('#filter-tabla').val() || '';
                     }
                 },
                 columns: [
@@ -80,7 +78,7 @@
                         render: d => html(d)
                     },
                     {
-                        data: 'libro', // Sincronizado perfectamente con el payload del backend
+                        data: 'libro',
                         render: d => html(d)
                     }
                 ],
@@ -90,8 +88,7 @@
                 pageLength: 25
             });
 
-            // Cambiamos el listener a 'input change' para asegurar captura en todos los navegadores
-            $('#filter-usuario, #filter-fecha-ini, #filter-fecha-fin').on('change input', function() {
+            $('#filter-usuario, #filter-fecha-ini, #filter-fecha-fin').on('change', function() {
                 tabla.ajax.reload();
             });
 
