@@ -199,38 +199,20 @@ endif;
 
           <!-- POP UP NOTIFICACION DE VENCIMIENTO -->
           <style>
-            /* Fondo general */
-            .popup-overlay {
-              position: fixed;
-              top: 0;
-              left: 0;
-              width: 100%;
-              height: 100%;
-              background: rgba(0, 0, 0, 0.65);
-              display: flex;
-              justify-content: center;
-              align-items: center;
-              z-index: 99999;
-              backdrop-filter: blur(2px);
-              /* Suave desenfoque de fondo */
-            }
-
-            /* Caja del Popup con borde izquierdo de advertencia */
+            /* Caja del Popup (Fija al centro de la pantalla) */
             .popup-content {
-              background: #ffffff;
-              padding: 35px 30px;
-              border-radius: 8px;
-              box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-              width: 90%;
-              max-width: 520px;
-              text-align: center;
-              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-              animation: popupSlideIn 0.3s ease-out;
+              background: #ffffff !important;
+              padding: 35px 30px !important;
+              border-radius: 8px !important;
+              box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
+              width: 90% !important;
+              max-width: 520px !important;
+              text-align: center !important;
+              margin: auto !important;
             }
 
             .warning-border {
-              border-top: 5px solid #f59e0b;
-              /* Color Ámbar / Advertencia */
+              border-top: 5px solid #f59e0b !important;
             }
 
             /* Ícono de Alerta */
@@ -242,87 +224,104 @@ endif;
 
             /* Título */
             .popup-content h2 {
-              color: #1f2937;
-              font-size: 22px;
-              margin-top: 0;
-              margin-bottom: 15px;
-              font-weight: 700;
+              color: #1f2937 !important;
+              font-size: 22px !important;
+              margin-top: 0 !important;
+              margin-bottom: 15px !important;
+              font-weight: 700 !important;
             }
 
             /* Cuerpo del texto */
             .popup-body p {
-              color: #4b5563;
-              font-size: 14.5px;
-              line-height: 1.6;
-              margin-bottom: 15px;
+              color: #4b5563 !important;
+              font-size: 14.5px !important;
+              line-height: 1.6 !important;
             }
 
-            /* Recuadro destacado para Administración */
-            .alert-box-notice {
-              background-color: #fef3c7;
-              border-left: 4px solid #d97706;
-              color: #92400e;
-              padding: 12px 15px;
-              border-radius: 4px;
-              font-size: 14px;
-              text-align: left;
-              line-height: 1.5;
-              margin: 20px 0;
+            /* Contenedor del Contador Faltante */
+            .countdown-box {
+              background-color: #f9fafb !important;
+              border: 2px dashed #d1d5db !important;
+              border-radius: 6px !important;
+              padding: 15px !important;
+              margin: 15px 0 !important;
             }
 
-            .action-text {
-              font-size: 13.5px !important;
-              font-style: italic;
+            .countdown-label {
+              font-size: 11px !important;
+              font-weight: 800 !important;
+              color: #4b5563 !important;
+              letter-spacing: 1px !important;
+              display: block;
+            }
+
+            .countdown-number {
+              font-size: 54px !important;
+              font-weight: 900 !important;
+              color: #d97706 !important;
+              margin: 5px 0 !important;
+            }
+
+            .countdown-sub {
+              font-size: 12px !important;
+              font-weight: 700 !important;
               color: #6b7280 !important;
+              letter-spacing: 2px !important;
             }
 
-            /* Botón de acción */
+            /* Recuadro de Administración */
+            .alert-box-notice {
+              background-color: #fef3c7 !important;
+              border-left: 4px solid #d97706 !important;
+              color: #92400e !important;
+              padding: 12px 15px !important;
+              border-radius: 4px !important;
+              font-size: 14px !important;
+              text-align: left !important;
+              margin: 20px 0 !important;
+            }
+
+            /* Botón estilizado (Para cambiar el botón feo por defecto) */
             .btn-popup-warning {
-              background-color: #d97706;
-              color: white;
-              border: none;
-              padding: 12px 30px;
-              font-size: 15px;
-              font-weight: 600;
-              border-radius: 5px;
-              cursor: pointer;
-              transition: background 0.2s ease;
-              width: 100%;
-              margin-top: 10px;
+              background-color: #d97706 !important;
+              color: white !important;
+              border: none !important;
+              padding: 12px 30px !important;
+              font-size: 15px !important;
+              font-weight: 600 !important;
+              border-radius: 5px !important;
+              cursor: pointer !important;
+              width: 100% !important;
             }
 
             .btn-popup-warning:hover {
-              background-color: #b45309;
-            }
-
-            /* Animación de entrada */
-            @keyframes popupSlideIn {
-              from {
-                transform: translateY(-20px);
-                opacity: 0;
-              }
-
-              to {
-                transform: translateY(0);
-                opacity: 1;
-              }
+              background-color: #b45309 !important;
             }
           </style>
-          <div id="global-popup" class="popup-overlay" style="">
+          <div id="global-popup" class="popup-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.65); z-index: 99999; justify-content: center; align-items: center; backdrop-filter: blur(2px);">
             <div class="popup-content warning-border">
               <div class="popup-icon">⚠️</div>
 
               <h2>Aviso Importante: Renovación de Servicio</h2>
 
               <div class="popup-body">
-                <p>Estimado(a) docente, le informamos que el sistema <strong>SIGI</strong> se encuentra en riesgo de suspensión temporal debido al próximo vencimiento del servicio de hosting/VPS.</p>
+                <p>Estimado(a) docente, le informamos que el sistema <strong>SIGI</strong> se encuentra en riesgo de suspensión temporal debido al próximo vencimiento del VPS.</p>
+
+                <div id="countdown-container" class="countdown-box">
+                  <span class="countdown-label">EL SERVICIO SE SUSPENDERÁ EN:</span>
+                  <div id="countdown-days" class="countdown-number">13</div>
+                  <span class="countdown-sub">DÍAS</span>
+                </div>
 
                 <!--<div class="alert-box-notice">
                   <strong>Nota para la gestión:</strong> El trámite y pago de renovación ya ha sido derivado y debe ser regularizado a la brevedad por el <strong>Área de Administración</strong> de la institución.
-                </div>-->
+                </div>
+
                 <p class="action-text">Agradecemos su comprensión. Estamos trabajando para evitar interrupciones en sus labores académicas.</p>
+              </div>-->
+
+                <button id="accept-popup-btn" class="btn-popup-warning">Entendido</button>
               </div>
-              <button id="accept-popup-btn" class="btn-popup-warning">Entendido</button>
             </div>
           </div>
           <script>
@@ -330,19 +329,14 @@ endif;
               const popup = document.getElementById("global-popup");
               const acceptBtn = document.getElementById("accept-popup-btn");
 
-              // Validar si ya vio el popup en esta navegación activa
-              /*if (!localStorage.getItem("popupVisto")) {
-                popup.style.display = "flex";
-              }*/
-
-              // Función para cerrar y registrar que ya se mostró
-              function cerrarPopup() {
-                popup.style.display = "none";
-                //localStorage.setItem("popupVisto", "true");
-                // Nota: Si quieres que vuelva a salir al cerrar el navegador, usa sessionStorage en lugar de localStorage
+              // Lógica para mostrarlo si no ha sido cerrado en la sesión
+              if (!sessionStorage.getItem("avisoVpsMostrado")) {
+                popup.style.setProperty("display", "flex", "important"); // Esto fuerza a que se vuelva un modal flotante centrado
               }
 
-              
-              acceptBtn.addEventListener("click", cerrarPopup);
+              acceptBtn.addEventListener("click", function() {
+                popup.style.setProperty("display", "none", "important");
+                sessionStorage.setItem("avisoVpsMostrado", "true");
+              });
             });
           </script>
