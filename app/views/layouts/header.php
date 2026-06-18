@@ -306,10 +306,16 @@ endif;
 
               <div class="popup-body">
                 <p>Estimado(a) docente, le informamos que el sistema <strong>SIGI</strong> se encuentra en riesgo de suspensión temporal debido al próximo vencimiento del VPS.</p>
-
+                <?php
+                // Calcular los días restantes para el vencimiento del VPS
+                $fechaVencimiento = new DateTime('2026-06-29'); // Fecha de vencimiento del VPS
+                $fechaActual = new DateTime();
+                $intervalo = $fechaActual->diff($fechaVencimiento);
+                $diasRestantes = $intervalo->format('%r%a'); // Días restantes (con signo) para el vencimiento
+                ?>
                 <div id="countdown-container" class="countdown-box">
                   <span class="countdown-label">EL SERVICIO SE SUSPENDERÁ EN:</span>
-                  <div id="countdown-days" class="countdown-number">13</div>
+                  <div id="countdown-days" class="countdown-number"><?php echo $diasRestantes; ?></div>
                   <span class="countdown-sub">DÍAS</span>
                 </div>
 
