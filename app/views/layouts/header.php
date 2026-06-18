@@ -38,7 +38,7 @@ endif;
 
   <!-- Si usas Responsive de DataTables, descomenta estas dos líneas -->
   <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap4.min.css">
-  
+
 
   <?php
   if ($_SESSION['favicon'] != '') {
@@ -195,3 +195,154 @@ endif;
             </div>
             <?php unset($_SESSION['flash_error']); ?>
           <?php endif; ?>
+
+
+          <!-- POP UP NOTIFICACION DE VENCIMIENTO -->
+          <style>
+            /* Fondo general */
+            .popup-overlay {
+              position: fixed;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+              background: rgba(0, 0, 0, 0.65);
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              z-index: 99999;
+              backdrop-filter: blur(2px);
+              /* Suave desenfoque de fondo */
+            }
+
+            /* Caja del Popup con borde izquierdo de advertencia */
+            .popup-content {
+              background: #ffffff;
+              padding: 35px 30px;
+              border-radius: 8px;
+              box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+              width: 90%;
+              max-width: 520px;
+              text-align: center;
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+              animation: popupSlideIn 0.3s ease-out;
+            }
+
+            .warning-border {
+              border-top: 5px solid #f59e0b;
+              /* Color Ámbar / Advertencia */
+            }
+
+            /* Ícono de Alerta */
+            .popup-icon {
+              font-size: 45px;
+              margin-bottom: 15px;
+              color: #f59e0b;
+            }
+
+            /* Título */
+            .popup-content h2 {
+              color: #1f2937;
+              font-size: 22px;
+              margin-top: 0;
+              margin-bottom: 15px;
+              font-weight: 700;
+            }
+
+            /* Cuerpo del texto */
+            .popup-body p {
+              color: #4b5563;
+              font-size: 14.5px;
+              line-height: 1.6;
+              margin-bottom: 15px;
+            }
+
+            /* Recuadro destacado para Administración */
+            .alert-box-notice {
+              background-color: #fef3c7;
+              border-left: 4px solid #d97706;
+              color: #92400e;
+              padding: 12px 15px;
+              border-radius: 4px;
+              font-size: 14px;
+              text-align: left;
+              line-height: 1.5;
+              margin: 20px 0;
+            }
+
+            .action-text {
+              font-size: 13.5px !important;
+              font-style: italic;
+              color: #6b7280 !important;
+            }
+
+            /* Botón de acción */
+            .btn-popup-warning {
+              background-color: #d97706;
+              color: white;
+              border: none;
+              padding: 12px 30px;
+              font-size: 15px;
+              font-weight: 600;
+              border-radius: 5px;
+              cursor: pointer;
+              transition: background 0.2s ease;
+              width: 100%;
+              margin-top: 10px;
+            }
+
+            .btn-popup-warning:hover {
+              background-color: #b45309;
+            }
+
+            /* Animación de entrada */
+            @keyframes popupSlideIn {
+              from {
+                transform: translateY(-20px);
+                opacity: 0;
+              }
+
+              to {
+                transform: translateY(0);
+                opacity: 1;
+              }
+            }
+          </style>
+          <div id="global-popup" class="popup-overlay" style="">
+            <div class="popup-content warning-border">
+              <div class="popup-icon">⚠️</div>
+
+              <h2>Aviso Importante: Renovación de Servicio</h2>
+
+              <div class="popup-body">
+                <p>Estimado(a) docente, le informamos que el sistema <strong>SIGI</strong> se encuentra en riesgo de suspensión temporal debido al próximo vencimiento del servicio de hosting/VPS.</p>
+
+                <!--<div class="alert-box-notice">
+                  <strong>Nota para la gestión:</strong> El trámite y pago de renovación ya ha sido derivado y debe ser regularizado a la brevedad por el <strong>Área de Administración</strong> de la institución.
+                </div>-->
+                <p class="action-text">Agradecemos su comprensión. Estamos trabajando para evitar interrupciones en sus labores académicas.</p>
+              </div>
+              <button id="accept-popup-btn" class="btn-popup-warning">Entendido</button>
+            </div>
+          </div>
+          <script>
+            document.addEventListener("DOMContentLoaded", function() {
+              const popup = document.getElementById("global-popup");
+              const acceptBtn = document.getElementById("accept-popup-btn");
+
+              // Validar si ya vio el popup en esta navegación activa
+              /*if (!localStorage.getItem("popupVisto")) {
+                popup.style.display = "flex";
+              }*/
+
+              // Función para cerrar y registrar que ya se mostró
+              function cerrarPopup() {
+                popup.style.display = "none";
+                //localStorage.setItem("popupVisto", "true");
+                // Nota: Si quieres que vuelva a salir al cerrar el navegador, usa sessionStorage en lugar de localStorage
+              }
+
+              
+              acceptBtn.addEventListener("click", cerrarPopup);
+            });
+          </script>
