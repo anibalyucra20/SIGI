@@ -298,7 +298,7 @@ endif;
               background-color: #b45309 !important;
             }
           </style>
-          <div id="global-popup" class="popup-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.65); z-index: 99999; justify-content: center; align-items: center; backdrop-filter: blur(2px);">
+          <div id="global-popup" class="popup-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.65); z-index: 99999; justify-content: center; align-items: center; backdrop-filter: blur(2px);">
             <div class="popup-content warning-border">
               <div class="popup-icon">⚠️</div>
 
