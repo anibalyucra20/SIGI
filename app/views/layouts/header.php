@@ -308,7 +308,7 @@ endif;
                 <p>Estimado(a) docente, le informamos que el sistema <strong>SIGI</strong> se encuentra en riesgo de suspensión temporal debido al próximo vencimiento del Hosting/VPS.</p>
                 <?php
                 // Calcular los días restantes para el vencimiento del VPS
-                $fechaVencimiento = new DateTime('2026-06-29'); // Fecha de vencimiento del VPS
+                $fechaVencimiento = new DateTime('2026-06-26'); // Fecha de vencimiento del VPS
                 $fechaActual = new DateTime();
                 $intervalo = $fechaActual->diff($fechaVencimiento);
                 $diasRestantes = $intervalo->format('%r%a'); // Días restantes (con signo) para el vencimiento
