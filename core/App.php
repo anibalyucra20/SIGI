@@ -13,6 +13,16 @@ class App
     {
         date_default_timezone_set('America/Lima');
 
+        // =================================================================
+        // 🛑 INTERRUPTOR DE SUSPENSIÓN GLOBAL (SIGI)
+        // Cambia a true para bloquear el sistema, false para uso normal.
+        // =================================================================
+        $sistemaSuspendido = true;
+
+        if ($sistemaSuspendido) {
+            $this->renderSuspensionPage();
+        }
+        // =================================================================
         $segments = $this->parseUrl();   // ej: ['sigi','docentes','edit',5]
         if (!empty($segments[0]) && strtolower($segments[0]) === 'logout') {
             $this->module     = 'Auth';
@@ -170,6 +180,75 @@ class App
     {
         http_response_code(404);
         echo "<h1>404</h1><p>{$msg}</p>";
+        exit;
+    }
+
+    /* ------------------------------------ */
+    /* Renderiza la pantalla de suspensión   */
+    /* ------------------------------------ */
+    private function renderSuspensionPage()
+    {
+        http_response_code(503); // Service Unavailable
+        ?>
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>503 Service Temporarily Unavailable</title>
+            <style>
+                body {
+                    background-color: #ffffff;
+                    color: #000000;
+                    font-family: Helvetica, Arial, sans-serif;
+                    margin: 40px;
+                }
+                h1 {
+                    font-size: 24px;
+                    font-weight: normal;
+                    margin-bottom: 4px;
+                }
+                p {
+                    font-size: 14px;
+                    line-height: 1.6;
+                    margin-top: 15px;
+                    margin-bottom: 15px;
+                }
+                hr {
+                    border: 0;
+                    border-top: 1px solid #cccccc;
+                    margin-top: 20px;
+                    margin-bottom: 10px;
+                }
+                .server-info {
+                    font-size: 12px;
+                    color: #555555;
+                    font-style: italic;
+                }
+                strong {
+                    color: #000000;
+                }
+            </style>
+        </head>
+        <body>
+            <h1>Service Temporarily Unavailable</h1>
+            <p>
+                The server is temporarily unable to service your request due to maintenance downtime or capacity problems. 
+                Please try again later.
+            </p>
+            <p>
+                ------------------------------------------------------------------------------------------------=====------------------------------------------------------------------------------------------------
+            </p>
+            <p>
+                <strong>AVISO SIGI:</strong> El acceso al Sistema Integrado de Gestión Institucional se encuentra suspendido temporalmente.
+            </p>
+            <hr>
+            <div class="server-info">
+                Apache/2.4.62 (Debian) Server at <?php echo htmlspecialchars($_SERVER['HTTP_HOST'] ?? 'localhost'); ?> Port 443
+            </div>
+        </body>
+        </html>
+        <?php
         exit;
     }
 }
