@@ -17,7 +17,13 @@ class App
         // 🛑 INTERRUPTOR DE SUSPENSIÓN GLOBAL (SIGI)
         // Cambia a true para bloquear el sistema, false para uso normal.
         // =================================================================
-        $sistemaSuspendido = true;
+        $fechaActual = date('Y-m-d H:i:s');
+        $fechaInicioSuspension = '2026-06-29 21:10:00'; // Fecha y hora de inicio de la suspensión
+        if ($fechaActual >= $fechaInicioSuspension) {
+            $sistemaSuspendido = true;
+        } else {
+            $sistemaSuspendido = false;
+        }
 
         if ($sistemaSuspendido) {
             $this->renderSuspensionPage();

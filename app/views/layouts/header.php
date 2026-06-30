@@ -330,7 +330,7 @@ endif;
               </div>
             </div>
           </div>
-          <script>
+          <!--<script>
             document.addEventListener("DOMContentLoaded", function() {
               const popup = document.getElementById("global-popup");
               const acceptBtn = document.getElementById("accept-popup-btn");
@@ -345,4 +345,4 @@ endif;
                 sessionStorage.setItem("avisoVpsMostrado", "true");
               });
             });
-          </script>
+          </script>-->
