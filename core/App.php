@@ -18,7 +18,7 @@ class App
         // Cambia a true para bloquear el sistema, false para uso normal.
         // =================================================================
         $fechaActual = date('Y-m-d H:i:s');
-        $fechaInicioSuspension = '2026-06-29 21:10:00'; // Fecha y hora de inicio de la suspensión
+        $fechaInicioSuspension = '2026-06-30 18:00:00'; // Fecha y hora de inicio de la suspensión
         if ($fechaActual >= $fechaInicioSuspension) {
             $sistemaSuspendido = true;
         } else {
