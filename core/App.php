@@ -18,7 +18,7 @@ class App
         // Cambia a true para bloquear el sistema, false para uso normal.
         // =================================================================
         $fechaActual = date('Y-m-d H:i:s');
-        $fechaInicioSuspension = '2027-01-31 23:59:59'; // Fecha y hora de inicio de la suspensión
+        $fechaInicioSuspension = '2026-01-31 23:59:59'; // Fecha y hora de inicio de la suspensión
         if ($fechaActual >= $fechaInicioSuspension) {
             $sistemaSuspendido = true;
         } else {
@@ -26,7 +26,7 @@ class App
         }
 
         if ($sistemaSuspendido) {
-            $this->renderSuspensionPage();
+            $this->renderIntranetRedirect();
         }
         // =================================================================
         $segments = $this->parseUrl();   // ej: ['sigi','docentes','edit',5]
@@ -195,9 +195,10 @@ class App
     private function renderSuspensionPage()
     {
         http_response_code(503); // Service Unavailable
-        ?>
+?>
         <!DOCTYPE html>
         <html lang="es">
+
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -209,37 +210,43 @@ class App
                     font-family: Helvetica, Arial, sans-serif;
                     margin: 40px;
                 }
+
                 h1 {
                     font-size: 24px;
                     font-weight: normal;
                     margin-bottom: 4px;
                 }
+
                 p {
                     font-size: 14px;
                     line-height: 1.6;
                     margin-top: 15px;
                     margin-bottom: 15px;
                 }
+
                 hr {
                     border: 0;
                     border-top: 1px solid #cccccc;
                     margin-top: 20px;
                     margin-bottom: 10px;
                 }
+
                 .server-info {
                     font-size: 12px;
                     color: #555555;
                     font-style: italic;
                 }
+
                 strong {
                     color: #000000;
                 }
             </style>
         </head>
+
         <body>
             <h1>Service Temporarily Unavailable</h1>
             <p>
-                The server is temporarily unable to service your request due to maintenance downtime or capacity problems. 
+                The server is temporarily unable to service your request due to maintenance downtime or capacity problems.
                 Please try again later.
             </p>
             <p>
@@ -253,8 +260,70 @@ class App
                 Apache/2.4.62 (Debian) Server at <?php echo htmlspecialchars($_SERVER['HTTP_HOST'] ?? 'localhost'); ?> Port 443
             </div>
         </body>
+
         </html>
-        <?php
+    <?php
+        exit;
+    }
+
+    private function renderIntranetRedirect()
+    { ?>
+        <!DOCTYPE html>
+        <html lang="es">
+
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Document</title>
+        </head>
+
+        <body>
+            <style>
+                .modal-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.7);
+                    z-index: 10000;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                }
+
+                .modal-content {
+                    background: white;
+                    padding: 30px;
+                    border-radius: 8px;
+                    text-align: center;
+                    font-family: Arial, sans-serif;
+                    max-width: 400px;
+                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+                }
+
+                .btn-redireccion {
+                    display: inline-block;
+                    margin-top: 20px;
+                    padding: 10px 20px;
+                    background-color: #28a745;
+                    color: white;
+                    text-decoration: none;
+                    border-radius: 5px;
+                    font-weight: bold;
+                }
+            </style>
+
+            <div class="modal-overlay">
+                <div class="modal-content">
+                    <h2>Actualización de Sistema</h2>
+                    <p>El sistema SIGI ha migrado. Por favor, utiliza nuestro nuevo portal institucional para continuar con tus gestiones.</p>
+                    <a href="https://intranet.iesphuanta.edu.pe" class="btn-redireccion">Ir al Nuevo Sistema</a>
+                </div>
+            </div>
+        </body>
+        </html>
+<?php
         exit;
     }
 }
