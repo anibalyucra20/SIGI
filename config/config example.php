@@ -1,5 +1,6 @@
 <?php
 // Configuración base
+
 const BASE_URL = 'http://localhost';
 const API_BASE_URL = 'http://192.168.0.101';
 
@@ -9,6 +10,7 @@ const DB_NAME = 'sigis';
 const DB_USER = 'root';
 const DB_PASS = 'root';
 
+const SISTEMA_SUSPENDIDO = false; 
 
 // Configuración de Integración 
 const INTEGRACIONES_SYNC_ACTIVE = true; // Interruptor general para apagar la sincro si api se cae

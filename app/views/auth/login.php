@@ -17,7 +17,6 @@
     <link rel="icon" type="image/x-icon" href="<?= $ruta_favicon ?>">
     <style>
         body {
-
             min-height: 100vh;
         }
 
@@ -34,11 +33,21 @@
             width: 200px;
             margin-bottom: 10px;
         }
+        
+        /* Estilo opcional para el botón de WhatsApp */
+        .btn-whatsapp {
+            background-color: #25D366;
+            color: white;
+            border: none;
+        }
+        .btn-whatsapp:hover {
+            background-color: #128C7E;
+            color: white;
+        }
     </style>
 </head>
 <?php
 //echo password_hash('',PASSWORD_DEFAULT);
-
 ?>
 
 <body style="background-color: <?= $datosSistema['color_correo'] ?>;">
@@ -57,9 +66,11 @@
                     <h4 class="mb-2">SIGI</h4>
                     <p class="text-muted mb-4">Sistema de Gestión Institucional</p>
                 </div>
+                
                 <?php if (isset($_GET['error'])): ?>
                     <div class="alert alert-danger">Credenciales incorrectas</div>
                 <?php endif; ?>
+                
                 <?php if (!empty($_SESSION['flash_success'])): ?>
                     <div class="alert alert-success alert-dismissible">
                         <?= $_SESSION['flash_success'] ?>
@@ -79,6 +90,7 @@
                     </div>
                     <?php unset($_SESSION['flash_error']); ?>
                 <?php endif; ?>
+
                 <form action="<?= BASE_URL ?>/login/acceder" method="post">
                     <div class="form-group">
                         <label for="dni">Usuario</label>
@@ -97,9 +109,21 @@
                     </div>
                     <button type="submit" class="btn btn-primary btn-block">Ingresar</button>
                 </form>
+
                 <p class="mt-3 text-center">
                     <a href="<?= BASE_URL ?>/recuperar">¿Olvidaste tu contraseña?</a>
                 </p>
+
+                <!-- Inicio Botón de WhatsApp -->
+                <hr class="mt-2 mb-3">
+                <div class="text-center">
+                    <!-- Reemplaza "NUMERO_AQUI" con el número incluyendo el código de país (Ej: 51999888777 para Perú) -->
+                    <a href="https://wa.me/+51943524805?text=Hola,%20necesito%20soporte%20con%20el%20sistema%20SIGI" target="_blank" class="btn btn-whatsapp btn-block">
+                        <i class="fab fa-whatsapp mr-1"></i> Contactar a Soporte
+                    </a>
+                </div>
+                <!-- Fin Botón de WhatsApp -->
+
             </div>
         </div>
     </div>

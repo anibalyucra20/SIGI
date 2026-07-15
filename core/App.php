@@ -12,20 +12,12 @@ class App
     public function __construct()
     {
         date_default_timezone_set('America/Lima');
-
+        require_once __DIR__ . '/../config/config.php';
         // =================================================================
         // 🛑 INTERRUPTOR DE SUSPENSIÓN GLOBAL (SIGI)
         // Cambia a true para bloquear el sistema, false para uso normal.
         // =================================================================
-        $fechaActual = date('Y-m-d H:i:s');
-        $fechaInicioSuspension = '2026-01-31 23:59:59'; // Fecha y hora de inicio de la suspensión
-        if ($fechaActual >= $fechaInicioSuspension) {
-            $sistemaSuspendido = true;
-        } else {
-            $sistemaSuspendido = false;
-        }
-
-        if ($sistemaSuspendido) {
+        if (SISTEMA_SUSPENDIDO) {
             $this->renderIntranetRedirect();
         }
         // =================================================================
@@ -322,6 +314,7 @@ class App
                 </div>
             </div>
         </body>
+
         </html>
 <?php
         exit;
