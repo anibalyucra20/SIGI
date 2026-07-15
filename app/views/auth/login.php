@@ -118,7 +118,7 @@
                 <hr class="mt-2 mb-3">
                 <div class="text-center">
                     <!-- Reemplaza "NUMERO_AQUI" con el número incluyendo el código de país (Ej: 51999888777 para Perú) -->
-                    <a href="https://wa.me/+51986067472?text=Hola,%20necesito%20soporte%20con%20el%20sistema%20SIGI" target="_blank" class="btn btn-whatsapp btn-block">
+                    <a href="https://wa.me/+51986067472?text=Hola,%20necesito%20soporte%20con%20el%20sistema%20SIGI.%0A%0A*Por%20favor,%20completa%20tus%20datos:*%0A-%20DNI:%20%0A-%20Nombres%20completos:%20%0A-%20Programa%20de%20estudios:%20%0A-%20Semestre:%20" target="_blank" class="btn btn-whatsapp btn-block">
                         <i class="fab fa-whatsapp mr-1"></i> Contactar a Soporte
                     </a>
                 </div>
