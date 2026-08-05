@@ -147,7 +147,7 @@ if (!$permitido) {
                 }
         ?>
                 <tr>
-                    <td style="text-align:center; width:10%;"><?= ($contador) ?></td>
+                    <td style="text-align:center; width:10%;">1</td>
                     <td style="text-align:center; width:15%;"><?= $est['dni'] ?? '' ?></td>
                     <td class="nombres" style="width:40%;"><?= $est['apellidos_nombres'] ?? '' ?></td>
                     <td style="text-align:center; width:13%;" class="<?= $clase; ?>"><?= $promedio_final ?? '' ?></td>
