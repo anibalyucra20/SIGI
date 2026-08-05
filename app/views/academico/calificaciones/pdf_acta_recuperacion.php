@@ -134,7 +134,7 @@ if (!$permitido) {
     </thead>
     <tbody>
         <?php 
-        $contador = 1;
+        $count_recup = 1;
         foreach ($estudiantes as $idx => $est):
             $id_detalle = $est['id_detalle_matricula'];
 
@@ -147,7 +147,7 @@ if (!$permitido) {
                 }
         ?>
                 <tr>
-                    <td style="text-align:center; width:10%;">1</td>
+                    <td style="text-align:center; width:10%;"><?= ($count_recup) ?></td>
                     <td style="text-align:center; width:15%;"><?= $est['dni'] ?? '' ?></td>
                     <td class="nombres" style="width:40%;"><?= $est['apellidos_nombres'] ?? '' ?></td>
                     <td style="text-align:center; width:13%;" class="<?= $clase; ?>"><?= $promedio_final ?? '' ?></td>
@@ -156,7 +156,7 @@ if (!$permitido) {
                 </tr>
 
         <?php   }
-        $contador++;
+        $count_recup ++;
         endforeach; ?>
         <?php
 
