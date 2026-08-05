@@ -102,6 +102,8 @@ require __DIR__ . '/../../layouts/header.php'; ?>
                                             <?php else: ?>
                                                 <?= $recup; ?>
                                             <?php endif; ?>
+                                        <?php else: ?>
+                                            <?= $recup; ?>
                                         <?php endif; ?>
                                     </td>
                                     <?php
@@ -131,6 +133,7 @@ require __DIR__ . '/../../layouts/header.php'; ?>
                                                     echo $nota_mostrar;
                                                 }
                                             }
+                                            $promedio_finalll = ""; // Limpiar la variable para la siguiente iteración
                                             ?>
                                         </label>
                                     </td>
