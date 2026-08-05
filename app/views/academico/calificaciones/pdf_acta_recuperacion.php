@@ -142,7 +142,7 @@ if (!$permitido) {
                 $promedio_final = $recuperaciones[$id_detalle];
                 if ($promedio_final < 13) {
                     $clase = "rojo";
-                } else {
+                } else { 
                     $clase = "azul";
                 }
         ?>
