@@ -69,7 +69,7 @@ require __DIR__ . '/../../layouts/header.php'; ?>
                         </thead>
                         <tbody>
                             <?php foreach ($estudiantes as $idx => $est):
-                                $promedio_finalll = "";
+                                
                                 $id_detalle = $est['id_detalle_matricula'];
                                 $inhabilitado = $estudiantes_inhabilitados[$id_detalle] ?? false;
                                 $motivo = ' (Inasistencia)';
@@ -134,7 +134,7 @@ require __DIR__ . '/../../layouts/header.php'; ?>
                                                     echo $nota_mostrar;
                                                 }
                                             }
-                                            $promedio_finalll = ""; // Limpiar la variable para la siguiente iteración
+                                            $nota_mostrar = "";
                                             ?>
                                         </label>
                                     </td>
