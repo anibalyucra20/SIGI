@@ -8,3 +8,4 @@ if (class_exists('App\Models\Sigi\Permiso')) {
 } else {
     echo "NO ENCONTRADO\n";
 }
+
