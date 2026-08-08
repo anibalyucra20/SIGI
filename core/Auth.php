@@ -481,4 +481,6 @@ class Auth
             && $_SESSION['sigi_modulo_actual'] == 11    // EFSRT
             && $_SESSION['sigi_rol_actual'] == 7);     // ESTUDIANTE
     }
+
+    // ------------------------------------------ ROLES DE MODULOS X --------------------
 }
