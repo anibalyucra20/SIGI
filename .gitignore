@@ -12,4 +12,17 @@ public/images/*.pdf
 public/images/*.docx
 public/images/*.docx
 
+public/images/ofertas_bolsa_laboral/*.jpg
+public/images/ofertas_bolsa_laboral/*.ico
+public/images/ofertas_bolsa_laboral/*.png
+public/images/ofertas_bolsa_laboral/*.gif
+public/images/ofertas_bolsa_laboral/*.jpeg
+public/images/ofertas_bolsa_laboral/*.web
+public/images/ofertas_bolsa_laboral/*.webp
+public/images/ofertas_bolsa_laboral/*.svg
+public/images/ofertas_bolsa_laboral/*.pdf
+public/images/ofertas_bolsa_laboral/*.docx
+public/images/ofertas_bolsa_laboral/*.docx
+
+
 public/uploads/*

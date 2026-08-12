@@ -21,7 +21,7 @@
                             <i class="mdi mdi-account-circle"></i> Tutores<div class="arrow-down"></div>
                         </a>
                         <div class="dropdown-menu" aria-labelledby="nav-periodos">
-                            <a href="<?= BASE_URL ?>/tutoria/tutores" class="dropdown-item">Tutores</a>
+                            <a href="<?= BASE_URL ?>/tutoria/programacion" class="dropdown-item">Tutores</a>
                             <a href="<?= BASE_URL ?>/tutoria/tutores/sesiones" class="dropdown-item">Sesiones de Tutoria</a>
                             <a href="<?= BASE_URL ?>/tutoria/tutores/fichas" class="dropdown-item">Reportes de Tutores</a>
                         </div>

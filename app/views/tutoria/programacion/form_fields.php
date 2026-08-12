@@ -1,18 +1,16 @@
 <div class="row">
-    <div class="col-md-4 mb-2">
-        <label class="form-label">Sede</label>
-        <input type="text" name="sede" class="form-control" maxlength="100" value="<?= htmlspecialchars($tutoria_programacion['id_sede'] ?? '') ?>">
-    </div>
-    <div class="col-md-2 mb-2">
-        <label class="form-label">Periodo Académico</label>
-        <input type="text" name="periodo_academico" class="form-control" value="<?= htmlspecialchars($tutoria_programacion['id_periodo_academico'] ?? '') ?>">
-    </div>
-    <div class="col-md-8 mb-2">
+    <div class="col-md-6 mb-2">
         <label class="form-label">Docente</label>
-        <input type="text" name="docente" class="form-control" maxlength="200" value="<?= htmlspecialchars($tutoria_programacion['id_docente'] ?? '') ?>">
-    </div>
-    <div class="col-md-4 mb-2">
-        <label class="form-label">Conclusiones</label>
-        <input type="text" name="conclusiones" class="form-control" maxlength="3000" value="<?= htmlspecialchars($tutoria_programacion['conclusiones'] ?? '') ?>">
+        <select name="docente" id="docente" class="form-control">
+            <option>Seleccione</option>
+            <?php
+            foreach ($docentes as $docente){
+                $selected = ($isEdit && $data['id_docente'] == $docente['id']) ? 'selected' : '';
+                ?>
+                <option value="<?= $docente['id'] ?>" <?= $selected ?>><?= htmlspecialchars($docente['apellidos_nombres']) ?></option>
+                <?php
+            }
+            ?>
+        </select>
     </div>
 </div>
