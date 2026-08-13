@@ -16,7 +16,7 @@
     <div class="container mt-4">
         <h3 class="mb-4">Detalles del Docente</h3>
 
-        <form id="form-ver-docente" class="card p-4 shadow-sm rounded-3" autocomplete="off">
+        <form id="form-ver-docente" action="<?= BASE_URL ?>/intranet/perfil/guardar" method="POST" class="card p-4 shadow-sm rounded-3" autocomplete="off">
             <input type="hidden" name="id" value="<?= htmlspecialchars($usuario['id'] ?? '') ?>">
 
             <!-- ======= FORMULARIO MISMO ESTILO QUE EDITAR/NUEVO ======= -->
@@ -93,7 +93,7 @@
                 </div>
 
                 <div class="col-md-4 mb-3">
-                    <label class="form-label">Correo electrónico</label>
+                    <label class="form-label">Correo Institucional</label>
                     <!--<input type="email" name="correo" class="form-control"
                         maxlength="120"
                         value="<?= htmlspecialchars($usuario['correo'] ?? '') ?>" required>-->
@@ -101,7 +101,10 @@
                         <label class="form-label" class="form-control"><?= htmlspecialchars($usuario['correo'] ?? '') ?></label>
                     </div>
                 </div>
-
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Correo Personal</label>
+                    <input type="email" name="correo_personal" class="form-control" maxlength="100" value="<?= htmlspecialchars($usuario['correo_personal'] ?? '') ?>" required>
+                </div>
                 <div class="col-md-5 mb-3">
                     <label class="form-label">Dirección</label>
                     <!--<input type="text" name="direccion" class="form-control"
@@ -146,9 +149,9 @@
             <!-- ======= /FORMULARIO ======= -->
 
             <div class="mt-3 d-flex justify-content-end gap-2">
-                <!--<button type="button" class="btn btn-primary d-none m-1" id="btn-guardar-ver">Guardar</button>
+                <button type="submit" class="btn btn-primary d-none m-1" id="btn-guardar-ver">Guardar</button>
                 <button type="button" class="btn btn-secondary d-none m-1" id="btn-cancelar-ver">Cancelar</button>
-                <button type="button" class="btn btn-warning m-1" id="btn-editar-ver">Editar</button>-->
+                <button type="button" class="btn btn-warning m-1" id="btn-editar-ver">Editar</button>
                 <a href="<?= BASE_URL ?>/intranet" class="btn btn-outline-secondary m-1">Ir a Panel</a>
             </div>
         </form>
@@ -219,6 +222,7 @@
             // En la vista "ver" NO guardamos (evita submits accidentales)
             btnGuardar.addEventListener('click', () => {
                 // Si luego quieres guardar de verdad, aquí cambiamos a submit con action=...
+
                 setEditable(false);
             });
 

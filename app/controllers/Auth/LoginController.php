@@ -144,6 +144,11 @@ class LoginController extends Controller
                 header('Location: ' . BASE_URL . $back);
                 exit;
             }
+            if ($user['correo_personal'] == '') {
+                $_SESSION['flash_error'] = 'Error, Usuario no tiene correo personal registrado. Contacte con el Soporte.';
+                header('Location: ' . BASE_URL . $back);
+                exit;
+            }
             // token 24 chars (cabe en VARCHAR(30))
             $token = bin2hex(random_bytes(12));
             $okTok = $this->objDocente->setResetToken((int)$user['id'], $token);
@@ -180,7 +185,7 @@ class LoginController extends Controller
                 "Si no solicitaste este cambio, ignora este mensaje.";
 
             $mail = new Mailer();
-            $res = $mail->send($user['correo'], $user['apellidos_nombres'], 'Restablecer contraseña', $html, $alt);
+            $res = $mail->send($user['correo_personal'], $user['apellidos_nombres'], 'Restablecer contraseña', $html, $alt);
 
             $_SESSION['flash_success'] = 'se envió un correo con instrucciones.' . $res['error'];
             header('Location: ' . BASE_URL . $back);
@@ -201,6 +206,11 @@ class LoginController extends Controller
         if (!$user) {
             // Para no revelar existencia del usuario, damos siempre OK
             $_SESSION['flash_error'] = 'No se encontró Usuario';
+            header('Location: ' . BASE_URL . '/recuperar');
+            exit;
+        }
+        if ($user['correo_personal'] == '') {
+            $_SESSION['flash_error'] = 'Usuario no tiene correo personal registrado. Contacte con el Soporte.';
             header('Location: ' . BASE_URL . '/recuperar');
             exit;
         }
@@ -241,7 +251,7 @@ class LoginController extends Controller
             "Abre este enlace para restablecerla: {$resetUrl}\n\n" .
             "Si no solicitaste este cambio, ignora este mensaje.";
 
-        $res = Mailer::send($user['correo'], $user['apellidos_nombres'], 'Restablecer contraseña', $html, $alt);
+        $res = Mailer::send($user['correo_personal'], $user['apellidos_nombres'], 'Restablecer contraseña', $html, $alt);
 
         $_SESSION['flash_success'] = 'Si existe una cuenta, se envió un correo con instrucciones.' . $res['error'];
         header('Location: ' . BASE_URL . '/recuperar');

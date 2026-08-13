@@ -651,4 +651,15 @@ class Docente extends Model
             'apellidos_nombres' => trim($apPat . '_' . $apMat . '_' . $nombres),
         ];
     }
+
+
+    //============================== FIN DE HELPER PARA CAMBIO CORREO DE USUARIOS----------------------------
+    public function updateCorreo($id, $correo)
+    {
+        $sql = "UPDATE sigi_usuarios SET correo_personal = :correo_personal WHERE id = :id";
+        $stmt = self::$db->prepare($sql);
+        $stmt->bindValue(':correo_personal', $correo, PDO::PARAM_STR);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
 }
