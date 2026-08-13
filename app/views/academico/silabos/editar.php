@@ -11,16 +11,21 @@ if (class_exists(\App\Helpers\HorarioHelper::class)) {
 } else {
     $horarioPretty = $horario_raw; // fallback sin helper
 }
+
+//no permitir editar por nada al coordinador
+if($esCoordinadorPE){
+    $periodo_vigente = false;
+}
 ?>
 
-<?php if ((\Core\Auth::esDocenteAcademico() || \Core\Auth::esAdminAcademico()) && $permitido): ?>
+<?php if ((\Core\Auth::esDocenteAcademico() || \Core\Auth::esAdminAcademico() || $esCoordinadorPE) && $permitido): ?>
     <form action="<?= BASE_URL ?>/academico/silabos/guardarEdicion" method="post" class="card p-4 shadow-sm rounded-3" autocomplete="off">
         <input type="hidden" name="id_silabo" value="<?= htmlspecialchars($silabo['id']) ?>">
 
         <?php if (\Core\Auth::esDocenteAcademico()): ?>
             <a class="btn btn-danger btn-sm btn-block col-sm-1 col-4 mb-1" href="<?= BASE_URL; ?>/academico/unidadesDidacticas">Regresar</a>
         <?php endif; ?>
-        <?php if (\Core\Auth::esAdminAcademico()): ?>
+        <?php if (\Core\Auth::esAdminAcademico() || $esCoordinadorPE): ?>
             <a class="btn btn-danger btn-sm btn-block col-sm-1 col-4 mb-1" href="<?= BASE_URL; ?>/academico/unidadesDidacticas/evaluar">Regresar</a>
         <?php endif; ?>
         <a href="<?= BASE_URL ?>/academico/silabos/pdf/<?= htmlspecialchars($silabo['id']) ?>" class="btn btn-sm btn-outline-secondary col-md-1" title="Imprimir" target="_blank"><i class="fa fa-print"></i> Imprimir</a>

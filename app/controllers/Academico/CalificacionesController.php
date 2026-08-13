@@ -14,6 +14,7 @@ require_once __DIR__ . '/../../../app/models/Sigi/DatosInstitucionales.php';
 require_once __DIR__ . '/../../../app/models/Sigi/PeriodoAcademico.php';
 require_once __DIR__ . '/../../../app/models/Sigi/DatosSistema.php';
 require_once __DIR__ . '/../../../app/models/Sigi/IndicadorLogroCapacidad.php';
+require_once __DIR__ . '/../../../app/models/Sigi/CoordinadorPeriodo.php';
 
 require_once __DIR__ . '/../../../vendor/autoload.php';
 //integraciones
@@ -29,6 +30,8 @@ use App\Models\Sigi\DatosInstitucionales;
 use App\Models\Sigi\DatosSistema;
 use App\Models\Sigi\PeriodoAcademico;
 use App\Models\Sigi\IndicadorLogroCapacidad;
+use App\Models\Sigi\CoordinadorPeriodo;
+
 use Complex\Functions;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -36,6 +39,7 @@ use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use App\Helpers\Integrator;
+
 
 use TCPDF;
 
@@ -51,6 +55,7 @@ class CalificacionesController extends Controller
     protected $objSilabo;
     protected $objMatricula;
     protected $objReporte;
+    protected $objCoordinadorPeriodo;
     protected $objIntegrator;
 
     public function __construct()
@@ -66,6 +71,7 @@ class CalificacionesController extends Controller
         $this->objSilabo = new Silabos();
         $this->objMatricula = new Matricula();
         $this->objReporte = new Reportes();
+        $this->objCoordinadorPeriodo = new CoordinadorPeriodo();
         $this->objIntegrator = new Integrator();
     }
     public function evaluar($id_programacion_ud, $nro_calificacion)
@@ -197,7 +203,21 @@ class CalificacionesController extends Controller
 
     public function ver($id_programacion_ud)
     {
+
+        $programacion = $this->objProgramacionUD->find($id_programacion_ud);
         $permitido = $this->model->puedeVerCalificaciones($id_programacion_ud);
+
+        //---- validacion para ver si es coodinador del programa de estudios
+        //obtener el periodo vigente
+        if (\Core\Auth::esCoordinadorPEAcademico()) {
+            $periodo_actual = $this->objPeriodoAcademico->periodoVigente();
+            $id_sede = $_SESSION['sigi_sede_actual'] ?? 0;
+            $esCoordinadorPE = $this->objCoordinadorPeriodo->getCoordinadorPorUsuarioYProgramaYSede($_SESSION['sigi_user_id'], $programacion['id_programa'], $id_sede) ? true : false;
+            $permitido = $esCoordinadorPE;
+        } else {
+            $esCoordinadorPE = false;
+        }
+
         if (!$permitido) {
             $this->view('academico/calificaciones/ver', [
                 'permitido' => false
@@ -205,7 +225,7 @@ class CalificacionesController extends Controller
             return;
         }
         /*consultar si perdiodo esta vigente*/
-        $programacion = $this->objProgramacionUD->find($id_programacion_ud);
+
         $periodo_vigente = $this->objPeriodoAcademico->getPeriodoVigente($programacion['id_periodo_academico']);
 
         $datos = $this->model->getDatosCalificaciones($id_programacion_ud);
@@ -230,6 +250,7 @@ class CalificacionesController extends Controller
         }
 
         $this->view('academico/calificaciones/ver', [
+            'esCoordinadorPE' => $esCoordinadorPE,
             'id_programacion_ud' => $id_programacion_ud,
             'indicadores_capacidad' => $indicadores_capacidad,
             'permitido' => $permitido,
@@ -335,6 +356,8 @@ class CalificacionesController extends Controller
                 echo json_encode(['ok' => false, 'msg' => 'Error al crear el criterio en SIGI']);
                 exit;
             }
+        } else {
+            $criterioGenerado = null;
         }
 
         // 3. SI EL SWITCH MOODLE ESTÁ ACTIVO -> CREAR EN MOODLE
@@ -382,6 +405,7 @@ class CalificacionesController extends Controller
             if ($id_seccion_seleccionada > 0) {
                 // Si el usuario eligió una opción del select, usamos ese ID directamente
                 $realSectionId = $id_seccion_seleccionada;
+                $sectionNumber = null; // No necesitamos el nro_calificacion en este caso
             } else {
                 // Lógica de respaldo: buscar por nro_calificacion si no se envió un ID específico
                 $sectionNumber = (int)($section ?? 0);
@@ -619,6 +643,8 @@ class CalificacionesController extends Controller
         $periodo_vigente = $this->objPeriodoAcademico->getPeriodoVigente($programacion['id_periodo_academico']);
         if ($permitido && $periodo_vigente) {
             $ok = $this->model->guardarRecuperacion($id_detalle_mat, $valor);
+        } else {
+            $ok = false;
         }
         echo json_encode(['ok' => $ok]);
         exit;

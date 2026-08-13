@@ -1,10 +1,16 @@
 <?php require __DIR__ . '/../../layouts/header.php'; ?>
-<?php if ($permitido): ?>
+<?php if ($permitido): 
+    if($esCoordinadorPE){
+        $permitido_editar = false;
+    }else{
+        $permitido_editar = true;
+    }
+    ?>
     <div class="card p-2">
         <?php if (\Core\Auth::esDocenteAcademico()): ?>
             <a class="btn btn-danger btn-sm btn-block col-sm-1 col-4 mb-1" href="<?= BASE_URL; ?>/academico/unidadesDidacticas">Regresar</a>
         <?php endif; ?>
-        <?php if (\Core\Auth::esAdminAcademico()): ?>
+        <?php if (\Core\Auth::esAdminAcademico() || \Core\Auth::esCoordinadorPEAcademico()): ?>
             <a class="btn btn-danger btn-sm btn-block col-sm-1 col-4 mb-1" href="<?= BASE_URL; ?>/academico/unidadesDidacticas/evaluar">Regresar</a>
         <?php endif; ?>
         <h4>Sesiones de Aprendizaje - <?= htmlspecialchars($datosUnidad['unidad']) ?></h4>
@@ -30,7 +36,7 @@
         <?php if (\Core\Auth::esDocenteAcademico()): ?>
             <a class="btn btn-danger btn-sm btn-block col-sm-1 col-4 mb-1" href="<?= BASE_URL; ?>/academico/unidadesDidacticas">Regresar</a>
         <?php endif; ?>
-        <?php if (\Core\Auth::esAdminAcademico()): ?>
+        <?php if (\Core\Auth::esAdminAcademico() || \Core\Auth::esCoordinadorPEAcademico()): ?>
             <a class="btn btn-danger btn-sm btn-block col-sm-1 col-4 mb-1" href="<?= BASE_URL; ?>/academico/unidadesDidacticas/evaluar">Regresar</a>
         <?php endif; ?>
     </div>
@@ -75,7 +81,7 @@
                         render: function(data, type, row, meta) {
                             // Preparamos un arreglo con todas las filas cargadas en esta página
                             let acciones = '';
-                            <?php if ($periodo_vigente): ?>
+                            <?php if ($periodo_vigente && $permitido_editar): ?>
                                 acciones += `<a href="<?= BASE_URL ?>/academico/sesiones/editar/${row.id}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="fa fa-edit"></i></a> `;
                             <?php endif; ?>
                             acciones += `<a href="<?= BASE_URL ?>/academico/sesiones/pdf/${row.id}" class="btn btn-sm btn-outline-secondary" title="Imprimir" target="_blank"><i class="fa fa-print"></i></a> `;

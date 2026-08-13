@@ -66,6 +66,19 @@ class Programa extends Model
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function getAllBySedeAndCoordinador($id_sede, $id_coordinador, $id_periodo)
+    {
+        $sql = "SELECT p.* 
+            FROM sigi_programa_estudios p
+            INNER JOIN sigi_programa_sede ps ON ps.id_programa_estudio = p.id
+            INNER JOIN sigi_coordinador_pe_periodo c ON c.id_programa_estudio = ps.id_programa_estudio
+            WHERE ps.id_sede = ? AND c.id_usuario = ? AND c.id_periodo = ?
+            ORDER BY p.nombre ASC";
+        $stmt = self::$db->prepare($sql);
+        $stmt->execute([$id_sede, $id_coordinador, $id_periodo]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function guardar($data)
     {
         if (!empty($data['id'])) {

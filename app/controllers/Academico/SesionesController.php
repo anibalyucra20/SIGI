@@ -7,11 +7,13 @@ use Core\Controller;
 require_once __DIR__ . '/../../../app/models/Academico/ProgramacionUnidadDidactica.php';
 require_once __DIR__ . '/../../../app/models/Academico/Sesiones.php';
 require_once __DIR__ . '/../../../app/models/Sigi/PeriodoAcademico.php';
+require_once __DIR__ . '/../../../app/models/Sigi/CoordinadorPeriodo.php';
 require_once __DIR__ . '/../../../app/utils/MYPDF.php';
 
 use App\Models\Academico\ProgramacionUnidadDidactica;
 use App\Models\Academico\Sesiones;
 use App\Models\Sigi\PeriodoAcademico;
+use App\Models\Sigi\CoordinadorPeriodo;
 use MYPDF;
 
 class SesionesController extends Controller
@@ -19,6 +21,7 @@ class SesionesController extends Controller
     protected $model;
     protected $objProgracionUD;
     protected $objPeriodoAcademico;
+    protected $objCoordinadorPeriodo;
 
     public function __construct()
     {
@@ -26,6 +29,7 @@ class SesionesController extends Controller
         $this->model = new Sesiones();
         $this->objProgracionUD = new ProgramacionUnidadDidactica();
         $this->objPeriodoAcademico = new PeriodoAcademico();
+        $this->objCoordinadorPeriodo = new CoordinadorPeriodo();
     }
 
     public function ver($id_programacion)
@@ -34,14 +38,26 @@ class SesionesController extends Controller
         $programacion = $this->objProgracionUD->find($id_programacion);
 
         $periodo = $this->objPeriodoAcademico->getPeriodoVigente($programacion['id_periodo_academico']);
+
+
+        //---- validacion para ver si es coodinador del programa de estudios
+        //obtener el periodo vigente
+        if (\Core\Auth::esCoordinadorPEAcademico()) {
+            $periodo_actual = $this->objPeriodoAcademico->periodoVigente();
+            $id_sede = $_SESSION['sigi_sede_actual'] ?? 0;
+            $esCoordinadorPE = $this->objCoordinadorPeriodo->getCoordinadorPorUsuarioYProgramaYSede($_SESSION['sigi_user_id'], $programacion['id_programa'], $id_sede) ? true : false;
+        } else {
+            $esCoordinadorPE = false;
+        }
         // Permisos
         $esAdminAcademico = (\Core\Auth::esAdminAcademico());
         $esDocenteEncargado = (isset($_SESSION['sigi_user_id']) && $datosUnidad && $_SESSION['sigi_user_id'] == $this->objProgracionUD->getIdDocente($id_programacion));
-        $permitido = $esAdminAcademico || $esDocenteEncargado;
+        $permitido = $esAdminAcademico || $esDocenteEncargado || $esCoordinadorPE;
 
         $periodo_vigente = ($periodo && $periodo['vigente']);
 
         $this->view('academico/sesiones/index', [
+            'esCoordinadorPE' => $esCoordinadorPE,
             'datosUnidad' => $datosUnidad,
             'id_programacion' => $id_programacion,
             'permitido' => $permitido,
@@ -54,10 +70,20 @@ class SesionesController extends Controller
 
     public function data($id_programacion)
     {
+        $programacion = $this->objProgracionUD->find($id_programacion);
         // Permisos
+        //---- validacion para ver si es coodinador del programa de estudios
+        //obtener el periodo vigente
+        if (\Core\Auth::esCoordinadorPEAcademico()) {
+            $periodo_actual = $this->objPeriodoAcademico->periodoVigente();
+            $id_sede = $_SESSION['sigi_sede_actual'] ?? 0;
+            $esCoordinadorPE = $this->objCoordinadorPeriodo->getCoordinadorPorUsuarioYProgramaYSede($_SESSION['sigi_user_id'], $programacion['id_programa'], $id_sede) ? true : false;
+        } else {
+            $esCoordinadorPE = false;
+        }
         $esAdminAcademico = (\Core\Auth::esAdminAcademico());
         $esDocenteEncargado = (isset($_SESSION['sigi_user_id']) && $_SESSION['sigi_user_id'] == $this->objProgracionUD->getIdDocente($id_programacion));
-        $permitido = $esAdminAcademico || $esDocenteEncargado;
+        $permitido = $esAdminAcademico || $esDocenteEncargado || $esCoordinadorPE;
         if ($permitido):
             header('Content-Type: application/json; charset=utf-8');
             $draw = $_GET['draw'] ?? 1;
@@ -370,9 +396,21 @@ class SesionesController extends Controller
         $activEval = $this->model->getActividadesEvaluacion($sesion['id']);
 
         $periodo = $this->objPeriodoAcademico->getPeriodoVigente($programacion['id_periodo_academico']);
+
+        //---- validacion para ver si es coodinador del programa de estudios
+        //obtener el periodo vigente
+        if (\Core\Auth::esCoordinadorPEAcademico()) {
+            $periodo_actual = $this->objPeriodoAcademico->periodoVigente();
+            $id_sede = $_SESSION['sigi_sede_actual'] ?? 0;
+            $esCoordinadorPE = $this->objCoordinadorPeriodo->getCoordinadorPorUsuarioYProgramaYSede($_SESSION['sigi_user_id'], $programacion['id_programa'], $id_sede) ? true : false;
+        } else {
+            $esCoordinadorPE = false;
+        }
+
+
         $esAdminAcademico = (\Core\Auth::esAdminAcademico());
         $esDocenteEncargado = (isset($_SESSION['sigi_user_id']) && $datosUnidad && $_SESSION['sigi_user_id'] == $this->objProgracionUD->getIdDocente($id_programacion));
-        $permitido = $esAdminAcademico || $esDocenteEncargado;
+        $permitido = $esAdminAcademico || $esDocenteEncargado || $esCoordinadorPE;
         $periodo_vigente = ($periodo && $periodo['vigente']);
         //var_dump($id_sesion);
 

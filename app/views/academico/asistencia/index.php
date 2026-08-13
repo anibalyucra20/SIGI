@@ -5,8 +5,13 @@ require __DIR__ . '/../../layouts/header.php';
 // Determinar si el periodo está finalizado para bloquear edición
 $periodoFinalizado = strtotime($periodo['fecha_fin']) < strtotime(date('Y-m-d'));
 $limiteInasistencia = 30; // Porcentaje para resaltar en rojo
+if($esCoordinadorPE){
+        $periodoFinalizado = true;
+    }else{
+        $periodoFinalizado = false;
+    }
 ?>
-<?php if ((\Core\Auth::esDocenteAcademico() || \Core\Auth::esAdminAcademico()) && $permitido): ?>
+<?php if ((\Core\Auth::esDocenteAcademico() || \Core\Auth::esAdminAcademico() || \Core\Auth::esCoordinadorPEAcademico()) && $permitido): ?>
     <div class="card p-2">
         <h4 class="text-center my-3">Asistencia - <?= htmlspecialchars($nombreUnidadDidactica) ?></h4>
         <?php if (\Core\Auth::esDocenteAcademico()): ?>
@@ -84,7 +89,7 @@ $limiteInasistencia = 30; // Porcentaje para resaltar en rojo
                         <button type="submit" class="btn btn-primary px-4">Guardar Asistencia</button>
                     </div>
                 <?php else: ?>
-                    <div class="alert alert-warning my-3">El periodo académico ha finalizado. La asistencia no es editable.</div>
+                    <div class="alert alert-warning my-3">No tiene permiso para editar la asistencia y/o el periodo académico ha finalizado.</div>
                 <?php endif; ?>
             </form>
         </div>

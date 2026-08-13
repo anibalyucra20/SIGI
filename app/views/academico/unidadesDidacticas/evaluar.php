@@ -1,5 +1,5 @@
 <?php require __DIR__ . '/../../layouts/header.php'; ?>
-<?php if (\Core\Auth::esAdminAcademico()): ?>
+<?php if (\Core\Auth::esAdminAcademico() || \Core\Auth::esCoordinadorPEAcademico()): ?>
     <div class="card p-2">
         <h3 class="mb-2">Evaluaciones</h3>
         <h5 class="mb-2">Filtros:</h5>
@@ -7,10 +7,25 @@
             <div class="col-md-2">
                 <label>Programa de Estudios</label>
                 <select id="filter-programa" class="form-control">
-                    <option value="">Todos</option>
-                    <?php foreach ($programas as $p): ?>
-                        <option value="<?= $p['id'] ?>"><?= htmlspecialchars($p['nombre']) ?></option>
-                    <?php endforeach; ?>
+                    <?php
+                    if (\Core\Auth::esAdminAcademico()) {
+                    ?>
+                        <option value="">Todos</option>
+                    <?php
+                    }
+                    $counter = 0;
+                    $selected = '';
+                    foreach ($programas as $p):
+                        if (\Core\Auth::esCoordinadorPEAcademico()) {
+                            $counter++;
+                            if ($counter == 1) {
+                                $selected = 'selected';
+                            }
+                        } ?>
+                        <option value="<?= $p['id'] ?>" <?= $selected ?>><?= htmlspecialchars($p['nombre']) ?></option>
+                    <?php
+                        $selected = '';
+                    endforeach; ?>
                 </select>
             </div>
             <div class="col-md-2">
@@ -132,6 +147,7 @@
                 tabla.ajax.reload();
             });
 
+
             const tabla = $('#tabla-programaciones').DataTable({
                 processing: true,
                 serverSide: true,
@@ -191,14 +207,17 @@
                             ?>
                             // Este valor JS se setea dinámicamente según el backend, aquí solo a modo ejemplo:
                             let periodoVigente = <?= ($periodo_vigente) ? 'true' : 'false' ?>;
+                            let esCoordinador = <?= (\Core\Auth::esCoordinadorPEAcademico()) ? 'true' : 'false' ?>;
 
                             acciones += `<a href="<?= BASE_URL ?>/academico/silabos/editar/${row.id}" class="btn btn-sm btn-outline-warning mb-1" title="Sílabo"><i class="fa fa-book"></i></a> `;
                             acciones += `<a href="<?= BASE_URL ?>/academico/sesiones/ver/${row.id}" class="btn btn-sm btn-outline-primary mb-1" title="Sesiones de Aprendizaje"><i class="fa fa-briefcase"></i></a> `;
                             acciones += `<a href="<?= BASE_URL ?>/academico/asistencia/ver/${row.id}" class="btn btn-sm btn-outline-success mb-1" title="Asistencia"><i class="fa fa-users"></i></a> `;
                             acciones += `<a href="<?= BASE_URL ?>/academico/calificaciones/ver/${row.id}" class="btn btn-sm btn-outline-info mb-1" title="Calificaciones"><i class="fa fa-edit"></i></a> `;
-                            acciones += `<a href="<?= BASE_URL ?>/academico/unidadesDidacticas/informeFinal/${row.id}" class="btn btn-sm btn-outline-dark mb-1" title="Informe Final"><i class="fa fa-chart-bar"></i></a> `;
-                            acciones += `<a href="<?= BASE_URL ?>/academico/unidadesDidacticas/imprimirCaratula/${row.id}" target="_blank" class="btn btn-sm btn-outline-secondary mb-1" title="Imprimir Carátula"><i Class="fa fa-file"></i></a> `;
-                            if (periodoVigente) {
+                            if (!esCoordinador) {
+                                acciones += `<a href="<?= BASE_URL ?>/academico/unidadesDidacticas/informeFinal/${row.id}" class="btn btn-sm btn-outline-dark mb-1" title="Informe Final"><i class="fa fa-chart-bar"></i></a> `;
+                                acciones += `<a href="<?= BASE_URL ?>/academico/unidadesDidacticas/imprimirCaratula/${row.id}" target="_blank" class="btn btn-sm btn-outline-secondary mb-1" title="Imprimir Carátula"><i Class="fa fa-file"></i></a> `;
+                            }
+                            if (periodoVigente && !esCoordinador) {
                                 acciones += `<a href="<?= BASE_URL ?>/academico/unidadesDidacticas/configuracion/${row.id}" class="btn btn-sm btn-outline-dark mb-1" title="Configuración"><i Class="fa fa-cog"></i></a> `;
                             }
                             return acciones;
@@ -209,8 +228,23 @@
                     url: '//cdn.datatables.net/plug-ins/1.13.5/i18n/es-ES.json'
                 }
             });
+            <?php
+            if (\Core\Auth::esCoordinadorPEAcademico()) {
+            ?>
+                let idPrograma = $('#filter-programa').val();
+                $.getJSON('<?= BASE_URL ?>/sigi/planes/porPrograma/' + idPrograma, function(planes) {
+                    planes.forEach(function(pl) {
+                        $('#filter-plan').append('<option value="' + pl.id + '">' + pl.nombre + '</option>');
+                    });
+                });
+                tabla.ajax.reload();
+            <?php
+                // Mostrar opciones de administración
+            }
+            ?>
         });
     </script>
+
 <?php else: ?>
     <div class="alert alert-danger mt-4">
         <p>El módulo solo es para rol de Administrador Académico.</p>

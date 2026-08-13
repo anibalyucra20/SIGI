@@ -2,7 +2,7 @@
 $module = 'academico';
 require __DIR__ . '/../../layouts/header.php'; ?>
 
-<?php if ((\Core\Auth::esDocenteAcademico() || \Core\Auth::esAdminAcademico()) && $permitido): ?>
+<?php if ((\Core\Auth::esDocenteAcademico() || \Core\Auth::esAdminAcademico() || \Core\Auth::esCoordinadorPEAcademico()) && $permitido): ?>
 
     <div class="card pt-2 m-2">
         <h5 class="text-center font-weight-bold mb-4" style="color:#607d8b;">
@@ -10,14 +10,16 @@ require __DIR__ . '/../../layouts/header.php'; ?>
         </h5>
         <div>
             <div class="col-4 col-md-2 mb-3">
+                <?php if (!$esCoordinadorPE): ?>
                 <a class="btn btn-info btn-sm btn-block mb-2" target="_blank" href="<?= BASE_URL ?>/academico/calificaciones/registroOficial/<?= $id_programacion_ud ?>">Imprimir Registro Oficial</a>
                 <a class="btn btn-success btn-sm btn-block mb-2" target="_blank" href="<?= BASE_URL ?>/academico/calificaciones/actaFinal/<?= $id_programacion_ud ?>">Imprimir Acta Final</a>
                 <a class="btn btn-primary btn-sm btn-block mb-2 text-white" target="_blank" href="<?= BASE_URL ?>/academico/calificaciones/actaRecuperacion/<?= $id_programacion_ud ?>">Imprimir Acta Recuperacion</a>
                 <a class="btn btn-warning btn-sm btn-block mb-2 text-white" target="_blank" href="<?= BASE_URL ?>/academico/calificaciones/reporteRegistra/<?= $id_programacion_ud ?>">Reporte Registra</a>
+                <?php endif; ?>
                 <?php if (\Core\Auth::esDocenteAcademico()): ?>
                     <a class="btn btn-danger btn-sm btn-block" href="<?= BASE_URL; ?>/academico/unidadesDidacticas">Regresar</a>
                 <?php endif; ?>
-                <?php if (\Core\Auth::esAdminAcademico()): ?>
+                <?php if (\Core\Auth::esAdminAcademico() || \Core\Auth::esCoordinadorPEAcademico()): ?>
                     <a class="btn btn-danger btn-sm btn-block" href="<?= BASE_URL; ?>/academico/unidadesDidacticas/evaluar">Regresar</a>
                 <?php endif; ?>
             </div>
@@ -37,7 +39,7 @@ require __DIR__ . '/../../layouts/header.php'; ?>
                                 <th rowspan="2" class="align-middle text-center" style="writing-mode:vertical-rl; background:#f5f7fa;">RECUPERACION</th>
                                 <th rowspan="2" class="align-middle text-center" style="writing-mode:vertical-rl; background:#f5f7fa;">PROMEDIO FINAL <br>
                                     <div style="writing-mode:initial;">
-                                        <?php if ($periodo_vigente['vigente']): ?>
+                                        <?php if ($periodo_vigente['vigente'] && !$esCoordinadorPE): ?>
                                             <input type="checkbox"
                                                 id="mostrar-promedio-todos"
                                                 <?= (isset($mostrar_promedio_todos) && $mostrar_promedio_todos) ? 'checked' : '' ?>>
@@ -51,7 +53,7 @@ require __DIR__ . '/../../layouts/header.php'; ?>
                                     <?php $mostrar = $mostrar_calificaciones[$nro] ?? 0; ?>
                                     <th class="text-center" style="min-width:110px;">
                                         I.L.° <?= $nro ?> <br>
-
+                                        <?php if (!$esCoordinadorPE): ?>
                                         <a href="<?= BASE_URL ?>/academico/calificaciones/evaluar/<?= $id_programacion_ud ?>/<?= $nro ?>" class="btn btn-primary btn-sm ml-2 waves-effect waves-light" data-toggle="tooltip" data-placement="top" title data-original-title="<?= $indicadores_capacidad['I' . $nro] ?>" aria-describedby="tooltip280829">
                                             <i></i><?= ($periodo_vigente['vigente']) ? 'Evaluar' : 'Ver' ?>
                                         </a>
@@ -63,6 +65,7 @@ require __DIR__ . '/../../layouts/header.php'; ?>
                                                 <span style="font-size:12px;">Mostrar</span>
                                             <?php endif; ?>
                                         </div>
+                                        <?php endif; ?>
                                     </th>
                                 <?php endforeach; ?>
                             </tr>
@@ -143,7 +146,7 @@ require __DIR__ . '/../../layouts/header.php'; ?>
                         </tbody>
                     </table>
                 </div>
-                <?php if ($periodo_vigente['vigente']): ?>
+                <?php if ($periodo_vigente['vigente'] && !$esCoordinadorPE): ?>
                     <center><a class="btn btn-success mb-3 col-6 col-md-2" href="<?= BASE_URL; ?>/academico/calificaciones/ver/<?= $id_programacion_ud; ?>">Guardar</a></center>
                 <?php endif; ?>
             </div>

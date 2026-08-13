@@ -7,16 +7,19 @@ use Core\Controller;
 require_once __DIR__ . '/../../../app/models/Academico/Asistencia.php';
 require_once __DIR__ . '/../../../app/models/Academico/ProgramacionUnidadDidactica.php';
 require_once __DIR__ . '/../../../app/models/Sigi/PeriodoAcademico.php';
+require_once __DIR__ . '/../../../app/models/Sigi/CoordinadorPeriodo.php';
 
 use App\Models\Academico\Asistencia;
 use App\Models\Academico\ProgramacionUnidadDidactica;
 use App\Models\Sigi\PeriodoAcademico;
+use App\Models\Sigi\CoordinadorPeriodo;
 
 class AsistenciaController extends Controller
 {
     protected $model;
     protected $objProgramacionUD;
     protected $objPeriodo;
+    protected $objCoordinadorPeriodo;
 
     public function __construct()
     {
@@ -24,20 +27,34 @@ class AsistenciaController extends Controller
         $this->model = new Asistencia();
         $this->objProgramacionUD = new ProgramacionUnidadDidactica();
         $this->objPeriodo = new PeriodoAcademico();
+        $this->objCoordinadorPeriodo = new CoordinadorPeriodo();
     }
 
     // Vista principal
     public function ver($id_programacion_ud)
     {
+        $programacion = $this->objProgramacionUD->find($id_programacion_ud);
+        //---- validacion para ver si es coodinador del programa de estudios
+        //obtener el periodo vigente
+        if (\Core\Auth::esCoordinadorPEAcademico()) {
+            $periodo_actual = $this->objPeriodo->periodoVigente();
+            $id_sede = $_SESSION['sigi_sede_actual'] ?? 0;
+            $esCoordinadorPE = $this->objCoordinadorPeriodo->getCoordinadorPorUsuarioYProgramaYSede($_SESSION['sigi_user_id'], $programacion['id_programa'], $id_sede) ? true : false;
+        } else {
+            $esCoordinadorPE = false;
+        }
+
         $esAdminAcademico = (\Core\Auth::esAdminAcademico());
         $esDocenteEncargado = (isset($_SESSION['sigi_user_id']) && $_SESSION['sigi_user_id'] == $this->objProgramacionUD->getIdDocente($id_programacion_ud));
-        $permitido = ($esDocenteEncargado || $esAdminAcademico);
+        $permitido = ($esDocenteEncargado || $esAdminAcademico || $esCoordinadorPE);
+
 
         // Datos generales
         $datos = $this->model->getDatosAsistencia($id_programacion_ud);
 
         $this->view('academico/asistencia/index', [
             'permitido' => $permitido,
+            'esCoordinadorPE' => $esCoordinadorPE,
             'id_programacion_ud' => $id_programacion_ud,
             'nombreUnidadDidactica' => $datos['nombreUnidadDidactica'],
             'periodo' => $datos['periodo'],

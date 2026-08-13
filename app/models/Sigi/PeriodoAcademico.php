@@ -17,6 +17,14 @@ class PeriodoAcademico extends Model
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    public function periodoVigente()
+    {
+        $sql = "SELECT * FROM sigi_periodo_academico ORDER BY id DESC LIMIT 1";
+        $stmt = self::$db->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
     // Listado de periodos académicos
     public function getPeriodos()
     {
@@ -98,8 +106,10 @@ class PeriodoAcademico extends Model
      // Devuelve información del periodo académico y si está vigente
      public function getPeriodoVigente($id_periodo)
      {
-         $stmt = self::$db->prepare("SELECT id, nombre, fecha_inicio, fecha_fin, (CURDATE() BETWEEN fecha_inicio AND fecha_fin) as vigente 
-             FROM sigi_periodo_academico WHERE id = ?");
+         $stmt = self::$db->prepare("SELECT pa.id, pa.nombre, pa.fecha_inicio, pa.fecha_fin, (CURDATE() BETWEEN pa.fecha_inicio AND pa.fecha_fin) as vigente, cpe.id_usuario as id_coordinador
+             FROM sigi_periodo_academico pa
+             INNER JOIN sigi_coordinador_pe_periodo cpe ON cpe.id_periodo= pa.id
+              WHERE pa.id = ?");
          $stmt->execute([$id_periodo]);
          return $stmt->fetch(PDO::FETCH_ASSOC);
      }

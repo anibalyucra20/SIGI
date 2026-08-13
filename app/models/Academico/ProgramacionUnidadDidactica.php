@@ -12,7 +12,14 @@ class ProgramacionUnidadDidactica extends Model
     // Devuelve los datos de la programación
     public function find($id)
     {
-        $stmt = self::$db->prepare("SELECT * FROM acad_programacion_unidad_didactica WHERE id = ?");
+        $stmt = self::$db->prepare("SELECT apud.*, pr.id as id_programa 
+                FROM acad_programacion_unidad_didactica apud
+                INNER JOIN sigi_unidad_didactica ud ON apud.id_unidad_didactica = ud.id
+                INNER JOIN sigi_semestre s ON ud.id_semestre = s.id
+                INNER JOIN sigi_modulo_formativo mf ON s.id_modulo_formativo = mf.id
+                INNER JOIN sigi_planes_estudio pl ON mf.id_plan_estudio = pl.id
+                INNER JOIN sigi_programa_estudios pr ON pl.id_programa_estudios = pr.id
+         WHERE apud.id = ?");
         $stmt->execute([$id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }

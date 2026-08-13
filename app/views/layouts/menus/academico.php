@@ -51,6 +51,17 @@
                         </div>
                     </li>
                 <?php endif; ?>
+                <?php if (\Core\Auth::esCoordinadorPEAcademico()): ?>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle arrow-none" href="#" id="nav-matriculas" role="button"
+                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="mdi mdi-bank-transfer"></i> Monitoreo <div class="arrow-down"></div>
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="nav-matriculas">
+                            <a href="<?= BASE_URL ?>/academico/unidadesDidacticas/evaluar" class="dropdown-item">Unidades Didácticas</a>
+                        </div>
+                    </li>
+                <?php endif; ?>
                 <?php if (\Core\Auth::esDocenteAcademico()): ?>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle arrow-none" href="#" id="nav-matriculas" role="button"

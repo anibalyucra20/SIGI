@@ -88,7 +88,7 @@ class ProgramacionUnidadDidacticaController extends Controller
 
     public function data()
     {
-        if (\Core\Auth::esAdminAcademico()):
+        if (\Core\Auth::esAdminAcademico() || \Core\Auth::esCoordinadorPEAcademico()):
             header('Content-Type: application/json; charset=utf-8');
             $draw      = $_GET['draw']  ?? 1;
             $start     = $_GET['start'] ?? 0;

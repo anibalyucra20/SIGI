@@ -13,6 +13,7 @@ require_once __DIR__ . '/../../../app/models/Sigi/PeriodoAcademico.php';
 require_once __DIR__ . '/../../../app/models/Sigi/Competencias.php';
 require_once __DIR__ . '/../../../app/models/Sigi/Capacidades.php';
 require_once __DIR__ . '/../../../app/models/Sigi/IndicadorLogroCapacidad.php';
+require_once __DIR__ . '/../../../app/models/Sigi/CoordinadorPeriodo.php';
 require_once __DIR__ . '/../../../app/utils/MYPDF.php';
 
 use App\Models\Academico\Silabos;
@@ -23,6 +24,8 @@ use App\Models\Sigi\PeriodoAcademico;
 use App\Models\Sigi\Competencias;
 use App\Models\Sigi\Capacidades;
 use App\Models\Sigi\IndicadorLogroCapacidad;
+use App\Models\Sigi\CoordinadorPeriodo;
+
 use MYPDF;
 
 class SilabosController extends Controller
@@ -35,6 +38,7 @@ class SilabosController extends Controller
     protected $objCompetencia;
     protected $objCapacidad;
     protected $objIndicadorLogroCapacidad;
+    protected $objCoordinadorPeriodo;
 
     public function __construct()
     {
@@ -47,6 +51,7 @@ class SilabosController extends Controller
         $this->objCompetencia = new Competencias();
         $this->objCapacidad = new Capacidades();
         $this->objIndicadorLogroCapacidad = new IndicadorLogroCapacidad();
+        $this->objCoordinadorPeriodo = new CoordinadorPeriodo();
     }
 
     public function editar($id_programacion)
@@ -59,10 +64,23 @@ class SilabosController extends Controller
             $programacion = $this->objProgramacionUD->find($id_programacion);
             $periodo = $this->objPeriodoAcademico->getPeriodoVigente($programacion['id_periodo_academico']);
 
+            //---- validacion para ver si es coodinador del programa de estudios
+            //obtener el periodo vigente
+            if (\Core\Auth::esCoordinadorPEAcademico()) {
+                $periodo_actual = $this->objPeriodoAcademico->periodoVigente();
+                $id_sede = $_SESSION['sigi_sede_actual'] ?? 0;
+                $esCoordinadorPE = $this->objCoordinadorPeriodo->getCoordinadorPorUsuarioYProgramaYSede($_SESSION['sigi_user_id'], $programacion['id_programa'], $id_sede) ? true : false;
+            } else {
+                $esCoordinadorPE = false;
+            }
+
+
             $esDocenteAsignado = ($programacion['id_docente'] == ($_SESSION['sigi_user_id'] ?? -1));
             $esAdminAcademico = (\Core\Auth::esAdminAcademico());
-            $permitido = (($esDocenteAsignado || $esAdminAcademico));
+            $permitido = (($esDocenteAsignado || $esAdminAcademico || $esCoordinadorPE));
             $periodo_vigente = ($periodo && $periodo['vigente']);
+            //no permitir editar por nada al coordinador 
+
             // DATOS GENERALES
             $datosGenerales = $this->model->getDatosGenerales($id_programacion);
             // SECCION III: COMPETENCIAS DEL MODULO
@@ -79,13 +97,15 @@ class SilabosController extends Controller
             $datosGenerales['fecha_inicio'] = $sesiones[0]['fecha'];
             $datosGenerales['fecha_fin'] = $sesiones[$cant_ses]['fecha'];
         } else {
+            $esCoordinadorPE = false;
             $permitido = false;
-            $periodo_vigente =false;
+            $periodo_vigente = false;
             $errores[] = "No existe un sílabo registrado para esta programación.";
             $datosGenerales = $competenciasUnidadDidactica = $capacidades = $competenciasTransversales = $sesiones = [];
         }
         $this->view('academico/silabos/editar', [
             'silabo' => $silabo,
+            'esCoordinadorPE' => $esCoordinadorPE,
             'permitido' => $permitido,
             'periodo_vigente' => $periodo_vigente,
             'errores' => $errores,
@@ -228,8 +248,19 @@ class SilabosController extends Controller
             $programacion = $this->objProgramacionUD->find($id_programacion);
             $periodo = $this->objPeriodoAcademico->getPeriodoVigente($programacion['id_periodo_academico']);
             $esDocenteAsignado = ($programacion['id_docente'] == ($_SESSION['sigi_user_id'] ?? -1));
+
+            //---- validacion para ver si es coodinador del programa de estudios
+            //obtener el periodo vigente
+            if (\Core\Auth::esCoordinadorPEAcademico()) {
+                $periodo_actual = $this->objPeriodoAcademico->periodoVigente();
+                $id_sede = $_SESSION['sigi_sede_actual'] ?? 0;
+                $esCoordinadorPE = $this->objCoordinadorPeriodo->getCoordinadorPorUsuarioYProgramaYSede($_SESSION['sigi_user_id'], $programacion['id_programa'], $id_sede) ? true : false;
+            } else {
+                $esCoordinadorPE = false;
+            }
+
             $esAdminAcademico = (\Core\Auth::esAdminAcademico());
-            $permitido = (($esDocenteAsignado || $esAdminAcademico));
+            $permitido = (($esDocenteAsignado || $esAdminAcademico || $esCoordinadorPE));
             // DATOS GENERALES DE SILABO
             $datosGenerales = $this->model->getDatosGenerales($id_programacion);
             // SECCION III: COMPETENCIAS DEL MODULO

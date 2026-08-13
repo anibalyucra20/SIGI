@@ -81,6 +81,29 @@ class Docente extends Model
         }
         return $data;
     }
+
+    public function getDocentesPorSedeYPrograma($id_sede, $id_programa)
+    {
+        $sql = "SELECT id, apellidos_nombres 
+            FROM sigi_usuarios
+            WHERE id_sede = ?
+              AND id_programa_estudios = ?
+              AND id_rol BETWEEN 1 AND 6
+              AND estado = 1
+            ORDER BY apellidos_nombres";
+        $stmt = self::$db->prepare($sql);
+        $stmt->execute([$id_sede, $id_programa]);
+        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($data as $key => $value) {
+            $apellidos_nombres = explode('_', trim($value['apellidos_nombres']));
+            $data[$key]['ApellidoPaterno'] = $apellidos_nombres[0];
+            $data[$key]['ApellidoMaterno'] = $apellidos_nombres[1];
+            $data[$key]['Nombres'] = $apellidos_nombres[2];
+            $data[$key]['apellidos_nombres'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ' ' . $apellidos_nombres[2];
+        }
+        return $data;
+    }
+
     // Para el select de directores (usuarios activos, solo rol Director)
     public function getDirectores()
     {

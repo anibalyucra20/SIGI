@@ -7,7 +7,7 @@ use PDO;
 
 class CoordinadorPeriodo extends Model
 {
-    protected $table = 'sigi_competencias';
+    protected $table = 'sigi_coordinador_pe_periodo';
 
     public function listarPorPeriodoYSede($id_periodo, $id_sede)
     {
@@ -72,5 +72,14 @@ class CoordinadorPeriodo extends Model
         $stmt = self::$db->prepare($sql);
         $stmt->execute([$id_usuario, $id_periodo, $id_sede]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getCoordinadorPorUsuarioYProgramaYSede($id_usuario, $id_programa_estudio, $id_sede)
+    {
+        $sql = "SELECT * FROM sigi_coordinador_pe_periodo 
+                WHERE id_usuario = ? AND id_programa_estudio = ? AND id_sede = ?";
+        $stmt = self::$db->prepare($sql);
+        $stmt->execute([$id_usuario, $id_programa_estudio, $id_sede]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 }

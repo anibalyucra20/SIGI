@@ -13,6 +13,7 @@ require_once __DIR__ . '/../../../app/models/Sigi/PeriodoAcademico.php';
 require_once __DIR__ . '/../../../app/models/Sigi/DatosInstitucionales.php';
 require_once __DIR__ . '/../../../app/models/Sigi/DatosSistema.php';
 require_once __DIR__ . '/../../../app/models/Sigi/Docente.php';
+require_once __DIR__ . '/../../../app/models/Sigi/CoordinadorPeriodo.php';
 
 
 use App\Models\Academico\UnidadesDidacticas;
@@ -24,6 +25,7 @@ use App\Models\Sigi\PeriodoAcademico;
 use App\Models\Sigi\DatosInstitucionales;
 use App\Models\Sigi\DatosSistema;
 use App\Models\Sigi\Docente;
+use App\Models\Sigi\CoordinadorPeriodo;
 use TCPDF;
 
 class UnidadesDidacticasController extends Controller
@@ -37,6 +39,7 @@ class UnidadesDidacticasController extends Controller
     protected $objDatosIes;
     protected $objDatosSistema;
     protected $objDocente;
+    protected $objCoordinador;
 
     public function __construct()
     {
@@ -50,6 +53,7 @@ class UnidadesDidacticasController extends Controller
         $this->objDatosIes = new DatosInstitucionales();
         $this->objDatosSistema = new DatosSistema();
         $this->objDocente = new Docente();
+        $this->objCoordinador = new CoordinadorPeriodo();
     }
 
     public function index()
@@ -162,7 +166,7 @@ class UnidadesDidacticasController extends Controller
         $datosGenerales = $this->objSilabo->getDatosGenerales($id_programacion);
 
         $periodo_nombre = $datosGenerales['periodo_lectivo'];
-        
+
         $programa = $datosGenerales['programa'];
         $modulo = $datosGenerales['modulo'];
         $unidad = $datosGenerales['unidad'];
@@ -235,8 +239,14 @@ class UnidadesDidacticasController extends Controller
     {
         $id_sede = $_SESSION['sigi_sede_actual'] ?? 0;
         $id_periodo = $_SESSION['sigi_periodo_actual_id'] ?? 0;
-        $programas = $this->objPrograma->getAllBySede($id_sede);
-        $docentes = $this->objDocente->getDocentesPorSede($id_sede);
+        if ($_SESSION['sigi_user_id'] && \Core\Auth::esCoordinadorPEAcademico()) {
+            $periodo = $this->objPeriodoAcademico->periodoVigente();
+            $programas = $this->objCoordinador->getProgramasAsignados($_SESSION['sigi_user_id'], $periodo['id'], $id_sede);
+            $docentes = $this->objDocente->getDocentesPorSedeYPrograma($id_sede, $programas[0]['id']); // Ajustar según la lógica real
+        } else {
+            $programas = $this->objPrograma->getAllBySede($id_sede);
+            $docentes = $this->objDocente->getDocentesPorSede($id_sede);
+        }
         $periodo = $this->objPeriodoAcademico->getPeriodoVigente($_SESSION['sigi_periodo_actual_id']);
         $periodo_vigente = ($periodo && $periodo['vigente']);
         $this->view('academico/unidadesDidacticas/evaluar', [
@@ -250,7 +260,7 @@ class UnidadesDidacticasController extends Controller
     }
     public function data_evaluar()
     {
-        if (\Core\Auth::esAdminAcademico()):
+        if (\Core\Auth::esAdminAcademico() || \Core\Auth::esCoordinadorPEAcademico()):
             header('Content-Type: application/json; charset=utf-8');
             $draw      = $_GET['draw']  ?? 1;
             $start     = $_GET['start'] ?? 0;
