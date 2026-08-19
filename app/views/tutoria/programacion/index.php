@@ -67,7 +67,7 @@
                         render: function(data, type, row) {
                             return `
                         <a href="<?= BASE_URL ?>/tutoria/programacion/editar/${row.id}" class="btn btn-warning btn-sm">Editar</a>
-                        <a href="<?= BASE_URL ?>/tutoria/programacion/eliminar/${row.id}" class="btn btn-danger btn-sm" onclick="return confirm('¿Está seguro de que desea eliminar esta programación?');">Eliminar</a>
+                        <a href="<?= BASE_URL ?>/tutoria/programacion/eliminar/${row.id}" class="btn btn-danger btn-sm" onclick="return confirm('¿Está seguro de que desea eliminar este Bien?');">Eliminar</a>
                     `;
                         }
                     }

@@ -2,31 +2,15 @@
 namespace App\Models\Inventario;
 
 use Core\Model;
+use PDO;
+
 
 class Bienes extends Model {
 
-    public function __construct() {
-        parent::__construct();
-        if (!$this->db) {
-            try {
-                if (isset($GLOBALS['db'])) {
-                    $this->db = $GLOBALS['db'];
-                } else {
-                    $host = 'localhost';
-                    $dbname = 'sigi';
-                    $username = 'root';
-                    $password = '';
-                    $this->db = new \PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $username, $password);
-                    $this->db->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-                }
-            } catch (\PDOException $e) {
-                die("Error de conexión: " . $e->getMessage());
-            }
-        }
-    }
 
-    public function getPaginated($filters, $length, $start, $orderCol, $orderDir) {
-        $columns = [
+     public function getPaginated($filters, $length, $start, $orderCol, $orderDir)
+    {
+        $columnas = [
             0 => 'id',
             1 => 'id_inv_ambiente',
             2 => 'codigo_patrimonial',
@@ -37,94 +21,120 @@ class Bienes extends Model {
             7 => 'serie',
             8 => 'estado_bien'
         ];
+        $ordenarPor = $columnas[$orderCol] ?? 'id';
 
-        $orderBy = $columns[$orderCol] ?? 'id';
-        $orderDir = strtoupper($orderDir) === 'DESC' ? 'DESC' : 'ASC';
-        
-        $sql = "SELECT *, id_inv_ambiente as ambiente_nombre 
-                FROM inventario_bienes 
-                WHERE 1=1";
-        
+        $where  = '';
         $params = [];
 
-        if (!empty($filters['codigo_patrimonial'])) {
-            $sql .= " AND codigo_patrimonial LIKE ?";
-            $params[] = "%" . $filters['codigo_patrimonial'] . "%";
+
+        /*if (!empty($filters['codigo'])) {
+            $where   .= " codigo LIKE :codigo ";
+            $params[':codigo'] = "%{$filters['codigo']}%";
         }
-        if (!empty($filters['denominacion'])) {
-            $sql .= " AND denominacion LIKE ?";
-            $params[] = "%" . $filters['denominacion'] . "%";
+        if (!empty($filters['nombre'])) {
+            $where   .= ($where != '') ? 'AND' : 'WHERE';
+            $where   .= " nombre LIKE :nombre ";
+            $params[':nombre'] = "%{$filters['nombre']}%";
+        }*/
+
+        $sqlWhere = $where;
+
+        $sql = "SELECT * FROM inventario_bienes
+                $sqlWhere
+                ORDER BY $ordenarPor $orderDir
+                LIMIT :limit OFFSET :offset";
+        $stmt = self::$db->prepare($sql);
+        foreach ($params as $k => $v) {
+            $stmt->bindValue($k, $v);
         }
-        if (!empty($filters['estado_bien']) && $filters['estado_bien'] !== 'Todos') {
-            $sql .= " AND estado_bien = ?";
-            $params[] = $filters['estado_bien'];
+        $stmt->bindValue(':limit', (int)$length, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int)$start, PDO::PARAM_INT);
+        $stmt->execute();
+        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Conteo total
+
+        $sqlTotal = "SELECT COUNT(*) FROM inventario_bienes
+            $sqlWhere";
+        $stmtTotal = self::$db->prepare($sqlTotal);
+        foreach ($params as $k => $v) {
+            $stmtTotal->bindValue($k, $v, PDO::PARAM_STR);
         }
+        $stmtTotal->execute();
+        $total = $stmtTotal->fetchColumn();
 
-        // Conteo total para DataTables
-        $countSql = "SELECT COUNT(*) as total FROM inventario_bienes WHERE 1=1";
-        $totalResult = $this->db->query($countSql)->fetch(\PDO::FETCH_ASSOC);
-        $total = $totalResult['total'] ?? 0;
 
-        $start = (int)$start;
-        $length = (int)$length;
-        $sql .= " ORDER BY $orderBy $orderDir LIMIT $start, $length";
-
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute($params);
-        $data = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        return [
-            'total' => $total,
-            'data'  => $data
-        ];
+        return ['data' => $data, 'total' => $total];
     }
 
-    public function guardar($data) {
-        if (!empty($data['id'])) {
-            $sql = "UPDATE inventario_bienes SET 
-                    id_inv_ambiente = ?, 
-                    codigo_patrimonial = ?, 
-                    denominacion = ?, 
-                    marca = ?, 
-                    modelo = ?, 
-                    color = ?, 
-                    serie = ?, 
-                    estado_bien = ?, 
-                    otros = ?, 
-                    observaciones = ? 
-                    WHERE id = ?";
-            
-            $stmt = $this->db->prepare($sql);
-            return $stmt->execute([
-                $data['id_inv_ambiente'],
-                $data['codigo_patrimonial'],
-                $data['denominacion'],
-                $data['marca'],
-                $data['modelo'],
-                $data['color'],
-                $data['serie'],
-                $data['estado_bien'],
-                $data['otros'],
-                $data['observaciones'],
-                $data['id']
-            ]);
-        } else {
-            $sql = "INSERT INTO inventario_bienes (id_inv_ambiente, codigo_patrimonial, denominacion, marca, modelo, color, serie, estado_bien, otros, observaciones) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            
-            $stmt = $this->db->prepare($sql);
-            return $stmt->execute([
-                $data['id_inv_ambiente'],
-                $data['codigo_patrimonial'],
-                $data['denominacion'],
-                $data['marca'],
-                $data['modelo'],
-                $data['color'],
-                $data['serie'],
-                $data['estado_bien'],
-                $data['otros'],
-                $data['observaciones']
-            ]);
+     public function find($id)
+    {
+        $sql = "SELECT * FROM inventario_bienes WHERE id = :id";
+        $stmt = self::$db->prepare($sql);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function guardar($data)
+        {
+            if (!empty($data['id'])) {
+                $sql = "UPDATE inventario_bienes SET 
+                            id_inv_ambiente    = :id_inv_ambiente,
+                            codigo_patrimonial = :codigo_patrimonial,
+                            denominacion       = :denominacion,
+                            marca              = :marca,
+                            modelo             = :modelo,
+                            color              = :color,
+                            serie              = :serie,
+                            estado_bien        = :estado_bien,
+                            otros              = :otros,
+                            observaciones      = :observaciones
+
+                        WHERE id = :id";
+                $params = [
+                    ':id_inv_ambiente'           => $data['id_inv_ambiente'],
+                    ':codigo_patrimonial'        => $data['codigo_patrimonial'],
+                    ':denominacion'              => $data['denominacion'],
+                    ':marca'                     => $data['marca'],
+                    ':modelo'                    => $data['modelo'],
+                    ':color'                     => $data['color'],
+                    ':serie'                     => $data['serie'],
+                    ':estado_bien'               => $data['estado_bien'],
+                    ':otros'                     => $data['otros'],
+                    ':observaciones'             => $data['observaciones'],
+                    ':id'                        => $data['id']
+                ];
+            } else {
+                $sql = "INSERT INTO inventario_bienes 
+                            (id_inv_ambiente, codigo_patrimonial, denominacion, marca, modelo, color, serie, estado_bien, otros, observaciones    ) 
+                        VALUES 
+                            (:id_inv_ambiente, :codigo_patrimonial, :denominacion, :marca, :modelo, :color, :serie, :estado_bien, :otros, :observaciones)";
+                $params = [
+                    ':id_inv_ambiente'          => $data['id_inv_ambiente'],
+                    ':codigo_patrimonial'       => $data['codigo_patrimonial'],
+                    ':denominacion'             => $data['denominacion'],
+                    ':marca'                    => $data['marca'],
+                    ':modelo'                   => $data['modelo'],
+                    ':color'                    => $data['color'],
+                    ':serie'                    => $data['serie'],
+                    ':estado_bien'              => $data['estado_bien'],
+                    ':otros'                    => $data['otros'],
+                    ':observaciones'            => $data['observaciones'] 
+                ];
+            }
+            $stmt = self::$db->prepare($sql);
+            $stmt->execute($params);
+            if (empty($data['id'])) {
+                return self::$db->lastInsertId();
+            }
+            return $data['id'];
+        }
+
+
+        public function eliminar($id)
+        {
+            $stmt = self::$db->prepare("DELETE FROM inventario_bienes WHERE id=?");
+            $stmt->execute([$id]);
         }
     }
-}

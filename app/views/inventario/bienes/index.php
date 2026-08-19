@@ -1,5 +1,6 @@
 <?php require_once __DIR__ . '/../../layouts/header.php'; ?>
-
+<?php if (\Core\Auth::esAdminInventario()): ?>
+    
 <div class="container-fluid px-4">
     <h1 class="mt-4">Gestión de Bienes</h1>
     
@@ -45,7 +46,7 @@
                 <table id="tabla-bienes" class="table table-bordered table-striped table-sm w-100 align-middle">
                     <thead class="table-light">
                         <tr>
-                            <th style="width: 5%;">#</th>
+                            <th>nro</th>
                             <th>Ambiente</th>
                             <th>Código Patrimonial</th>
                             <th>Denominación</th>
@@ -53,7 +54,6 @@
                             <th>Modelo</th>
                             <th>Color</th>
                             <th>Serie</th>
-                            <th>Estado</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -65,71 +65,78 @@
         </div>
     </div>
 </div>
-
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Recargar la tabla cuando escriban o cambien los filtros
-        $('#filter-codigo, #filter-denominacion').on('keyup', function() {
-            tabla.ajax.reload();
-        });
+        document.addEventListener('DOMContentLoaded', function() {
+            // Filtros dependientes
+            /*$('#filter-codigo').on('keyup', function() {
+                tabla.ajax.reload();
+            });
+            $('#filter-denominacion').on('keyup', function() {
+                tabla.ajax.reload();
+            });
 
-        $('#filter-estado').on('change', function() {
+            $('#filter-estado').on('change', function() {
             tabla.ajax.reload();
-        });
+            });*/
 
-        const tabla = $('#tabla-bienes').DataTable({
-            processing: true,
-            serverSide: true,
-            searching: false,
-            autoWidth: false,
-            ajax: {
-                url: '<?= BASE_URL ?>/inventario/bienes/data',
-                type: 'GET',
-                data: function(d) {
-                    d.codigo_patrimonial = $('#filter-codigo').val();
-                    d.denominacion       = $('#filter-denominacion').val();
-                    d.estado_bien        = $('#filter-estado').val();
-                }
-            },
-            columns: [
-                {
-                    data: null,
-                    render: function(data, type, row, meta) {
-                        return meta.row + 1 + meta.settings._iDisplayStart;
+            const tabla = $('#tabla-bienes').DataTable({
+                processing: true,
+                serverSide: true,
+                searching: false,
+                ajax: {
+                    url: '<?= BASE_URL ?>/inventario/bienes/data',
+                    type: 'GET',
+                    data: function(d) {
+                         /* d.codigo_patrimonial = $('#filter-codigo').val();
+                          d.denominacion       = $('#filter-denominacion').val();
+                          d.estado_bien        = $('#filter-estado').val();*/
                     }
                 },
-                { data: 'id_inv_ambiente' },
-                { data: 'codigo_patrimonial' },
-                { data: 'denominacion' },
-                { data: 'marca' },
-                { data: 'modelo' },
-                { 
-                    data: 'color',
-                    render: function(data) { return data ? data : '-'; }
-                },
-                { 
-                    data: 'serie',
-                    render: function(data) { return data ? data : '-'; }
-                },
-                { data: 'estado_bien' },
-                {
-                    data: null,
-                    orderable: false,
-                    searchable: false,
-                    render: function(data, type, row) {
-                        return `
-                            <a href="<?= BASE_URL ?>/inventario/bienes/editar/${row.id}" class="btn btn-warning btn-sm px-2 py-1">
-                                <i class="fas fa-edit"></i>Editar
-                            </a>
-                        `;
+                columns: [{
+                        data: null,
+                        render: function(data, type, row, meta) {
+                            return meta.row + 1 + meta.settings._iDisplayStart;
+                        }
+                    },
+                    {
+                        data: 'id_inv_ambiente'
+                    },
+                    {
+                        data: 'codigo_patrimonial'
+                    },
+                    {
+                        data: 'denominacion'
+                    },
+                    {
+                        data: 'marca'
+                    },
+                    {
+                        data: 'modelo'
+                    },
+                    {
+                        data: 'color'
+                    },{
+                        data: 'serie'
+                    },
+                    {
+                        data: null,
+                        orderable: false,
+                        searchable: false,
+                        render: function(data, type, row) {
+                            return `
+                        <a href="<?= BASE_URL ?>/inventario/bienes/editar/${row.id}" class="btn btn-warning btn-sm">Editar</a>
+                        <a href="<?= BASE_URL ?>/inventario/bienes/eliminar/${row.id}" class="btn btn-danger btn-sm" onclick="return confirm('¿Está seguro de que desea eliminar esta programación?');">Eliminar</a>
+                    `;
+                        }
                     }
+                ],
+                language: {
+                  //  url: '//cdn.datatables.net/plug-ins/1.13.5/i18n/es-ES.json'
                 }
-            ],
-            language: {
-                url: '//cdn.datatables.net/plug-ins/1.13.5/i18n/es-ES.json'
-            }
+            });
         });
-    });
-</script>
-
+    </script>
+<?php else: ?>
+    <p>El módulo solo es para rol de Administrador.</p>
+<?php endif; ?>
 <?php require_once __DIR__ . '/../../layouts/footer.php'; ?>
