@@ -6,6 +6,26 @@
         <div class="mb-2">
             <a href="<?= BASE_URL ?>/bolsa/ofertas/nuevo" class="btn btn-success">+ Nueva Oferta</a>
         </div>
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <label>Programa de Estudio</label>
+                <select id="filter-programa" class="form-control">
+                    <option value="">Todos</option>
+                    <?php foreach ($programas as $p): ?>
+                        <option value="<?= $p['id'] ?>"><?= htmlspecialchars($p['nombre']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label>Empresa</label>
+                <select id="filter-empresa" class="form-control">
+                    <option value="">Todos</option>
+                    <?php foreach ($empresas as $e): ?>
+                        <option value="<?= $e['id'] ?>"><?= htmlspecialchars($e['empresa']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+        </div>
         <div class="table-responsive">
             <table id="tabla-ofertas" class="table table-bordered table-hover table-sm align-middle">
                 <thead class="table-light">
@@ -30,6 +50,9 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            $('#filter-programa, #filter-empresa').on('change', function() {
+            tabla.ajax.reload();
+            });
             const tabla = $('#tabla-ofertas').DataTable({
                 processing: true,
                 serverSide: true,
@@ -39,6 +62,8 @@
                     type: 'GET',
                     data: function(d) {
                         // Puedes agregar parámetros adicionales aquí si es necesario
+                        d.filter_empresa = $('#filter-empresa').val();
+                        d.filter_programa = $('#filter-programa').val();
                     }
                 },
                 columns: [
@@ -53,7 +78,7 @@
                     { data: null, orderable: false, searchable: false, render: function(data, type, row) {
                         return `
                             <a href="<?= BASE_URL ?>/bolsa/ofertas/editar/${row.id}" class="btn btn-sm btn-primary">Editar</a>
-                            <button class="btn btn-sm btn-danger" onclick="eliminarOferta(${row.id})">Eliminar</button>
+                            <a href="<?= BASE_URL ?>/bolsa/ofertas/eliminar/${row.id}" class="btn btn-sm btn-danger" onclick="return confirm('¿Está seguro de que desea eliminar esta oferta?');">Eliminar</a>
                         `;
                     }}
                 ],

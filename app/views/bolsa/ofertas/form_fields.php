@@ -62,10 +62,13 @@
         <input type="text" name="titulo" class="form-control" maxlength="200" placeholder="Ejemplo: Soporte Técnico" value="<?= htmlspecialchars($oferta['titulo'] ?? '') ?>" required>
     </div>
 
-    <div class="col-md-4 mb-2">
-        <label class="form-label">Salario</label>
-        <input type="text" name="salario" class="form-control" maxlength="100" value="<?= htmlspecialchars($oferta['salario'] ?? '') ?>">
+<div class="col-md-4 mb-2">
+    <label class="form-label">Salario</label>
+    <div class="input-group">
+        <span class="input-group-text">S/</span>
+        <input type="number" name="salario" class="form-control" step="0.01" min="0" value="<?= htmlspecialchars($oferta['salario'] ?? '') ?>" placeholder="0.00" required>
     </div>
+</div>
 
     <div class="col-md-6 mb-2">
         <label class="form-label">Ubicación</label>
@@ -100,8 +103,14 @@
     </div>
 
     <div class="col-md-8 mb-2">
-        <label class="form-label">Foto / Imagen</label>
-        <input type="url" name="foto" class="form-control" value="<?= htmlspecialchars($oferta['foto'] ?? '') ?>">
+        <label class="form-label">Foto / Imagen</label>     
+        <input type="file" name="foto" id="foto" class="form-control" accept="image/jpeg,image/png,image/webp">
+        <div class="mt-2">
+            <small class="text-muted d-block mb-1">
+                <?= !empty($oferta['foto']) ? 'Imagen actual:' : 'Vista previa:' ?>
+            </small>
+            <img id="previewFoto" src="<?= !empty($oferta['foto']) ? BASE_URL . '/' . htmlspecialchars($oferta['foto']) : '' ?>" alt="Vista previa de la oferta" class="img-thumbnail" style="max-width: 200px; max-height: 120px; object-fit: cover; <?= empty($oferta['foto']) ? 'display: none;' : '' ?>">
+        </div>
     </div>
 
     <div class="col-md-4 mb-2">
@@ -120,4 +129,25 @@
 
 </div>
 
-
+<!-- Script para vista previa de la imagen -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+                
+        const inputFoto = document.getElementById('foto');
+        const previewFoto = document.getElementById('previewFoto');
+                
+        inputFoto.addEventListener('change', function () {
+                
+            const archivo = this.files[0];
+                
+            if (archivo) {
+                const url = URL.createObjectURL(archivo);
+                
+                previewFoto.src = url;
+                previewFoto.style.display = 'block';
+            }
+                
+        });
+                
+    });
+</script>
