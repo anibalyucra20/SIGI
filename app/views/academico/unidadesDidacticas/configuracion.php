@@ -72,6 +72,7 @@
                             <th>Sílabo</th>
                             <th>#Activ.</th>
                             <th>#Ses.</th>
+                            <th>Ver</th>
                         </tr>
                     </thead>
                     <tbody><!-- DataTables --></tbody>
@@ -205,6 +206,14 @@
                     },
                     {
                         data: 'sesiones'
+                    },
+                    {
+                        data: null,
+                        orderable: false,
+                        render: (data, type, row) => {
+                            const urlVer = `${urlBase}/academico/silabos/verpdf/${row.id}`;
+                            return `<a href="${urlVer}" class="btn btn-sm btn-info" target="_blank"><i class="fas fa-eye"></i></a>`;
+                        }
                     }
                 ],
                 language: {

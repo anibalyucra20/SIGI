@@ -258,9 +258,10 @@ class SilabosController extends Controller
             } else {
                 $esCoordinadorPE = false;
             }
+            $esUsuario = \Core\Auth::user();
 
             $esAdminAcademico = (\Core\Auth::esAdminAcademico());
-            $permitido = (($esDocenteAsignado || $esAdminAcademico || $esCoordinadorPE));
+            $permitido = (($esDocenteAsignado || $esAdminAcademico || $esCoordinadorPE || $esUsuario));
             // DATOS GENERALES DE SILABO
             $datosGenerales = $this->model->getDatosGenerales($id_programacion);
             // SECCION III: COMPETENCIAS DEL MODULO
@@ -294,6 +295,24 @@ class SilabosController extends Controller
         $pdf->AddPage("P");
         $pdf->writeHTML($html, true, false, true, false, '');
         $pdf->Output('Silabo_' . $datosGenerales['unidad'] . '.pdf', 'I'); // 'I' para inline
+        exit;
+    }
+
+    public function verpdf($id_programacion)
+    {
+        require_once __DIR__ . '/../../../vendor/autoload.php';
+
+
+        // Obtener todos los datos igual que para la vista de edición
+        $silabo = $this->model->getSilaboByProgramacion($id_programacion);
+        $id_silabo = $silabo['id'] ?? null;
+        if(!$id_silabo) {
+            $_SESSION['flash_error'] = "No se encontró un sílabo para esta programación.";
+            header('Location: ' . BASE_URL . '/academico/unidadesDidacticas/configuracion/' . (int)$id_programacion);
+            exit;
+        }else {
+            $this->pdf($id_silabo);
+        }
         exit;
     }
 }
