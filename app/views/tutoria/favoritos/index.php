@@ -2,18 +2,17 @@
 <?php if (\Core\Auth::esAdminTutoria()): ?>
 
     <div class="card p-2">
-        <h3 class="mb-2">Programación Tutoria</h3>
+        <h3 class="mb-2">Lista de Estudiantes</h3>
         <div class="mb-2">
-            <a href="<?= BASE_URL ?>/tutoria/programacion/nuevo" class="btn btn-success">+ Nuevo</a>
+            <a href="<?= BASE_URL ?>/tutoria/favoritos/nuevo" class="btn btn-success">+ Nuevo</a>
         </div>
         <div class="table-responsive">
-            <table id="tabla-programacion" class="table table-bordered table-hover table-sm align-middle">
+            <table id="tabla-favoritos" class="table table-bordered table-hover table-sm align-middle">
                 <thead class="table-light">
                     <tr>
                         <th>Nro</th>
-                        <th>Sede</th>
-                        <th>Periodo Academico</th>
-                        <th>Docente</th>
+                        <th>Id Programación</th>
+                        <th>Apellidos y Nombres</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -33,12 +32,12 @@
                 tabla.ajax.reload();
             });*/
 
-            const tabla = $('#tabla-programacion').DataTable({
+            const tabla = $('#tabla-favoritos').DataTable({
                 processing: true,
                 serverSide: true,
                 searching: false,
                 ajax: {
-                    url: '<?= BASE_URL ?>/tutoria/programacion/data',
+                    url: '<?= BASE_URL ?>/tutoria/favoritos/data',
                     type: 'GET',
                     data: function(d) {
                         /*d.descripcion = $('#filter-descripcion').val();
@@ -52,22 +51,20 @@
                         }
                     },
                     {
-                        data: 'sede_nombre'
+                        data: 'id_programacion_tutoria'
                     },
                     {
-                        data: 'periodo_academico_nombre'
+                        data: 'estudiante_nombre'
                     },
-                    {
-                        data: 'docente_nombre'
-                    },
+
                     {
                         data: null,
                         orderable: false,
                         searchable: false,
                         render: function(data, type, row) {
                             return `
-                        <a href="<?= BASE_URL ?>/tutoria/programacion/editar/${row.id}" class="btn btn-warning btn-sm">Editar</a>
-                        <a href="<?= BASE_URL ?>/tutoria/programacion/eliminar/${row.id}" class="btn btn-danger btn-sm" onclick="return confirm('¿Está seguro de que desea eliminar esta Programación?');">Eliminar</a>
+                        <a href="<?= BASE_URL ?>/tutoria/favoritos/editar/${row.id}" class="btn btn-warning btn-sm">Editar</a>
+                        <a href="<?= BASE_URL ?>/tutoria/favoritos/eliminar/${row.id}" class="btn btn-danger btn-sm" onclick="return confirm('¿Está seguro de que desea eliminar este Estudiante?');">Eliminar</a>
                     `;
                         }
                     }
