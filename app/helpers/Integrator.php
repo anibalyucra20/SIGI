@@ -579,4 +579,83 @@ class Integrator
 
         return (isset($res['success']) && $res['success']) ? $res['itemid'] : null;
     }
+
+
+
+    /**
+     * Obtiene los ítems de calificación (tareas, cuestionarios, foros) de un curso en Moodle.
+     * Útil para poblar el modal de configuración de SIGI.
+     */
+    public function getGradeItemsConfig($courseid)
+    {
+        if (!defined('INTEGRACIONES_SYNC_ACTIVE') || !INTEGRACIONES_SYNC_ACTIVE) {
+            return ['success' => false, 'details' => 'Integraciones no activadas'];
+        }
+
+        $ds = $this->objDatosSistema->buscar();
+        $apiKey = $ds['token_sistema'];
+
+        // Asumimos que crearás este endpoint en tu API Master
+        $url = API_BASE_URL . "/api/integracion/getGradeItemsConfig";
+
+        $payload = [
+            'courseid' => $courseid
+        ];
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, INTEGRACIONES_SSL_VERIFY);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, INTEGRACIONES_SSL_VERIFY ? 2 : 0);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'X-Api-Key: ' . $apiKey
+        ]);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+
+        $response = curl_exec($ch);
+        curl_close($ch);
+
+        return json_decode($response, true);
+    }
+
+    /**
+     * Extrae las calificaciones de los estudiantes desde el Gradebook de Moodle.
+     */
+    public function getCourseGrades($courseid)
+    {
+        if (!defined('INTEGRACIONES_SYNC_ACTIVE') || !INTEGRACIONES_SYNC_ACTIVE) {
+            return ['success' => false, 'details' => 'Integraciones no activadas'];
+        }
+
+        $ds = $this->objDatosSistema->buscar();
+        $apiKey = $ds['token_sistema'];
+
+        // Asumimos que crearás este endpoint en tu API Master
+        $url = API_BASE_URL . "/api/integracion/getCourseGrades";
+
+        $payload = [
+            'courseid' => $courseid
+        ];
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, INTEGRACIONES_SSL_VERIFY);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, INTEGRACIONES_SSL_VERIFY ? 2 : 0);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'X-Api-Key: ' . $apiKey
+        ]);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+
+        $response = curl_exec($ch);
+        curl_close($ch);
+
+        return json_decode($response, true);
+    }
 }

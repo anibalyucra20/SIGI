@@ -568,4 +568,135 @@ class Calificaciones extends Model
         $stmt->execute([$id_programacion]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+
+    /**
+     * Obtiene un diccionario rápido para mapear [moodle_user_id => id_detalle_matricula]
+     */
+    public function getDiccionarioMoodleEstudiantes(int $id_programacion_ud): array
+    {
+        $sql = "SELECT u.moodle_user_id, adm.id AS id_detalle_matricula
+                FROM sigi_usuarios u
+                INNER JOIN acad_estudiante_programa aep ON u.id = aep.id_usuario
+                INNER JOIN acad_matricula am ON aep.id = am.id_estudiante
+                INNER JOIN acad_detalle_matricula adm ON am.id = adm.id_matricula
+                WHERE adm.id_programacion_ud = ? AND u.moodle_user_id > 0";
+
+        $stmt = self::$db->prepare($sql);
+        $stmt->execute([$id_programacion_ud]);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $diccionario = [];
+        foreach ($rows as $row) {
+            $diccionario[$row['moodle_user_id']] = $row['id_detalle_matricula'];
+        }
+        return $diccionario;
+    }
+
+    /**
+     * Actualiza o inserta la nota proveniente de Moodle en la tabla de criterios de SIGI.
+     */
+    public function guardarNotaMoodle(
+        $id_programacion_ud, 
+        $nro_calificacion, 
+        $aspecto_detalle, 
+        $criterio_orden, 
+        $id_detalle_matricula, 
+        $notaString
+    ) {
+        // 1. Validaciones básicas de integridad
+        if (empty($id_detalle_matricula) || empty($notaString)) {
+            return false;
+        }
+
+        // 2. Consulta para obtener el ID exacto del registro a actualizar en acad_criterio_evaluacion
+        // Seguimos la ruta: Detalle Matrícula -> Calificación -> Evaluación (Aspecto) -> Criterio
+        $sqlBusqueda = "
+            SELECT 
+                ce.id as id_criterio_evaluacion,
+                ce.calificacion as nota_anterior
+            FROM acad_criterio_evaluacion ce
+            INNER JOIN acad_evaluacion e ON ce.id_evaluacion = e.id
+            INNER JOIN acad_calificacion c ON e.id_calificacion = c.id
+            INNER JOIN acad_detalle_matricula dm ON c.id_detalle_matricula = dm.id
+            WHERE dm.id_programacion_ud = :id_programacion_ud
+              AND dm.id = :id_detalle_matricula
+              AND c.nro_calificacion = :nro_calificacion
+              AND e.detalle = :aspecto_detalle
+              AND ce.orden = :criterio_orden
+            LIMIT 1
+        ";
+
+        $stmtBusqueda = self::$db->prepare($sqlBusqueda);
+        $stmtBusqueda->execute([
+            ':id_programacion_ud'   => $id_programacion_ud,
+            ':id_detalle_matricula' => $id_detalle_matricula,
+            ':nro_calificacion'     => $nro_calificacion,
+            ':aspecto_detalle'      => $aspecto_detalle,
+            ':criterio_orden'       => $criterio_orden
+        ]);
+
+        $resultado = $stmtBusqueda->fetch(\PDO::FETCH_ASSOC);
+
+        if ($resultado && isset($resultado['id_criterio_evaluacion'])) {
+            $idCriterioObjetivo = $resultado['id_criterio_evaluacion'];
+            $notaAnterior       = $resultado['nota_anterior'];
+
+            // 3. Si la nota ya es igual, evitamos hacer un UPDATE innecesario (Optimización)
+            if ($notaAnterior === $notaString) {
+                return true; 
+            }
+
+            // 4. Ejecutar la actualización (Update)
+            $sqlUpdate = "UPDATE acad_criterio_evaluacion SET calificacion = :nota WHERE id = :id_criterio";
+            $stmtUpdate = self::$db->prepare($sqlUpdate);
+            $updateExitoso = $stmtUpdate->execute([
+                ':nota'        => $notaString,
+                ':id_criterio' => $idCriterioObjetivo
+            ]);
+
+            // 5. [Sugerencia Arquitectónica] Registro de Auditoría
+            // Es vital registrar este evento automatizado en 'auditoria_acad_logs'
+            if ($updateExitoso) {
+                $this->registrarAuditoriaSincronizacion(
+                    $idCriterioObjetivo, 
+                    $notaAnterior, 
+                    $notaString
+                );
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function registrarAuditoriaSincronizacion($id_registro, $valor_anterior, $valor_nuevo)
+    {
+        try {
+            // Asumimos que el ID del usuario que presiona "Sincronizar" está en sesión
+            $id_usuario = $_SESSION['sigi_user_id'] ?? 0;
+            $ip_origen  = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+            $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? 'SIGI System (Moodle Sync)';
+
+            $sqlAudit = "INSERT INTO auditoria_acad_logs 
+                         (id_usuario, tabla_afectada, id_registro, campo_afectado, valor_anterior, valor_nuevo, ip_origen, user_agent) 
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                         
+            $stmt = self::$db->prepare($sqlAudit);
+            $stmt->execute([
+                $id_usuario,
+                'acad_criterio_evaluacion',
+                $id_registro,
+                'calificacion',
+                $valor_anterior,
+                $valor_nuevo,
+                $ip_origen,
+                $user_agent
+            ]);
+        } catch (\Exception $e) {
+            // Si falla la auditoría, lo anotamos en el log del servidor, 
+            // pero no detenemos la transacción principal.
+            error_log("[SIGI AUDITORIA ERROR] Fallo al registrar sincronización: " . $e->getMessage());
+        }
+    }
 }

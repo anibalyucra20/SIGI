@@ -8,6 +8,7 @@ require __DIR__ . '/../../layouts/header.php';
         <div class="col-4 col-md-2 mb-3">
             <a class="btn btn-danger mb-3 col-12" href="<?= BASE_URL; ?>/academico/calificaciones/ver/<?php echo $id_programacion_ud; ?>">Regresar</a>
             <a class="btn btn-info btn-sm btn-block mb-2 col-12" target="_blank" href="<?= BASE_URL ?>/academico/calificaciones/registroAuxiliar/<?= $id_programacion_ud ?>/<?= $nro_calificacion ?>">Imprimir</a>
+
         </div>
         <h5 class="text-center font-weight-bold mb-4" style="color:#607d8b;">
             Evaluación - Indicador <?= $nro_calificacion ?>
@@ -106,46 +107,102 @@ require __DIR__ . '/../../layouts/header.php';
                         ?>
                             <?php foreach ($eval['criterios'] as $iCrit => $criterio): ?>
                                 <?php
-                                // Obtiene todos los IDs de la columna
+
+                                // 1. Identificadores robustos
+                                $aspectoNombre = trim($eval['detalle']); // Ej: "Conceptual", "Procedimental"
+                                $ordenCriterio = isset($criterio['orden']) ? $criterio['orden'] : ($iCrit + 1);
+
+                                // 2. Buscar si ya existe un CMID para este Aspecto + Orden específico
+                                $llaveDiccionario = $aspectoNombre . '_' . $ordenCriterio;
+                                $cmidPrevio = $vinculosActivos[$llaveDiccionario] ?? '';
+
+                                // --- NUEVA BANDERA BOOLEANA ---
+                                $estaVinculado = !empty($cmidPrevio);
+                                $modalId = "modalMoodle_{$iEval}_{$iCrit}";
                                 $ids = isset($criterio_ids_columnas[$iEval][$iCrit]) && count($criterio_ids_columnas[$iEval][$iCrit])
                                     ? implode(',', $criterio_ids_columnas[$iEval][$iCrit])
                                     : $criterio['id'];
+                                // 3. ID único para evitar cruce de modales
+                                $modalId = "modalMoodle_{$iEval}_{$iCrit}";
+
+
+                                // 1. Obtener el CMID si ya está vinculado (basado en el detalle del criterio)
+                                $detalleLimpio = trim($criterio['detalle']);
+
+
+                                // 2. Definir el orden dinámico. (Asumo que $iCrit es el índice del array, usualmente 0, 1, 2...)
+                                // Si tu BD ya trae un campo 'orden', úsalo: $criterio['orden']. Si no, usa el índice + 1.
+                                $ordenDinamico = isset($criterio['orden']) ? $criterio['orden'] : ($iCrit + 1);
                                 ?>
                                 <th class="text-center criterio-header p-0" style="width: 40px;">
                                     <?php if ($periodo_vigente['vigente']): ?>
-                                        <button class="btn btn-warning mb-1 btn-sm btn-vinculo-moodle-criterio" data-toggle="modal"
-                                            data-target=".bd-example-modal-lg-<?= $cont  ?>" data-ids-criterio="<?= $ids ?>"><i class="fas fa-link"></i></button><br>
-                                        <button class="btn btn-info mb-1 btn-sm btn-editar-criterio"
-                                            data-ids-criterio="<?= $ids ?>"><i class="fa fa-pen"></i></button>
-                                        <!-- Modal para moodle -->
-                                        <div class="modal fade bd-example-modal-lg-<?= $cont ?>" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+
+                                        <?php if ($estaVinculado): ?>
+                                            <!-- Habilitado: Color verde/primary, dispara el JS -->
+                                            <button class="btn btn-success mb-1 btn-sm btn-sincronizar-criterio"
+                                                data-aspecto="<?= htmlspecialchars($aspectoNombre) ?>"
+                                                data-orden="<?= $ordenCriterio ?>"
+                                                title="Descargar calificaciones desde Moodle">
+                                                <i class="fas fa-cloud-download-alt"></i>
+                                            </button><br>
+                                        <?php else: ?>
+                                            <!-- Deshabilitado: Color gris, no hace nada -->
+                                            <button class="btn btn-secondary mb-1 btn-sm" disabled
+                                                title="Primero debe vincular una actividad de Moodle usando el icono de enlace">
+                                                <i class="fas fa-cloud-download-alt" style="opacity: 0.5;"></i>
+                                            </button><br>
+                                        <?php endif; ?>
+                                        <!-- BOTÓN QUE ABRE EL MODAL (Hidratado con datos puros) -->
+                                        <button class="btn btn-warning mb-1 btn-sm btn-vinculo-moodle-criterio"
+                                            data-toggle="modal"
+                                            data-target="#<?= $modalId ?>"
+                                            data-aspecto="<?= htmlspecialchars($aspectoNombre) ?>"
+                                            data-orden="<?= $ordenCriterio ?>"
+                                            data-cmid-previo="<?= $cmidPrevio ?>">
+                                            <i class="fas fa-link"></i>
+                                        </button><br>
+
+                                        <button class="btn btn-info mb-1 btn-sm btn-editar-criterio" data-ids-criterio="<?= $ids ?>">
+                                            <i class="fa fa-pen"></i>
+                                        </button>
+
+                                        <!-- MODAL ÚNICO PARA ESTE CRITERIO -->
+                                        <div class="modal fade" id="<?= $modalId ?>" tabindex="-1" role="dialog" aria-hidden="true">
                                             <div class="modal-dialog modal-lg">
                                                 <div class="modal-content">
+                                                    <!-- Cabecera y cuerpo (Mismo HTML que tenías) -->
                                                     <div class="modal-header">
-                                                        <h5 class="modal-title h4" id="myLargeModalLabel">Configuración con Moodle</h5>
-                                                        <button type="button" class="close waves-effect waves-light" data-dismiss="modal" aria-label="Close">
-                                                            <span aria-hidden="true">&times;</span>
-                                                        </button>
+                                                        <h5 class="modal-title h4">Configuración Moodle: <?= $aspectoNombre ?> (Criterio <?= $ordenCriterio ?>)</h5>
+                                                        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                                                     </div>
-                                                    <div class="modal-body">
-                                                        <div class="row col-12">
-                                                            <div class="form-group row col-md-12">
-                                                                <label class="col-4 col-form-label">Vincular Criterio con :</label>
-                                                                <div class="col-8">
-                                                                    <select name="criterio-moodle-<?= $cont ?>" id="criterio-moodle-<?= $cont ?>" class="form-control" data-ids-criterio="<?= $ids ?>">
-                                                                        <option value="">Ninguna</option>
-                                                                    </select>
-                                                                </div>
+                                                    <div class="modal-body text-left">
+                                                        <div class="form-group row">
+                                                            <label class="col-4 col-form-label">Vincular con:</label>
+                                                            <div class="col-8">
+                                                                <select name="criterio-moodle-<?= $iEval ?>-<?= $iCrit ?>" class="form-control select-moodle-dinamico">
+                                                                    <option value="">Ninguna</option>
+                                                                </select>
                                                             </div>
                                                         </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+
+                                                        <!-- BOTÓN GUARDAR (Lleva los datos del Aspecto actual) -->
+                                                        <button type="button" class="btn btn-success btn-guardar-vinculo"
+                                                            data-aspecto="<?= htmlspecialchars($aspectoNombre) ?>"
+                                                            data-orden="<?= $ordenCriterio ?>">
+                                                            <i class="fas fa-link"></i> Vincular Actividad
+                                                        </button>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
-
                                     <?php endif; ?>
                                     <br>
-                                    <span class="criterio-detalle" style="width:40px; writing-mode: vertical-lr; transform: rotate(180deg);"><?= htmlspecialchars($criterio['detalle']) ?></span>
+                                    <span class="criterio-detalle" style="writing-mode: vertical-lr; transform: rotate(180deg);">
+                                        <?= htmlspecialchars($criterio['detalle']) ?>
+                                    </span>
                                 </th>
                             <?php endforeach; ?>
                             <th class="text-center" style="width:40px; writing-mode: vertical-lr; transform: rotate(180deg);">Promedio <?= $eval['detalle']; ?>.</th>
@@ -993,6 +1050,271 @@ require __DIR__ . '/../../layouts/header.php';
                 containerCalificable.style.opacity = "0.5";
                 checkCalificable.checked = false;
                 checkCalificable.disabled = true;
+            }
+        });
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+
+            // --- 1. CARGAR DATOS DE MOODLE EN EL MODAL ---
+            // Variables de caché para no consultar Moodle cada vez que abren el modal
+            let actividadesMoodleCache = null;
+
+            $('.btn-vinculo-moodle-criterio').on('click', function() {
+                const modalId = $(this).data('target');
+                const selectElement = $(modalId).find('select[name^="criterio-moodle"]');
+
+                // Mostrar cargando en el select
+                selectElement.html('<option value="">Cargando actividades de Moodle...</option>');
+
+                if (actividadesMoodleCache !== null) {
+                    poblarSelectMoodle(selectElement, actividadesMoodleCache);
+                } else {
+                    // Consultar al backend
+                    const formData = new FormData();
+                    formData.append('id_programacion_ud', '<?= $id_programacion_ud ?>');
+                    formData.append('nro_calificacion', '<?= $nro_calificacion ?>');
+
+                    fetch('<?= BASE_URL ?>/academico/calificaciones/listarActividadesMoodleCourse', {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(r => r.json())
+                        .then(res => {
+                            if (res.success) {
+                                actividadesMoodleCache = res.data;
+                                poblarSelectMoodle(selectElement, actividadesMoodleCache);
+                            } else {
+                                selectElement.html(`<option value="">Error: ${res.message}</option>`);
+                            }
+                        }).catch(e => selectElement.html('<option value="">Error de conexión</option>'));
+                }
+            });
+
+            // (Asumo que sigues inyectando $vinculosOcupados desde PHP)
+            const vinculosOcupados = <?= json_encode($vinculosOcupados ?? []) ?>;
+
+            function poblarSelectMoodle(selectJQ, datos, cmidPrevio) {
+                if (datos.length === 0) {
+                    selectJQ.html('<option value="">No hay actividades evaluables en Moodle</option>');
+                    return;
+                }
+
+                let html = '<option value="">-- Seleccione una actividad de Moodle --</option>';
+                datos.forEach(act => {
+                    const isSelected = (act.cmid == cmidPrevio) ? 'selected' : '';
+
+                    // UX: Mostrar si está ocupado, pero NO deshabilitarlo
+                    let textoAgregado = '';
+                    // Atributo data para que el botón de guardar sepa si está "robando" un vínculo
+                    let dataOcupado = '';
+
+                    if (vinculosOcupados[act.cmid] && act.cmid != cmidPrevio) {
+                        const ocupadoPor = vinculosOcupados[act.cmid];
+                        textoAgregado = ` [⚠️ Vinculado a: Ind.${ocupadoPor.indicador} - ${ocupadoPor.detalle}]`;
+                        dataOcupado = `data-ocupado="true" data-ocupado-texto="${ocupadoPor.detalle}"`;
+                    }
+
+                    html += `<option value="${act.cmid}" data-cmid="${act.cmid}" ${dataOcupado} ${isSelected}>
+                        ${act.nombre} (${act.modulo.toUpperCase()})${textoAgregado}
+                     </option>`;
+                });
+                selectJQ.html(html);
+            }
+
+            // --- 2. SINCRONIZAR NOTAS DE UN CRITERIO (PULL) ---
+            // 3. SINCRONIZAR NOTAS (PULL)
+            document.querySelectorAll('.btn-sincronizar-criterio').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+
+                    // Leer las coordenadas exactas de la celda
+                    const aspectoCriterio = this.dataset.aspecto;
+                    const ordenCriterio = this.dataset.orden; // <-- EL DATO CLAVE
+
+                    Swal.fire({
+                        title: `¿Sincronizar calificaciones?`,
+                        text: "Se descargarán las calificaciones de Moodle y se convertirán a escala vigesimal. Se sobrescribirán las notas previas.",
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#28a745',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: '<i class="fas fa-sync"></i> Sí, sincronizar'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            const btnOriginalHTML = this.innerHTML;
+                            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                            this.disabled = true;
+
+                            // Construcción del Payload
+                            const fd = new FormData();
+                            fd.append('id_programacion_ud', '<?= $id_programacion_ud ?>');
+                            fd.append('nro_calificacion', '<?= $nro_calificacion ?>');
+                            fd.append('detalle_criterio', aspectoCriterio);
+                            fd.append('criterio_orden', ordenCriterio); // <-- ENVIAR AL BACKEND
+
+                            fetch('<?= BASE_URL ?>/academico/calificaciones/sincronizarCriterioMoodle', {
+                                    method: 'POST',
+                                    body: fd
+                                })
+                                .then(r => r.json())
+                                .then(res => {
+                                    if (res.success) {
+                                        Swal.fire('Completado', res.message, 'success').then(() => location.reload());
+                                    } else {
+                                        Swal.fire('Operación Fallida', res.message, 'error');
+                                        this.innerHTML = btnOriginalHTML;
+                                        this.disabled = false;
+                                    }
+                                })
+                                .catch(() => {
+                                    Swal.fire('Error de Red', 'No se pudo comunicar con el servidor SIGI.', 'error');
+                                    this.innerHTML = btnOriginalHTML;
+                                    this.disabled = false;
+                                });
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+
+            let actividadesMoodleCache = null;
+            let modalActivoAspecto = '';
+            let modalActivoOrden = 1;
+            let modalActivoCmidPrevio = '';
+            const vinculosOcupados = <?= json_encode($vinculosOcupados ?? []) ?>;
+
+            // 1. AL ABRIR EL MODAL
+            $('.btn-vinculo-moodle-criterio').on('click', function() {
+                const modalId = $(this).data('target');
+                const selectElement = $(modalId).find('.select-moodle-dinamico');
+
+                // Captura precisa de coordenadas
+                modalActivoAspecto = $(this).data('aspecto');
+                modalActivoOrden = $(this).data('orden');
+                modalActivoCmidPrevio = $(this).data('cmid-previo');
+
+                selectElement.html('<option value="">Cargando actividades...</option>');
+
+                if (actividadesMoodleCache !== null) {
+                    poblarSelectMoodle(selectElement, actividadesMoodleCache, modalActivoCmidPrevio);
+                } else {
+                    const formData = new FormData();
+                    formData.append('id_programacion_ud', '<?= $id_programacion_ud ?>');
+                    formData.append('nro_calificacion', '<?= $nro_calificacion ?>');
+
+                    fetch('<?= BASE_URL ?>/academico/calificaciones/listarActividadesMoodleCourse', {
+                        method: 'POST',
+                        body: formData
+                    }).then(r => r.json()).then(res => {
+                        if (res.success) {
+                            actividadesMoodleCache = res.data;
+                            poblarSelectMoodle(selectElement, actividadesMoodleCache, modalActivoCmidPrevio);
+                        } else {
+                            selectElement.html(`<option value="">Error: ${res.message}</option>`);
+                        }
+                    }).catch(e => selectElement.html('<option value="">Error de conexión</option>'));
+                }
+            });
+
+            function poblarSelectMoodle(selectJQ, datos, cmidPrevio) {
+                if (datos.length === 0) {
+                    selectJQ.html('<option value="">No hay actividades en Moodle</option>');
+                    return;
+                }
+
+                let html = '<option value="">-- Seleccione una actividad --</option>';
+                datos.forEach(act => {
+                    const isSelected = (act.cmid == cmidPrevio) ? 'selected' : '';
+
+                    let textoOcupado = '';
+                    let dataOcupado = '';
+                    if (vinculosOcupados[act.cmid] && act.cmid != cmidPrevio) {
+                        const info = vinculosOcupados[act.cmid];
+                        textoOcupado = ` [⚠️ Ocupado en Ind.${info.indicador} - ${info.detalle}]`;
+                        dataOcupado = `data-ocupado="true" data-ocupado-texto="${info.detalle}"`;
+                    }
+
+                    html += `<option value="${act.cmid}" ${dataOcupado} ${isSelected}>
+                        ${act.nombre} (${act.modulo}) ${textoOcupado}
+                     </option>`;
+                });
+                selectJQ.html(html);
+            }
+
+            // 2. AL GUARDAR
+            document.querySelectorAll('.btn-guardar-vinculo').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+
+                    const modalContent = this.closest('.modal-content');
+                    const selectMoodle = modalContent.querySelector('.select-moodle-dinamico');
+                    const moodleCmid = selectMoodle ? selectMoodle.value : '';
+
+                    if (!moodleCmid) {
+                        Swal.fire('Atención', 'Seleccione una actividad de Moodle.', 'warning');
+                        return;
+                    }
+
+                    const optElegida = selectMoodle.options[selectMoodle.selectedIndex];
+                    if (optElegida.hasAttribute('data-ocupado')) {
+                        const donde = optElegida.getAttribute('data-ocupado-texto');
+                        Swal.fire({
+                            title: 'Reasignar Actividad',
+                            text: `Esta tarea ya califica al ${donde}. ¿Desea moverla aquí?`,
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Sí, reasignar'
+                        }).then((r) => {
+                            if (r.isConfirmed) ejecutarVinculacion(this, moodleCmid);
+                        });
+                    } else {
+                        ejecutarVinculacion(this, moodleCmid);
+                    }
+                });
+            });
+
+            function ejecutarVinculacion(boton, moodleCmid) {
+                const btnHTML = boton.innerHTML;
+                boton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+                boton.disabled = true;
+
+                const formData = new FormData();
+                formData.append('id_programacion_ud', '<?= $id_programacion_ud ?>');
+                formData.append('nro_calificacion', '<?= $nro_calificacion ?>');
+
+                // Usamos los datos inyectados por PHP en el botón Guardar
+                formData.append('evaluacion_detalle', boton.dataset.aspecto);
+                formData.append('criterio_orden', boton.dataset.orden);
+                formData.append('moodle_cmid', moodleCmid);
+
+                fetch('<?= BASE_URL ?>/academico/calificaciones/vincularCriterioMoodle', {
+                    method: 'POST',
+                    body: formData
+                }).then(r => r.json()).then(res => {
+                    if (res.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Vinculado',
+                            timer: 1000,
+                            showConfirmButton: false
+                        }).then(() => location.reload());
+                    } else {
+                        Swal.fire('Error', res.message, 'error');
+                        boton.disabled = false;
+                        boton.innerHTML = btnHTML;
+                    }
+                }).catch(() => {
+                    Swal.fire('Error', 'Fallo de red.', 'error');
+                    boton.disabled = false;
+                    boton.innerHTML = btnHTML;
+                });
             }
         });
     </script>

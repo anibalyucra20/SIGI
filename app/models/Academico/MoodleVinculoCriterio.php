@@ -72,4 +72,33 @@ class MoodleVinculoCriterio extends Model
         $stmt = self::$db->prepare($sql);
         return $stmt->execute([$id_programacion_ud, $nro_calificacion, $evaluacion_detalle, $criterio_orden]);
     }
+
+    /**
+     * Libera un cmid de Moodle de cualquier otro criterio en el curso.
+     * Útil para la lógica de "reasignación" de actividades.
+     */
+    public function liberarCmidEnCurso(int $id_programacion_ud, int $moodle_cmid)
+    {
+        // Actualizamos los registros que tengan este cmid, poniéndolos a 0 o null
+        $sql = "UPDATE {$this->table} 
+                SET moodle_cmid = 0, 
+                    graded = 0, 
+                    moodle_grade_item_id = NULL, 
+                    last_sync_at = NULL 
+                WHERE id_programacion_ud = ? AND moodle_cmid = ?";
+                
+        $stmt = self::$db->prepare($sql);
+        return $stmt->execute([$id_programacion_ud, $moodle_cmid]);
+    }
+
+    public function getOneByDetalleYOrden($id_programacion_ud, $nro_calificacion, $detalle_criterio, $criterio_orden){
+        
+        $sql = "SELECT *
+                FROM {$this->table}
+                WHERE id_programacion_ud = ? AND nro_calificacion = ? AND evaluacion_detalle = ? AND criterio_orden = ?";
+        $stmt = self::$db->prepare($sql);
+        $stmt->execute([$id_programacion_ud, $nro_calificacion, $detalle_criterio, $criterio_orden]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
+    }
 }

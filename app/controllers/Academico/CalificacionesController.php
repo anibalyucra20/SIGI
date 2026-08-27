@@ -161,6 +161,32 @@ class CalificacionesController extends Controller
             $datos_seccion_moodle = [];
         }
 
+
+        // 1. Obtener vínculos existentes de Moodle para este Indicador
+        require_once __DIR__ . '/../../../app/models/Academico/MoodleVinculoCriterio.php';
+        $objVinculo = new \App\Models\Academico\MoodleVinculoCriterio();
+
+        $vinculosBD = $objVinculo->getByProgramacion($id_programacion_ud, $nro_calificacion);
+
+        // 2. Crear diccionario usando "Aspecto_Orden" como llave maestra
+        $vinculosActivos = [];
+        foreach ($vinculosBD as $v) {
+            $llave = trim($v['evaluacion_detalle']) . '_' . $v['criterio_orden'];
+            $vinculosActivos[$llave] = $v['moodle_cmid'];
+        }
+
+        // 3. Obtener TODOS los vínculos del curso (Para evitar duplicados en el select)
+        $todosLosVinculosBD = $objVinculo->getByProgramacion($id_programacion_ud, 0); // Asumiendo que 0 trae todos
+        $vinculosOcupados = [];
+        foreach ($todosLosVinculosBD as $v) {
+            if ($v['moodle_cmid'] > 0) {
+                $vinculosOcupados[$v['moodle_cmid']] = [
+                    'indicador' => $v['nro_calificacion'],
+                    'detalle'   => $v['evaluacion_detalle'] . ' - Criterio ' . $v['criterio_orden']
+                ];
+            }
+        }
+
         /*echo "<pre>";
         print_r($final_modules);
         echo "</pre>";
@@ -179,7 +205,9 @@ class CalificacionesController extends Controller
             'nota_inasistencia' => $nota_inasistencia,
             'permitido' => $permitido,
             'final_modules' => $final_modules,
-            'datos_seccion_moodle' => $datos_seccion_moodle
+            'datos_seccion_moodle' => $datos_seccion_moodle,
+            'vinculosActivos' => $vinculosActivos,
+            'vinculosOcupados' => $vinculosOcupados
         ], $datos));
     }
 
@@ -501,13 +529,20 @@ class CalificacionesController extends Controller
     }
 
     /**
-     * Procesa la vinculación de un criterio SIGI con un módulo de Moodle
-     * Maneja la creación en Moodle y el registro en la tabla acad_moodle_vinculo_criterio
+     * ENDPOINT AJAX: Registra o actualiza el vínculo. Si el CMID ya estaba 
+     * siendo usado por otro criterio en el mismo curso, se lo reasigna al actual.
      */
     public function vincularCriterioMoodle()
     {
-        // 1. Validaciones de Seguridad y Periodo (Siguiendo tu estilo)
-        $id_programacion_ud = $_POST['id_programacion_ud'] ?? 0;
+        header('Content-Type: application/json');
+
+        $id_programacion_ud = (int)($_POST['id_programacion_ud'] ?? 0);
+        $nro_calificacion   = (int)($_POST['nro_calificacion'] ?? 0);
+        $evaluacion_detalle = trim($_POST['evaluacion_detalle'] ?? '');
+        $criterio_orden     = (int)($_POST['criterio_orden'] ?? 1);
+        $moodle_cmid        = (int)($_POST['moodle_cmid'] ?? 0);
+
+        // 1. Validaciones Base
         $permitido = $this->model->puedeVerCalificaciones($id_programacion_ud);
         $programacion = $this->objProgramacionUD->find($id_programacion_ud);
         $periodo_vigente = $this->objPeriodoAcademico->getPeriodoVigente($programacion['id_periodo_academico']);
@@ -517,74 +552,343 @@ class CalificacionesController extends Controller
             exit;
         }
 
-        // 2. Recolección de datos base
-        $nro_calificacion   = $_POST['nro_calificacion'];
-        $evaluacion_detalle = $_POST['evaluacion_detalle']; // Este es el nombre del criterio en SIGI
-        $criterio_orden     = $_POST['criterio_orden'];
-        $modname            = $_POST['modname'];
-        $id_seccion_moodle  = $_POST['id_seccion_moodle'];
-
-        // Puntos 2, 3 y 4 de tu lista
-        $vincular_sigi  = isset($_POST['vincular_sigi']) && $_POST['vincular_sigi'] == '1';
-        $es_calificable = isset($_POST['es_calificable']) && $_POST['es_calificable'] == '1' ? 1 : 0;
-
-        // --- VALIDACIÓN PUNTO 4: Solo un calificable por criterio ---
-        if ($vincular_sigi && $es_calificable == 1) {
-            $existe = $this->model->existeModuloCalificable(
-                $id_programacion_ud,
-                $nro_calificacion,
-                $evaluacion_detalle,
-                $criterio_orden
-            );
-            if ($existe) {
-                echo json_encode(['success' => false, 'message' => 'Ya existe un módulo marcado como CALIFICABLE para este criterio.']);
-                exit;
-            }
+        if ($moodle_cmid <= 0) {
+            echo json_encode(['success' => false, 'message' => 'Seleccione una actividad de Moodle válida.']);
+            exit;
         }
 
-        // 3. Preparación de parámetros para Moodle (Punto 1 y conversión de fechas)
-        $moodle_params = $this->prepararParametrosMoodle($_POST);
+        try {
+            require_once __DIR__ . '/../../../app/models/Academico/MoodleVinculoCriterio.php';
+            $objVinculo = new \App\Models\Academico\MoodleVinculoCriterio();
 
-        // 4. Llamada al Integrator para crear el módulo en Moodle
-        $resultado_moodle = $this->objIntegrator->createModuleMoodle(
-            $programacion['id_moodle'], // id_course_moodle
-            $id_seccion_moodle,
-            $modname,
-            $moodle_params
-        );
+            // 2. Iniciar Transacción
+            \Core\Model::getDB()->beginTransaction();
 
-        if ($resultado_moodle['success']) {
-            $moodle_data = $resultado_moodle['message']; // Contiene cmid e id (instance)
+            // 3. REGLA DE NEGOCIO: Liberar el CMID si ya estaba ocupado por otro criterio
+            // Esto asegura que la actividad de Moodle "se mude" al criterio actual
+            $objVinculo->liberarCmidEnCurso($id_programacion_ud, $moodle_cmid);
 
-            // 5. Registro en tu tabla acad_moodle_vinculo_criterio
-            // Si vincular_sigi es falso (Punto 3), graded siempre va como 0
-            $graded_final = ($vincular_sigi) ? $es_calificable : 0;
-
-
+            // 4. Upsert: Vincular al nuevo criterio
             $data_vinculo = [
-                'id_programacion_ud' => $id_programacion_ud,
-                'nro_calificacion'   => $nro_calificacion,
-                'evaluacion_detalle' => $evaluacion_detalle,
-                'criterio_orden'     => $criterio_orden,
-                'moodle_course_id'   => $programacion['id_moodle'],
-                'moodle_cmid'        => $moodle_data['cmid'],
-                'graded'             => $graded_final,
-                'moodle_grade_item_id' => $moodle_data['gradeitemid'] ?? null,
-                'created_at'         => date('Y-m-d H:i:s')
+                'id_programacion_ud'   => $id_programacion_ud,
+                'nro_calificacion'     => $nro_calificacion,
+                'evaluacion_detalle'   => $evaluacion_detalle,
+                'criterio_orden'       => $criterio_orden,
+                'moodle_course_id'     => (int)$programacion['id_moodle'],
+                'moodle_cmid'          => $moodle_cmid,
+                'graded'               => 1, // Se asume calificable al vincular
+                'moodle_grade_item_id' => null,
+                'last_sync_at'         => date('Y-m-d H:i:s')
             ];
 
-            $ok = $this->model->registrarVinculoMoodle($data_vinculo);
+            if (!$objVinculo->upsert($data_vinculo)) {
+                throw new \Exception('No se pudo guardar el vínculo local.');
+            }
 
-            echo json_encode([
-                'success' => $ok,
-                'message' => $ok ? 'Vinculación exitosa' : 'Error al registrar vínculo en SIGI',
-                'moodle_cmid' => $moodle_data['cmid']
-            ]);
-        } else {
-            echo json_encode(['success' => false, 'message' => 'Error Moodle: ' . $resultado_moodle['message']]);
+            // 5. Confirmar Cambios
+            \Core\Model::getDB()->commit();
+            echo json_encode(['success' => true, 'message' => 'Criterio vinculado exitosamente.']);
+        } catch (\Exception $e) {
+            if (\Core\Model::getDB()->inTransaction()) {
+                \Core\Model::getDB()->rollBack();
+            }
+            echo json_encode(['success' => false, 'message' => 'Error al vincular: ' . $e->getMessage()]);
         }
         exit;
     }
+
+
+    /**
+     * Sincroniza las notas desde Moodle EXCLUSIVAMENTE para el indicador (nro_calificacion) solicitado.
+     */
+    public function sincronizarNotasMoodle()
+    {
+        header('Content-Type: application/json');
+
+        $id_programacion_ud = (int)($_POST['id_programacion_ud'] ?? 0);
+        $nro_calificacion   = (int)($_POST['nro_calificacion'] ?? 0);
+
+        if ($id_programacion_ud <= 0 || $nro_calificacion <= 0) {
+            echo json_encode(['success' => false, 'message' => 'Parámetros incompletos.']);
+            exit;
+        }
+
+        // 1. Validaciones de Seguridad
+        $permitido = $this->model->puedeVerCalificaciones($id_programacion_ud);
+        $programacion = $this->objProgramacionUD->find($id_programacion_ud);
+        $periodo_vigente = $this->objPeriodoAcademico->getPeriodoVigente($programacion['id_periodo_academico']);
+
+        if (!$permitido || !$periodo_vigente) {
+            echo json_encode(['success' => false, 'message' => 'Sin permisos o periodo cerrado.']);
+            exit;
+        }
+
+        try {
+            // 2. Obtener los vínculos activos para ESTE indicador
+            require_once __DIR__ . '/../../../app/models/Academico/MoodleVinculoCriterio.php';
+            $objVinculo = new \App\Models\Academico\MoodleVinculoCriterio();
+            $vinculos = $objVinculo->getByProgramacion($id_programacion_ud, $nro_calificacion);
+
+            $criteriosMapeados = [];
+            foreach ($vinculos as $v) {
+                // Solo nos interesan los que son calificables y tienen un item ID válido en Moodle
+                if ($v['graded'] == 1 && !empty($v['moodle_grade_item_id'])) {
+                    $criteriosMapeados[$v['moodle_grade_item_id']] = $v['criterio_orden'];
+                }
+            }
+
+            if (empty($criteriosMapeados)) {
+                throw new \Exception('No hay actividades marcadas como "Calificables" vinculadas a Moodle en este Indicador.');
+            }
+
+            // 3. Consumir API de Moodle
+            $moodleGrades = $this->objIntegrator->getCourseGrades($programacion['id_moodle']);
+            if (!$moodleGrades) {
+                throw new \Exception('No se pudieron obtener las calificaciones de Moodle. Verifique la conexión.');
+            }
+
+            // 4. Obtener diccionario de estudiantes (MoodleID -> DetalleMatriculaID)
+            $diccionarioEstudiantes = $this->model->getDiccionarioMoodleEstudiantes($id_programacion_ud);
+
+            // 5. Iniciar Transacción (ACID Compliance)
+            \Core\Model::getDB()->beginTransaction();
+            $notasActualizadas = 0;
+
+            foreach ($moodleGrades as $userGrade) {
+                $moodleUserId = $userGrade['userid'];
+
+                // Si el alumno de Moodle está en nuestra matriz de SIGI
+                if (isset($diccionarioEstudiantes[$moodleUserId])) {
+                    $id_detalle_matricula = $diccionarioEstudiantes[$moodleUserId];
+
+                    foreach ($userGrade['gradeitems'] as $item) {
+                        $moodleItemId = $item['id'];
+
+                        // Si esta tarea pertenece al Indicador actual
+                        if (isset($criteriosMapeados[$moodleItemId])) {
+                            $ordenSigi = $criteriosMapeados[$moodleItemId];
+
+                            // Conversión Segura: Extraer nota (puede venir vacía, con guiones o nula)
+                            $notaCruda = $item['gradeformatted'] ?? 0;
+                            $notaCruda = strip_tags($notaCruda); // Moodle a veces manda HTML en notas
+
+                            if (is_numeric($notaCruda)) {
+                                // Escalamiento de nota. Moodle trabaja sobre maxgrade (ej. 100).
+                                // Asumimos que la conversión a base 20 se hace con regla de tres: (Nota / Max) * 20
+                                $maxGrade = floatval($item['grademax'] ?? 20);
+                                $notaBase20 = ($maxGrade > 0) ? (floatval($notaCruda) / $maxGrade) * 20 : 0;
+
+                                // Redondeo institucional (vigesimal entero)
+                                $notaFinal = round($notaBase20);
+                                // Formatear a 2 dígitos ('05', '14')
+                                $notaString = str_pad($notaFinal, 2, "0", STR_PAD_LEFT);
+
+                                // Persistencia
+                                $this->model->guardarNotaMoodle($id_programacion_ud, $nro_calificacion, $ordenSigi, $id_detalle_matricula, $notaString);
+                                $notasActualizadas++;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 6. Confirmar la transacción
+            \Core\Model::getDB()->commit();
+
+            echo json_encode([
+                'success' => true,
+                'message' => "Se han importado/actualizado {$notasActualizadas} notas para el Indicador {$nro_calificacion}."
+            ]);
+        } catch (\Exception $e) {
+            if (\Core\Model::getDB()->inTransaction()) {
+                \Core\Model::getDB()->rollBack();
+            }
+            error_log("Fallo Sincronización Moodle (Pull): " . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+        exit;
+    }
+
+
+
+
+    /**
+     * ENDPOINT AJAX: Devuelve las actividades de Moodle para poblar el select del Modal
+     */
+    public function listarActividadesMoodleCourse()
+    {
+        header('Content-Type: application/json');
+        $id_programacion_ud = (int)($_POST['id_programacion_ud'] ?? 0);
+        $nro_calificacion   = (int)($_POST['nro_calificacion'] ?? 0);
+
+        if (!$this->model->puedeVerCalificaciones($id_programacion_ud)) {
+            echo json_encode(['success' => false, 'message' => 'Acceso denegado.']);
+            exit;
+        }
+
+        $programacion = $this->objProgramacionUD->find($id_programacion_ud);
+        if (!$programacion || empty($programacion['id_moodle'])) {
+            echo json_encode(['success' => false, 'message' => 'El curso no está vinculado a Moodle.']);
+            exit;
+        }
+
+        // Llamada al Integrator que consume la API Master
+        $respuestaMaster = $this->objIntegrator->getGradeItemsConfig($programacion['id_moodle']);
+
+        if (!$respuestaMaster || !$respuestaMaster['success']) {
+            $msg = $respuestaMaster['details'] ?? 'Error de comunicación con API Master.';
+            echo json_encode(['success' => false, 'message' => $msg]);
+            exit;
+        }
+        $actividadesCrudas = $respuestaMaster['data'] ?? [];
+        $actividadesFiltradas = [];
+
+        // Filtro inteligente por Indicador de Logro
+        // Si nro_calificacion es 1, buscamos coincidencias con "Indicador de logro 1" (o secciones específicas)
+        // También podemos permitir las de la sección "General" por si el docente prefiere poner material global ahí.
+        foreach ($actividadesCrudas as $act) {
+            $ubicacion = strtolower(trim($act['ubicacion']));
+
+            // Criterio de inclusión: 
+            // 1. Si pertenece exactamente al indicador (ej. contiene "indicador de logro 1" o el número)
+            // 2. Opcional: Si está en la sección "General"
+            $buscado = "indicador de logro " . $nro_calificacion;
+
+            if (strpos($ubicacion, $buscado) !== false || $ubicacion === 'general') {
+                $actividadesFiltradas[] = $act;
+            }
+        }
+
+        echo json_encode(['success' => true, 'data' => $actividadesFiltradas]);
+        exit;
+    }
+
+    /**
+     * ENDPOINT AJAX: Sincroniza SOLO las notas de un Aspecto/Criterio específico.
+     * Implementa la escala de conversión y validación estricta de concurrencia.
+     */
+    public function sincronizarCriterioMoodle()
+    {
+        header('Content-Type: application/json');
+
+        // 1. Recepción de Coordenadas Exactas
+        $id_programacion_ud = (int)($_POST['id_programacion_ud'] ?? 0);
+        $nro_calificacion   = (int)($_POST['nro_calificacion'] ?? 0);
+        $detalle_criterio   = trim($_POST['detalle_criterio'] ?? ''); // Ej: "Conceptual"
+        $criterio_orden     = (int)($_POST['criterio_orden'] ?? 0);   // Ej: 1
+
+        // 2. Control de Acceso
+        $permitido = $this->model->puedeVerCalificaciones($id_programacion_ud);
+        $programacion = $this->objProgramacionUD->find($id_programacion_ud);
+        $periodo_vigente = $this->objPeriodoAcademico->getPeriodoVigente($programacion['id_periodo_academico']);
+
+        if (!$permitido || !$periodo_vigente) {
+            echo json_encode(['success' => false, 'message' => 'Acceso denegado o periodo cerrado.']);
+            exit;
+        }
+
+        try {
+            \Core\Model::getDB()->beginTransaction();
+
+            // 3. Recuperar el Vínculo Exacto (Llave Compuesta)
+            require_once __DIR__ . '/../../../app/models/Academico/MoodleVinculoCriterio.php';
+            $objVinculo = new \App\Models\Academico\MoodleVinculoCriterio();
+
+            // Ajusta este método en tu modelo si es necesario para que busque por detalle Y orden
+            $vinculo = $objVinculo->getOneByDetalleYOrden($id_programacion_ud, $nro_calificacion, $detalle_criterio, $criterio_orden);
+
+            if (!$vinculo || empty($vinculo['moodle_cmid'])) {
+                throw new \Exception('No existe un vínculo registrado para este criterio específico.');
+            }
+
+            $cmidObjetivo = (int)$vinculo['moodle_cmid'];
+
+            // 4. Consumir API Master
+            $respuestaMaster = $this->objIntegrator->getCourseGrades($programacion['id_moodle']);
+
+            if (!$respuestaMaster || !$respuestaMaster['success'] || empty($respuestaMaster['data'])) {
+                throw new \Exception('El servicio de Moodle no devolvió calificaciones para este curso.');
+            }
+
+            $moodleGrades = $respuestaMaster['data'];
+            $diccionarioEstudiantes = $this->model->getDiccionarioMoodleEstudiantes($id_programacion_ud);
+
+            $notasActualizadas = 0;
+            $notasIgnoradas = 0;
+            // --- INICIO DE AUDITORÍA TÉCNICA (DEBUG) ---
+            error_log("=== INICIO SYNC PULL ===");
+            error_log("CMID Objetivo: " . $cmidObjetivo);
+            error_log("Total Alumnos en Diccionario SIGI: " . count($diccionarioEstudiantes));
+            error_log("Total Alumnos devueltos por Moodle: " . count($moodleGrades));
+
+            // Verificamos si Moodle trajo el cmid dentro del primer alumno (para descartar problemas de API)
+            if (!empty($moodleGrades[0]['gradeitems'])) {
+                error_log("Estructura GradeItems (Primer alumno): " . json_encode($moodleGrades[0]['gradeitems']));
+            }
+            // --- FIN AUDITORÍA TÉCNICA ---
+            // 5. Motor de Conversión de Notas
+            foreach ($moodleGrades as $userGrade) {
+                $moodleUserId = $userGrade['userid'];
+
+                // Si el alumno está matriculado en SIGI
+                if (isset($diccionarioEstudiantes[$moodleUserId])) {
+                    $id_detalle = $diccionarioEstudiantes[$moodleUserId];
+
+                    foreach ($userGrade['gradeitems'] as $item) {
+                        // Cruce exacto con el CMID de la Tarea/Examen
+                        if (isset($item['cmid']) && (int)$item['cmid'] === $cmidObjetivo) {
+                            // 1. Obtener el valor crudo
+                            $notaCruda = $item['gradeformatted'] ?? '';
+                            // 2. Decodificar entidades ocultas de Moodle (ej. &nbsp; -> espacio)
+                            $notaDecodificada = html_entity_decode($notaCruda, ENT_QUOTES, 'UTF-8');
+                            // 3. Quitar posibles etiquetas HTML
+                            $notaSinTags = strip_tags($notaDecodificada);
+                            // 4. Cambiar coma decimal latinoamericana por punto (Ej: 14,50 -> 14.50)
+                            $notaConPunto = str_replace(',', '.', $notaSinTags);
+                            // 5. Limpieza agresiva: Dejar SOLO números, puntos y el guion (por si viene negativo o vacío)
+                            $notaLimpia = preg_replace('/[^0-9.\-]/', '', $notaConPunto);
+                            // Si Moodle envía un guion solitario "-", is_numeric dará false (correcto para notas vacías)
+                            if (is_numeric($notaLimpia)) {
+                                $maxGradeMoodle = floatval($item['grademax'] ?? 20);
+                                $notaMatematica = ($maxGradeMoodle > 0) ? (floatval($notaLimpia) / $maxGradeMoodle) * 20 : 0;
+                                $notaFinal = round($notaMatematica, 0, PHP_ROUND_HALF_UP);
+                                if ($notaFinal < 0) $notaFinal = 0;
+                                if ($notaFinal > 20) $notaFinal = 20;
+                                $notaString = str_pad($notaFinal, 2, "0", STR_PAD_LEFT);
+                                $this->model->guardarNotaMoodle(
+                                    $id_programacion_ud,
+                                    $nro_calificacion,
+                                    $vinculo['evaluacion_detalle'],
+                                    $vinculo['criterio_orden'],
+                                    $id_detalle,
+                                    $notaString
+                                );
+                                $notasActualizadas++;
+                            } else {
+                                $notasIgnoradas++;
+                            }
+                        }
+                    }
+                }
+            }
+
+            \Core\Model::getDB()->commit();
+            echo json_encode([
+                'success' => true,
+                'message' => "Sincronización exitosa. Se actualizaron {$notasActualizadas} notas."
+                    . ($notasIgnoradas > 0 ? " ({$notasIgnoradas} alumnos pendientes de calificación en Moodle)." : "")
+            ]);
+        } catch (\Exception $e) {
+            if (\Core\Model::getDB()->inTransaction()) {
+                \Core\Model::getDB()->rollBack();
+            }
+            // Proactividad: Registrar el error técnico en los logs del servidor
+            error_log("[SIGI-MOODLE PULL ERROR] Curso ID: {$id_programacion_ud} | Msg: " . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+        exit;
+    }
+
 
     /**
      * Limpia y convierte los parámetros del POST al formato que Moodle entiende
