@@ -658,4 +658,85 @@ class Integrator
 
         return json_decode($response, true);
     }
+
+
+
+
+
+
+
+
+
+
+
+
+    /**
+     * Obtiene el catálogo de rúbricas institucionales desde SIGI Master.
+     */
+    public function getRubricasMaster()
+    {
+        if (!defined('INTEGRACIONES_SYNC_ACTIVE') || !INTEGRACIONES_SYNC_ACTIVE) {
+            return ['ok' => false, 'details' => 'Integraciones no activadas'];
+        }
+
+        $ds = $this->objDatosSistema->buscar();
+        $apiKey = $ds['token_sistema'];
+        $url = API_BASE_URL . "/api/rubricas";
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, INTEGRACIONES_SSL_VERIFY);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, INTEGRACIONES_SSL_VERIFY ? 2 : 0);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'X-Api-Key: ' . $apiKey
+        ]);
+
+        $response = curl_exec($ch);
+        if (curl_errno($ch)) {
+            $error = curl_error($ch);
+            curl_close($ch);
+            return ['ok' => false, 'details' => "Error cURL: " . $error];
+        }
+        curl_close($ch);
+
+        return json_decode($response, true);
+    }
+
+    /**
+     * Obtiene el detalle de una rúbrica específica del Master.
+     */
+    public function getRubricaDetalleMaster(int $id_master)
+    {
+        if (!defined('INTEGRACIONES_SYNC_ACTIVE') || !INTEGRACIONES_SYNC_ACTIVE) {
+            return ['ok' => false, 'details' => 'Integraciones no activadas'];
+        }
+
+        $ds = $this->objDatosSistema->buscar();
+        $apiKey = $ds['token_sistema'];
+        $url = API_BASE_URL . "/api/rubricas/detalle/" . $id_master;
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'SIGI-Academico-Client');
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, INTEGRACIONES_SSL_VERIFY);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, INTEGRACIONES_SSL_VERIFY ? 2 : 0);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'X-Api-Key: ' . $apiKey
+        ]);
+
+        $response = curl_exec($ch);
+        if (curl_errno($ch)) {
+            $error = curl_error($ch);
+            curl_close($ch);
+            return ['ok' => false, 'details' => "Error cURL: " . $error];
+        }
+        curl_close($ch);
+
+        return json_decode($response, true);
+    }
 }

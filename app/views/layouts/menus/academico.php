@@ -71,6 +71,13 @@
                         <div class="dropdown-menu" aria-labelledby="nav-matriculas">
                             <a href="<?= BASE_URL ?>/academico/unidadesDidacticas" class="dropdown-item">Mis Unidades Didácticas</a>
                         </div>
+
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link"
+                            href="<?= BASE_URL ?>/academico/rubricas">
+                            <i class="mdi mdi-home-analytics"></i> Inicio
+                        </a>
                     </li>
                 <?php endif; ?>
                 <?php if ((\Core\Auth::esAdminAcademico()) || (\Core\Auth::esDirectorAcademico()) || (\Core\Auth::esSecretarioAcadAcademico()) || (\Core\Auth::esJUAAcademico()) || (\Core\Auth::esCoordinadorPEAcademico())): ?>

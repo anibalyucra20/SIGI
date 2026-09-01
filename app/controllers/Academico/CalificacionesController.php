@@ -633,7 +633,10 @@ class CalificacionesController extends Controller
             foreach ($vinculos as $v) {
                 // Solo nos interesan los que son calificables y tienen un item ID válido en Moodle
                 if ($v['graded'] == 1 && !empty($v['moodle_grade_item_id'])) {
-                    $criteriosMapeados[$v['moodle_grade_item_id']] = $v['criterio_orden'];
+                    $criteriosMapeados[$v['moodle_grade_item_id']] = [
+                        'orden'   => $v['criterio_orden'],
+                        'detalle' => $v['evaluacion_detalle']
+                    ];
                 }
             }
 
@@ -666,7 +669,8 @@ class CalificacionesController extends Controller
 
                         // Si esta tarea pertenece al Indicador actual
                         if (isset($criteriosMapeados[$moodleItemId])) {
-                            $ordenSigi = $criteriosMapeados[$moodleItemId];
+                            $ordenSigi   = $criteriosMapeados[$moodleItemId]['orden'];
+                            $detalleSigi = $criteriosMapeados[$moodleItemId]['detalle'];
 
                             // Conversión Segura: Extraer nota (puede venir vacía, con guiones o nula)
                             $notaCruda = $item['gradeformatted'] ?? 0;
@@ -684,7 +688,7 @@ class CalificacionesController extends Controller
                                 $notaString = str_pad($notaFinal, 2, "0", STR_PAD_LEFT);
 
                                 // Persistencia
-                                $this->model->guardarNotaMoodle($id_programacion_ud, $nro_calificacion, $ordenSigi, $id_detalle_matricula, $notaString);
+                                $this->model->guardarNotaMoodle($id_programacion_ud, $nro_calificacion, $detalleSigi, $ordenSigi, $id_detalle_matricula, $notaString);
                                 $notasActualizadas++;
                             }
                         }
@@ -816,7 +820,7 @@ class CalificacionesController extends Controller
             $notasActualizadas = 0;
             $notasIgnoradas = 0;
             // --- INICIO DE AUDITORÍA TÉCNICA (DEBUG) ---
-            error_log("=== INICIO SYNC PULL ===");
+            /*error_log("=== INICIO SYNC PULL ===");
             error_log("CMID Objetivo: " . $cmidObjetivo);
             error_log("Total Alumnos en Diccionario SIGI: " . count($diccionarioEstudiantes));
             error_log("Total Alumnos devueltos por Moodle: " . count($moodleGrades));
@@ -824,7 +828,7 @@ class CalificacionesController extends Controller
             // Verificamos si Moodle trajo el cmid dentro del primer alumno (para descartar problemas de API)
             if (!empty($moodleGrades[0]['gradeitems'])) {
                 error_log("Estructura GradeItems (Primer alumno): " . json_encode($moodleGrades[0]['gradeitems']));
-            }
+            }*/
             // --- FIN AUDITORÍA TÉCNICA ---
             // 5. Motor de Conversión de Notas
             foreach ($moodleGrades as $userGrade) {

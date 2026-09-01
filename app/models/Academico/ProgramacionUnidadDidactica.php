@@ -656,4 +656,27 @@ class ProgramacionUnidadDidactica extends Model
         $stmt->execute([':id_programacion' => $id_programacion]);
         return $stmt->fetch(\PDO::FETCH_ASSOC);
     }
+
+    public function getProgramacionesPorDocente(int $id_docente, int $id_periodo): array
+    {
+        $sql = "SELECT 
+                    pud.id AS id_programacion_ud,
+                    ud.id AS id_unidad_didactica,
+                    ud.nombre AS nombre_ud,
+                    pud.turno,
+                    pud.seccion
+                FROM acad_programacion_unidad_didactica pud
+                INNER JOIN sigi_unidad_didactica ud ON pud.id_unidad_didactica = ud.id
+                WHERE pud.id_docente = :id_docente 
+                  AND pud.id_periodo_academico = :id_periodo
+                ORDER BY ud.nombre ASC";
+
+        $stmt = self::$db->prepare($sql);
+        $stmt->execute([
+            ':id_docente' => $id_docente,
+            ':id_periodo' => $id_periodo
+        ]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
 }
