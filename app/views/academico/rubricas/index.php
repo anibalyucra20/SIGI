@@ -59,8 +59,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 data: null, orderable:false, searchable:false,
                 render: function(row){
                     const btnEdit = `<a href="<?= BASE_URL ?>/academico/rubricas/editar/${row.id}" class="btn btn-warning btn-sm m-1" title="Editar"><i class="fa fa-pen"></i></a>`;
+                    const btnPrint = `<a href="<?= BASE_URL ?>/academico/rubricas/imprimirPdf/${row.id}" target="_blank" class="btn btn-info btn-sm m-1" title="Imprimir PDF"><i class="fa fa-file-pdf"></i></a>`;
                     const btnDel = `<a href="<?= BASE_URL ?>/academico/rubricas/eliminar/${row.id}" class="btn btn-danger btn-sm m-1" onclick="return confirm('¿Seguro que desea eliminar esta rúbrica?')" title="Eliminar"><i class="fa fa-trash"></i></a>`;
-                    return btnEdit + btnDel;
+                    return btnEdit + btnPrint + btnDel;
                 }
             }
         ],

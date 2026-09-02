@@ -9,6 +9,11 @@ class Rubrica extends Model
 {
     protected $table = 'acad_rubricas';
 
+    public function find($id_rubrica){
+        $st = self::$db->prepare("SELECT * FROM {$this->table} WHERE id=? AND estado=1");
+        $st->execute([$id_rubrica]);
+        return $st->fetch(PDO::FETCH_ASSOC) ?: null;
+    }
     /**
      * Obtiene las rúbricas locales del docente para DataTables
      */

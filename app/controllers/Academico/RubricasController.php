@@ -8,15 +8,23 @@ require_once __DIR__ . '/../../../app/models/Academico/Rubrica.php';
 require_once __DIR__ . '/../../../app/models/Academico/ProgramacionUnidadDidactica.php';
 require_once __DIR__ . '/../../helpers/Integrator.php';
 
+require_once __DIR__ . '/../../../app/models/Sigi/DatosInstitucionales.php';
+require_once __DIR__ . '/../../../app/models/Sigi/DatosSistema.php';
+
 use App\Models\Academico\Rubrica;
 use App\Models\Academico\ProgramacionUnidadDidactica;
 use App\Helpers\Integrator;
+
+use App\Models\Sigi\DatosInstitucionales;
+use App\Models\Sigi\DatosSistema;
 
 class RubricasController extends Controller
 {
     protected $model;
     protected $objProgramacionUD;
     protected $objIntegrator;
+    protected $objDatosIes;
+    protected $objDatosSistema;
 
     public function __construct()
     {
@@ -24,6 +32,9 @@ class RubricasController extends Controller
         $this->model = new Rubrica();
         $this->objProgramacionUD = new ProgramacionUnidadDidactica();
         $this->objIntegrator = new Integrator();
+
+        $this->objDatosIes = new DatosInstitucionales();
+        $this->objDatosSistema = new DatosSistema();
     }
 
     /**
@@ -173,5 +184,55 @@ class RubricasController extends Controller
         $_SESSION['flash_success'] = 'Rúbrica eliminada de su banco.';
         header('Location: ' . BASE_URL . '/academico/rubricas');
         exit;
+    }
+
+
+
+    // =========================================================================
+    // IMPRESIÓN DE RÚBRICA EN PDF HORIZONTAL (LANDSCAPE)
+    // =========================================================================
+    public function imprimirPdf($id_rubrica)
+    {
+        // 1. Instanciar Modelos necesarios
+        
+        $rubrica = $this->model->find($id_rubrica);
+
+        if (!$rubrica) {
+            $_SESSION['flash_error'] = "La rúbrica no existe o fue eliminada.";
+            header('Location: ' . BASE_URL . '/academico/rubricas');
+            exit;
+        }
+
+        // 2. Control de Permisos
+        $esAdminAcademico = (\Core\Auth::esAdminAcademico());
+        $esDuenio = (isset($_SESSION['sigi_user_id']) && $_SESSION['sigi_user_id'] == $rubrica['usuario_id']);
+        $permitido = $esAdminAcademico || $esDuenio;
+
+        // 3. Procesar Datos de la Rúbrica
+        $matriz = json_decode($rubrica['contenido_json'], true);
+        $criterios = $matriz['criterios'] ?? [];
+        
+        $nivelesPuntajes = [];
+        if (isset($criterios[0]['niveles'])) {
+            foreach ($criterios[0]['niveles'] as $nivel) {
+                $nivelesPuntajes[] = $nivel['score'];
+            }
+        }
+
+        // 4. Obtener Datos del Sistema para los Logos
+        $datosSistema = $this->objDatosSistema->buscar();
+
+        // 5. Configurar TCPDF en formato Horizontal ('L' = Landscape)
+        require_once __DIR__ . '/../../../vendor/autoload.php';
+        $pdf = new \TCPDF('L', 'mm', 'A4', true, 'UTF-8', false);
+        $pdf->SetTitle('Rúbrica - ' . $rubrica['nombre']);
+        $pdf->setPrintHeader(false); 
+        $pdf->SetMargins(10, 25, 10); // Margen top en 25 para dar espacio a los logos
+        $pdf->SetAutoPageBreak(true, 15);
+        $pdf->AddPage();
+
+        // 6. Cargar la vista (El HTML, la escritura y los logos se procesan ahí)
+        ob_start();
+        include __DIR__ . '/../../views/academico/rubricas/pdf_rubrica.php';
     }
 }
