@@ -70,7 +70,8 @@ require __DIR__ . '/../../layouts/header.php';
                                     ?>
                                     <?php if ($periodo_vigente['vigente']): ?>
                                         <button class="btn btn-success btn-sm btn-agregar-criterio"
-                                            data-eval-ids="<?= implode(',', $ids_eval_columna) ?>">
+                                            data-eval-ids="<?= implode(',', $ids_eval_columna) ?>"
+                                            data-detalle="<?= htmlspecialchars($eval['detalle']) ?>"> <!-- NUEVO -->
                                             <i class="fa fa-plus"></i>
                                         </button>
                                     <?php endif; ?>
@@ -326,6 +327,24 @@ require __DIR__ . '/../../layouts/header.php';
                                     <?php endforeach; ?>
                                 </select>
                             </div>
+                            <!-- Selecter de rúbrica de Moodle -->
+                            <div class="form-group border-left border-info pl-3 mt-3" id="contenedor_rubrica_moodle" style="display: none;">
+                                <label class="font-weight-bold text-info"><i class="fa fa-table"></i> Evaluación Avanzada (Rúbrica)</label>
+                                <select name="moodle_field[rubric_json]" id="moodle_rubric_json" class="form-control">
+                                    <option value="">-- Calificación Simple (Sin Rúbrica) --</option>
+                                    <?php if (!empty($rubricas_docente)): foreach ($rubricas_docente as $rub): ?>
+                                            <!-- Guardamos el JSON directamente en el value para enviarlo en el payload -->
+                                            <option value='<?= htmlspecialchars($rub['contenido_json'], ENT_QUOTES, 'UTF-8') ?>'>
+                                                <?= htmlspecialchars($rub['nombre']) ?>
+                                            </option>
+                                        <?php endforeach;
+                                    else: ?>
+                                        <option value="" disabled>No tiene rúbricas disponibles para esta Unidad Didáctica.</option>
+                                    <?php endif; ?>
+                                </select>
+                                <small class="text-muted">Si selecciona una rúbrica, la actividad de Moodle se configurará automáticamente para evaluación avanzada.</small>
+                            </div>
+
                             <div class="form-group mb-3">
                                 <label class="small font-weight-bold text-primary">Ubicar en:</label>
                                 <select id="select-seccion-moodle" class="form-control form-control-sm m-input" name="section_moodle_id">
@@ -355,6 +374,7 @@ require __DIR__ . '/../../layouts/header.php';
                         </div>
 
                         <input type="hidden" id="hidden-eval-ids">
+                        <input type="hidden" id="hidden-detalle-criterio">
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
@@ -631,6 +651,7 @@ require __DIR__ . '/../../layouts/header.php';
                 e.preventDefault();
                 // Limpiar y preparar el modal para un nuevo registro
                 document.getElementById('hidden-eval-ids').value = this.dataset.evalIds;
+                document.getElementById('hidden-detalle-criterio').value = this.dataset.detalle;
                 document.getElementById('nuevo-criterio-nombre').value = '';
                 document.getElementById('switchMoodle').checked = false;
 
@@ -985,6 +1006,11 @@ require __DIR__ . '/../../layouts/header.php';
                 }
             }
 
+
+
+
+
+
             // Bloquear botón para evitar doble envío
             this.disabled = true;
             this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
@@ -993,6 +1019,7 @@ require __DIR__ . '/../../layouts/header.php';
             const formData = new FormData();
             formData.append('nombre', nombre);
             formData.append('ids_eval', ids_eval);
+            formData.append('detalle', document.getElementById('hidden-detalle-criterio').value);
             formData.append('crear_moodle', crearEnMoodle);
 
             /**
@@ -1009,6 +1036,11 @@ require __DIR__ . '/../../layouts/header.php';
             formData.append('section', '<?= $nro_calificacion ?>');
             formData.append('courseid', courseIdMoodle);
             formData.append('section_moodle_id', document.getElementById('select-seccion-moodle').value);
+
+            let selectRubrica = document.getElementById('moodle_rubric_json');
+            if (selectRubrica && selectRubrica.value !== '') {
+                formData.append('rubric_json', selectRubrica.value);
+            }
 
             if (physicalFile) {
                 formData.append('file', physicalFile);
@@ -1050,6 +1082,22 @@ require __DIR__ . '/../../layouts/header.php';
                 containerCalificable.style.opacity = "0.5";
                 checkCalificable.checked = false;
                 checkCalificable.disabled = true;
+            }
+        });
+
+
+        // Listener cuando el docente cambia el tipo de actividad de Moodle
+        document.getElementById('select-modname-dinamico').addEventListener('change', function() {
+            const tipoSeleccionado = this.value;
+            const contenedorRubrica = document.getElementById('contenedor_rubrica_moodle');
+            const selectRubrica = document.getElementById('moodle_rubric_json');
+
+            // Moodle generalmente soporta rúbricas en el módulo 'assign' (Tareas)
+            if (tipoSeleccionado === 'assign') {
+                contenedorRubrica.style.display = 'block';
+            } else {
+                contenedorRubrica.style.display = 'none';
+                selectRubrica.value = ''; // Reseteamos si elige un Foro o Cuestionario
             }
         });
     </script>
@@ -1177,6 +1225,7 @@ require __DIR__ . '/../../layouts/header.php';
                     });
                 });
             });
+
         });
     </script>
 
@@ -1316,8 +1365,11 @@ require __DIR__ . '/../../layouts/header.php';
                     boton.innerHTML = btnHTML;
                 });
             }
+
+
         });
     </script>
+
 <?php else: ?>
     <p>No tiene permisos para editar Calificaciones o el periodo ya culminó.</p>
 <?php endif; ?>

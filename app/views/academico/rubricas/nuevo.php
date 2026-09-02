@@ -5,7 +5,7 @@ require __DIR__ . '/../../layouts/header.php';
 
 <div class="card p-2">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3 class="text-success mb-0"><i class="fa fa-plus-circle"></i> Nueva Rúbrica de Evaluación</h3>
+        <h3 class="mb-0"><i class="fa fa-plus-circle"></i> Nueva Rúbrica de Evaluación</h3>
         <a href="<?= BASE_URL ?>/academico/rubricas" class="btn btn-secondary btn-sm">
             <i class="fa fa-arrow-left"></i> Volver a Mis Rúbricas
         </a>
@@ -20,7 +20,7 @@ require __DIR__ . '/../../layouts/header.php';
         </li>
         <li class="nav-item">
             <a class="nav-link text-info font-weight-bold" id="clonar-master-tab" data-toggle="tab" href="#clonar-master" role="tab">
-                <i class="fa fa-cloud-download-alt"></i> Explorar Catálogo Institucional (Clonar)
+                <i class="fa fa-cloud-download-alt"></i> Explorar Catálogo de Rúbricas
             </a>
         </li>
     </ul>
@@ -32,7 +32,7 @@ require __DIR__ . '/../../layouts/header.php';
         <!-- ========================================== -->
         <div class="tab-pane fade show active" id="crear-cero" role="tabpanel">
             <div class="alert alert-success small">
-                <i class="fa fa-info-circle"></i> Construya su propia matriz de evaluación. Añada los criterios en las filas y los niveles de logro (con sus respectivos puntajes) en las columnas.
+                <i class="fa fa-info-circle"></i> Construya su propia matriz de evaluación. Añada los criterios en las filas y los niveles de logro en las columnas. Ahora puede asignar puntos independientes a cada celda.
             </div>
             
             <form action="<?= BASE_URL ?>/academico/rubricas/guardar" method="POST" id="frmRubricaLocal">
@@ -54,7 +54,7 @@ require __DIR__ . '/../../layouts/header.php';
                     </div>
                 </div>
 
-                <h5 class="mb-3 text-secondary"><i class="fa fa-table"></i> Constructor de Matriz</h5>
+                <h5 class="mb-3 text-primary"><i class="fa fa-table"></i> Constructor de Matriz</h5>
                 <div class="table-responsive">
                     <table class="table table-bordered table-sm text-center align-middle" id="tablaRubricaConstructor">
                         <thead class="table-light">
@@ -80,7 +80,6 @@ require __DIR__ . '/../../layouts/header.php';
                         <i class="fa fa-eye"></i> Ver / Exportar JSON
                     </button>
                 </div>
-
                 <div class="text-right border-top pt-3">
                     <button type="submit" class="btn btn-success btn-lg"><i class="fa fa-save"></i> Guardar Rúbrica</button>
                 </div>
@@ -96,7 +95,8 @@ require __DIR__ . '/../../layouts/header.php';
             </div>
 
             <div class="table-responsive">
-                <table class="table table-bordered table-hover table-sm w-100">
+                <!-- Se agregó el ID tablaCatalogoMaster aquí para inicializar DataTable -->
+                <table id="tablaCatalogoMaster" class="table table-bordered table-hover table-sm w-100">
                     <thead class="table-light">
                         <tr>
                             <th>#</th>
@@ -124,7 +124,7 @@ require __DIR__ . '/../../layouts/header.php';
 <div class="modal fade" id="modalVerJSON" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
-            <div class="modal-header bg-dark text-white">
+            <div class="modal-header">
                 <h5 class="modal-title"><i class="fa fa-code"></i> Previsualización del JSON</h5>
                 <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
@@ -255,23 +255,29 @@ document.addEventListener('DOMContentLoaded', function () {
     function agregarNivel(puntaje = 0) {
         nivelCount++;
         const th = document.createElement('th');
-        th.className = 'nivel-col bg-secondary text-white';
+        th.className = 'nivel-col text-white';
+        // La cabecera sirve como "Referencia" de puntaje para cuando se agrega un nuevo criterio
         th.innerHTML = `
             <div class="input-group input-group-sm mb-1">
-                <div class="input-group-prepend"><span class="input-group-text bg-dark text-white border-dark">Pts</span></div>
-                <input type="number" class="form-control input-score text-center font-weight-bold" value="${puntaje}" min="0" required>
+                <div class="input-group-prepend"><span class="input-group-text bg-dark text-white border-dark" title="Puntaje Base/Referencia">Ref. Pts</span></div>
+                <input type="number" class="form-control input-score text-center font-weight-bold" value="${puntaje}" min="0" step="any" required>
             </div>
             <button type="button" class="btn btn-danger btn-sm w-100" onclick="eliminarNivel(this)" title="Eliminar Columna"><i class="fa fa-trash"></i></button>`;
         trCabecera.insertBefore(th, thAddNivel);
 
         document.querySelectorAll('#tbodyCriteriosConstructor .criterio-row').forEach(tr => {
             const td = document.createElement('td');
-            td.innerHTML = `<textarea class="form-control input-def" rows="3" placeholder="Describa el nivel..." required></textarea>`;
+            td.innerHTML = `
+                <div class="input-group input-group-sm mb-1">
+                    <div class="input-group-prepend"><span class="input-group-text bg-light border-secondary">Pts</span></div>
+                    <input type="number" class="form-control input-cell-score text-center font-weight-bold border-secondary text-primary" value="${puntaje}" min="0" step="any" required>
+                </div>
+                <textarea class="form-control input-def" rows="3" placeholder="Describa el nivel..." required></textarea>`;
             tr.appendChild(td);
         });
     }
 
-    function agregarCriterio(descripcion = '', definicionesNiveles = []) {
+    function agregarCriterio(descripcion = '', nivelesData = []) {
         if (typeof descripcion !== 'string') descripcion = '';
 
         const tr = document.createElement('tr');
@@ -280,9 +286,24 @@ document.addEventListener('DOMContentLoaded', function () {
             <textarea class="form-control input-criterio-desc mb-2 border-primary" rows="2" placeholder="Nombre del criterio..." required>${descripcion}</textarea>
             <button type="button" class="btn btn-outline-danger btn-sm w-100" onclick="this.closest('tr').remove()"><i class="fa fa-times"></i> Quitar</button>
         </td>`;
+        
         for(let i = 0; i < nivelCount; i++) {
-            let defText = definicionesNiveles[i] !== undefined ? definicionesNiveles[i] : '';
-            tds += `<td><textarea class="form-control input-def" rows="3" placeholder="Describa el nivel..." required>${defText}</textarea></td>`;
+            let defText = (nivelesData[i] && nivelesData[i].definition !== undefined) ? nivelesData[i].definition : '';
+            let cellScore = (nivelesData[i] && nivelesData[i].score !== undefined) ? nivelesData[i].score : 0;
+            
+            // Si es un criterio nuevo (no viene del JSON), copiamos el puntaje de la cabecera correspondiente
+            if (!nivelesData[i]) {
+                const headerScoreInput = document.querySelectorAll('#trCabeceraNiveles .input-score')[i];
+                if(headerScoreInput) cellScore = headerScoreInput.value;
+            }
+
+            tds += `<td>
+                <div class="input-group input-group-sm mb-1">
+                    <div class="input-group-prepend"><span class="input-group-text bg-light border-secondary">Pts</span></div>
+                    <input type="number" class="form-control input-cell-score text-center font-weight-bold border-secondary text-primary" value="${cellScore}" min="0" step="any" required>
+                </div>
+                <textarea class="form-control input-def" rows="3" placeholder="Describa el nivel..." required>${defText}</textarea>
+            </td>`;
         }
         tr.innerHTML = tds;
         tbody.appendChild(tr);
@@ -300,21 +321,23 @@ document.addEventListener('DOMContentLoaded', function () {
         nivelCount--;
     };
 
-    // Función Central de Extracción JSON
+    // Función Central de Extracción JSON (ahora lee directamente de los inputs de cada celda)
     function compilarJSONMatriz() {
         const payload = { criterios: [] };
-        const puntajes = [];
         
-        document.querySelectorAll('#trCabeceraNiveles .input-score').forEach(input => puntajes.push(parseFloat(input.value) || 0));
-
         let sortOrder = 1;
         document.querySelectorAll('#tbodyCriteriosConstructor .criterio-row').forEach(tr => {
             const descCriterio = tr.querySelector('.input-criterio-desc').value.trim();
             if (!descCriterio) return; 
 
             const criterio = { sortorder: sortOrder++, description: descCriterio, niveles: [] };
-            tr.querySelectorAll('.input-def').forEach((textarea, idx) => {
-                criterio.niveles.push({ score: puntajes[idx], definition: textarea.value.trim() });
+            
+            const cellScores = tr.querySelectorAll('.input-cell-score');
+            const defs = tr.querySelectorAll('.input-def');
+            
+            defs.forEach((textarea, idx) => {
+                const scoreVal = parseFloat(cellScores[idx].value) || 0;
+                criterio.niveles.push({ score: scoreVal, definition: textarea.value.trim() });
             });
             payload.criterios.push(criterio);
         });
@@ -359,10 +382,9 @@ document.addEventListener('DOMContentLoaded', function () {
     function construirMatriz(data) {
         if (data.criterios && data.criterios.length > 0) {
             const nivelesBase = data.criterios[0].niveles;
-            nivelesBase.forEach(nivel => agregarNivel(nivel.score));
+            nivelesBase.forEach(nivel => agregarNivel(nivel.score)); // Configuramos las columnas base
             data.criterios.forEach(criterio => {
-                const defs = criterio.niveles.map(n => n.definition);
-                agregarCriterio(criterio.description, defs);
+                agregarCriterio(criterio.description, criterio.niveles); // Pasamos todo el objeto de niveles
             });
         } else {
             agregarNivel(0); agregarNivel(10); agregarNivel(20);
@@ -412,9 +434,9 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(r => r.json())
         .then(res => {
             if (res.ok && res.data && res.data.length > 0) {
-                tbodyMaster.innerHTML = '';
+                let rowsHtml = '';
                 res.data.forEach((r, i) => {
-                    tbodyMaster.innerHTML += `
+                    rowsHtml += `
                         <tr>
                             <td>${i + 1}</td>
                             <td class="font-weight-bold">${r.nombre}</td>
@@ -428,7 +450,20 @@ document.addEventListener('DOMContentLoaded', function () {
                         </tr>
                     `;
                 });
+                tbodyMaster.innerHTML = rowsHtml;
                 catalogoCargado = true;
+
+                // INICIALIZACIÓN DE DATATABLE
+                $('#tablaCatalogoMaster').DataTable({
+                    "language": {
+                        "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json"
+                    },
+                    "pageLength": 10,
+                    "lengthMenu": [5, 10, 25, 50],
+                    "destroy": true, // Permite reinicializar si se vuelve a llamar la función
+                    "responsive": true
+                });
+
             } else {
                 tbodyMaster.innerHTML = `<tr><td colspan="5" class="text-center text-warning">${res.details || 'No hay rúbricas disponibles.'}</td></tr>`;
             }
@@ -470,16 +505,23 @@ document.addEventListener('DOMContentLoaded', function () {
         const head = document.getElementById('trCabeceraPreview');
         const body = document.getElementById('tbodyPreview');
         
-        data.criterios[0].niveles.forEach(n => {
+        // Cabeceras genéricas ahora que cada celda tiene su propio puntaje
+        data.criterios[0].niveles.forEach((n, idx) => {
             const th = document.createElement('th');
             th.className = 'preview-col bg-secondary text-white';
-            th.innerText = `${n.score} Pts`;
+            th.innerText = `Nivel ${idx + 1}`;
             head.appendChild(th);
         });
 
         data.criterios.forEach(c => {
             let tr = `<tr><td class="font-weight-bold text-primary text-left">${c.description}</td>`;
-            c.niveles.forEach(n => tr += `<td class="small">${n.definition}</td>`);
+            c.niveles.forEach(n => {
+                // Ahora el puntaje se previsualiza en la celda
+                tr += `<td class="small">
+                    <div class="badge badge-info mb-1">${n.score} Pts</div><br>
+                    ${n.definition}
+                </td>`;
+            });
             tr += `</tr>`;
             body.innerHTML += tr;
         });

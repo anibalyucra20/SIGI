@@ -37,7 +37,7 @@ class Rubrica extends Model
                   $where
                  ORDER BY $orderBy $orderDir
                  LIMIT :limit OFFSET :offset";
-                 
+
         $st = self::$db->prepare($sql);
         foreach ($params as $k => $v) {
             $st->bindValue($k, $v, is_int($v) ? PDO::PARAM_INT : PDO::PARAM_STR);
@@ -50,7 +50,7 @@ class Rubrica extends Model
         $stTotal = self::$db->prepare("SELECT COUNT(*) FROM {$this->table} r WHERE r.usuario_id = :uid AND r.estado = 1");
         $stTotal->execute([':uid' => $usuario_id]);
         $total = (int) $stTotal->fetchColumn();
-        
+
         $stFiltered = self::$db->prepare("SELECT COUNT(*) FROM {$this->table} r LEFT JOIN sigi_unidad_didactica ud ON r.unidad_didactica_id = ud.id $where");
         foreach ($params as $k => $v) {
             $stFiltered->bindValue($k, $v, is_int($v) ? PDO::PARAM_INT : PDO::PARAM_STR);
@@ -100,5 +100,27 @@ class Rubrica extends Model
     {
         $st = self::$db->prepare("UPDATE {$this->table} SET estado = 0, updated_at = NOW() WHERE id = ? AND usuario_id = ?");
         return $st->execute([$id, $usuario_id]);
+    }
+
+    /**
+     * Obtiene las rúbricas elegibles para una evaluación específica.
+     * Filtra por el docente en sesión y rúbricas globales (sin UD) o vinculadas a la UD actual.
+     */
+    public function getRubricasDisponiblesPorUD(int $usuario_id, int $id_unidad_didactica): array
+    {
+        $sql = "SELECT id, nombre, contenido_json 
+                  FROM {$this->table} 
+                 WHERE usuario_id = :uid 
+                   AND estado = 1 
+                   AND (unidad_didactica_id IS NULL OR unidad_didactica_id = :id_ud)
+                 ORDER BY nombre ASC";
+
+        $st = self::$db->prepare($sql);
+        $st->execute([
+            ':uid' => $usuario_id,
+            ':id_ud' => $id_unidad_didactica
+        ]);
+
+        return $st->fetchAll(\PDO::FETCH_ASSOC) ?: [];
     }
 }

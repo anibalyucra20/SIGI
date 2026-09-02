@@ -5,7 +5,7 @@ require __DIR__ . '/../../layouts/header.php';
 
 <div class="card p-2">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3 class="text-warning mb-0"><i class="fa fa-pen"></i> Editar Rúbrica Local</h3>
+        <h3 class="mb-0"> Editar Rúbrica Local</h3>
         <a href="<?= BASE_URL ?>/academico/rubricas" class="btn btn-secondary btn-sm">
             <i class="fa fa-arrow-left"></i> Volver al Banco
         </a>
@@ -34,7 +34,10 @@ require __DIR__ . '/../../layouts/header.php';
         </div>
 
         <hr>
-        <h5 class="mb-3 text-secondary"><i class="fa fa-table"></i> Constructor de la Matriz de Evaluación</h5>
+        <div class="alert alert-info small">
+            <i class="fa fa-info-circle"></i> Modifique la matriz de evaluación. Ahora puede asignar puntos independientes a cada celda de nivel.
+        </div>
+        <h5 class="mb-3 text-primary"><i class="fa fa-table"></i> Constructor de la Matriz de Evaluación</h5>
         
         <div class="table-responsive">
             <table class="table table-bordered table-sm text-center align-middle" id="tablaRubrica">
@@ -138,39 +141,55 @@ document.addEventListener('DOMContentLoaded', function () {
         if (data.criterios && data.criterios.length > 0) {
             data.criterios[0].niveles.forEach(n => agregarNivelDOM(n.score));
             data.criterios.forEach(c => {
-                const defs = c.niveles.map(n => n.definition);
-                agregarCriterioDOM(c.description, defs);
+                // Pasamos todo el arreglo de niveles (con score y definition)
+                agregarCriterioDOM(c.description, c.niveles);
             });
         } else {
             // Failsafe
             agregarNivelDOM(0); agregarNivelDOM(10); agregarNivelDOM(20);
-            agregarCriterioDOM('', ['', '', '']);
+            agregarCriterioDOM('', []);
         }
     }
 
     function agregarNivelDOM(puntaje = 0) {
         nivelCount++;
         const th = document.createElement('th');
-        th.className = 'nivel-col bg-secondary text-white';
+        th.className = 'nivel-col text-white';
+        // Input en la cabecera actúa como puntaje Referencia/Base
         th.innerHTML = `
             <div class="input-group input-group-sm mb-1">
-                <div class="input-group-prepend"><span class="input-group-text bg-dark text-white border-dark">Pts</span></div>
-                <input type="number" class="form-control input-score text-center font-weight-bold" value="${puntaje}" min="0" required>
+                <div class="input-group-prepend"><span class="input-group-text bg-dark text-white border-dark" title="Puntaje Base/Referencia">Ref. Pts</span></div>
+                <input type="number" class="form-control input-score text-center font-weight-bold" value="${puntaje}" min="0" step="any" required>
             </div>
             <button type="button" class="btn btn-danger btn-sm w-100" onclick="eliminarNivel(this)"><i class="fa fa-trash"></i></button>`;
         trCabecera.insertBefore(th, thAddNivel);
     }
 
-    function agregarCriterioDOM(desc = '', defs = []) {
+    function agregarCriterioDOM(desc = '', nivelesData = []) {
         const tr = document.createElement('tr');
         tr.className = 'criterio-row';
         let tds = `<td>
             <textarea class="form-control input-criterio-desc mb-2 border-primary" rows="2" required>${desc}</textarea>
             <button type="button" class="btn btn-outline-danger btn-sm w-100" onclick="this.closest('tr').remove()"><i class="fa fa-times"></i> Quitar</button>
         </td>`;
+        
         for(let i = 0; i < nivelCount; i++) {
-            let defText = defs[i] !== undefined ? defs[i] : '';
-            tds += `<td><textarea class="form-control input-def" rows="3" required>${defText}</textarea></td>`;
+            let defText = (nivelesData[i] && nivelesData[i].definition !== undefined) ? nivelesData[i].definition : '';
+            let cellScore = (nivelesData[i] && nivelesData[i].score !== undefined) ? nivelesData[i].score : 0;
+            
+            // Si es un criterio nuevo, copiamos el puntaje de la cabecera correspondiente
+            if (!nivelesData[i]) {
+                const headerScoreInput = document.querySelectorAll('.input-score')[i];
+                if(headerScoreInput) cellScore = headerScoreInput.value;
+            }
+
+            tds += `<td>
+                <div class="input-group input-group-sm mb-1">
+                    <div class="input-group-prepend"><span class="input-group-text bg-light border-secondary">Pts</span></div>
+                    <input type="number" class="form-control input-cell-score text-center font-weight-bold border-secondary text-primary" value="${cellScore}" min="0" step="any" required>
+                </div>
+                <textarea class="form-control input-def" rows="3" required>${defText}</textarea>
+            </td>`;
         }
         tr.innerHTML = tds;
         tbody.appendChild(tr);
@@ -181,7 +200,12 @@ document.addEventListener('DOMContentLoaded', function () {
         agregarNivelDOM(0);
         document.querySelectorAll('.criterio-row').forEach(tr => {
             const td = document.createElement('td');
-            td.innerHTML = `<textarea class="form-control input-def" rows="3" required></textarea>`;
+            td.innerHTML = `
+                <div class="input-group input-group-sm mb-1">
+                    <div class="input-group-prepend"><span class="input-group-text bg-light border-secondary">Pts</span></div>
+                    <input type="number" class="form-control input-cell-score text-center font-weight-bold border-secondary text-primary" value="0" min="0" step="any" required>
+                </div>
+                <textarea class="form-control input-def" rows="3" required></textarea>`;
             tr.appendChild(td);
         });
     });
@@ -200,19 +224,23 @@ document.addEventListener('DOMContentLoaded', function () {
         nivelCount--;
     };
 
-    // Función de extracción centralizada
+    // Función de extracción centralizada desde cada celda
     function compilarJSONMatriz() {
         const payload = { criterios: [] };
-        const puntajes = [];
-        document.querySelectorAll('.input-score').forEach(inp => puntajes.push(parseFloat(inp.value) || 0));
-
         let sortOrder = 1;
+        
         document.querySelectorAll('.criterio-row').forEach(tr => {
             const desc = tr.querySelector('.input-criterio-desc').value.trim();
             if (!desc) return;
+            
             const crit = { sortorder: sortOrder++, description: desc, niveles: [] };
-            tr.querySelectorAll('.input-def').forEach((ta, i) => {
-                crit.niveles.push({ score: puntajes[i], definition: ta.value.trim() });
+            
+            const cellScores = tr.querySelectorAll('.input-cell-score');
+            const defs = tr.querySelectorAll('.input-def');
+            
+            defs.forEach((ta, i) => {
+                const scoreVal = parseFloat(cellScores[i].value) || 0;
+                crit.niveles.push({ score: scoreVal, definition: ta.value.trim() });
             });
             payload.criterios.push(crit);
         });
@@ -270,7 +298,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
 
-    // Iniciar
+    // Iniciar hidratación
     construirMatriz(rubricaData);
 });
 </script>

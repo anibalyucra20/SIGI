@@ -76,7 +76,7 @@
                     <li class="nav-item">
                         <a class="nav-link"
                             href="<?= BASE_URL ?>/academico/rubricas">
-                            <i class="mdi mdi-home-analytics"></i> Inicio
+                            <i class="fa fa-medal"></i> Rúbricas
                         </a>
                     </li>
                 <?php endif; ?>

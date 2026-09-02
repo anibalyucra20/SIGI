@@ -10,6 +10,8 @@ require_once __DIR__ . '/../../../app/models/Academico/Asistencia.php';
 require_once __DIR__ . '/../../../app/models/Academico/Silabos.php';
 require_once __DIR__ . '/../../../app/models/Academico/Matricula.php';
 require_once __DIR__ . '/../../../app/models/Academico/Reportes.php';
+require_once __DIR__ . '/../../../app/models/Academico/Rubrica.php';
+
 require_once __DIR__ . '/../../../app/models/Sigi/DatosInstitucionales.php';
 require_once __DIR__ . '/../../../app/models/Sigi/PeriodoAcademico.php';
 require_once __DIR__ . '/../../../app/models/Sigi/DatosSistema.php';
@@ -26,6 +28,8 @@ use App\Models\Academico\Asistencia;
 use App\Models\Academico\Silabos;
 use App\Models\Academico\Matricula;
 use App\Models\Academico\Reportes;
+use App\Models\Academico\Rubrica;
+
 use App\Models\Sigi\DatosInstitucionales;
 use App\Models\Sigi\DatosSistema;
 use App\Models\Sigi\PeriodoAcademico;
@@ -57,6 +61,7 @@ class CalificacionesController extends Controller
     protected $objReporte;
     protected $objCoordinadorPeriodo;
     protected $objIntegrator;
+    protected $objRubrica;
 
     public function __construct()
     {
@@ -73,6 +78,7 @@ class CalificacionesController extends Controller
         $this->objReporte = new Reportes();
         $this->objCoordinadorPeriodo = new CoordinadorPeriodo();
         $this->objIntegrator = new Integrator();
+        $this->objRubrica = new Rubrica();
     }
     public function evaluar($id_programacion_ud, $nro_calificacion)
     {
@@ -186,6 +192,9 @@ class CalificacionesController extends Controller
                 ];
             }
         }
+        $idUsuario = $_SESSION['sigi_user_id'] ?? 0;
+        // 4. obtener rubricas locales del docente para el select
+        $rubricas_docente = $this->objRubrica->getRubricasDisponiblesPorUD($idUsuario, $id_ud);
 
         /*echo "<pre>";
         print_r($final_modules);
@@ -207,7 +216,8 @@ class CalificacionesController extends Controller
             'final_modules' => $final_modules,
             'datos_seccion_moodle' => $datos_seccion_moodle,
             'vinculosActivos' => $vinculosActivos,
-            'vinculosOcupados' => $vinculosOcupados
+            'vinculosOcupados' => $vinculosOcupados,
+            'rubricas_docente' => $rubricas_docente
         ], $datos));
     }
 
@@ -365,6 +375,8 @@ class CalificacionesController extends Controller
         $nombre         = trim($_POST['nombre'] ?? '');
         $ids_eval       = explode(',', $_POST['ids_eval'] ?? '');
 
+        $rubro          = trim($_POST['detalle'] ?? $_POST['rubro'] ?? '');
+
         // FormData envía booleanos como strings "true"/"false", los convertimos a bool real
         $crear_moodle   = ($_POST['crear_moodle'] === 'true');
         $vincular_sigi  = ($_POST['vincular_sigi'] === 'true');
@@ -494,6 +506,10 @@ class CalificacionesController extends Controller
                 }
             }
 
+            if (!empty($_POST['rubric_json'])) {
+                $moodle_data['rubric_json'] = $_POST['rubric_json'];
+                $moodle_data['advancedgradingmethod_submissions'] = 'rubric';
+            }
             // Llamada a la API Moodle
             $resultado_moodle = $this->objIntegrator->createModuleMoodle($courseid, $realSectionId, $moodle_type, $moodle_data);
 
@@ -505,7 +521,7 @@ class CalificacionesController extends Controller
                     $data_vinculo = [
                         'id_programacion_ud' => $id_programacion_ud,
                         'nro_calificacion'   => $criterioGenerado['nro_calificacion'],
-                        'evaluacion_detalle' => $nombre,
+                        'evaluacion_detalle' => !empty($rubro) ? $rubro : $nombre,
                         'criterio_orden'     => $criterioGenerado['orden'],
                         'moodle_course_id'   => $courseid,
                         'moodle_cmid'        => $moodle_resp['cmid'],

@@ -20,7 +20,7 @@ require __DIR__ . '/../../layouts/header.php';
 
 <div class="card p-2">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3 class="text-primary mb-0"><i class="fa fa-list-alt"></i> Mi Banco de Rúbricas</h3><br>
+        <h3 class="mb-0"> Mi Banco de Rúbricas</h3><br>
         <a href="<?= BASE_URL ?>/academico/rubricas/nuevo" class="btn btn-success btn-sm">
             <i class="fa fa-cloud-download-alt"></i> + nuevo
         </a>
@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function () {
             { data: null, render: (d,t,r,m) => m.row + 1 },
             { data: 'nombre' },
             { data: 'unidad_didactica_nombre', render: d => d ? d : '<i class="text-muted">No asignada</i>' },
-            { data: 'master_rubrica_id', render: d => d ? '<span class="badge badge-info">Clonada (Master)</span>' : '<span class="badge badge-secondary">Creada</span>' },
+            { data: 'master_rubrica_id', render: d => d ? '<span class="badge badge-info">Clonada</span>' : '<span class="badge badge-secondary">Propia</span>' },
             {
                 data: null, orderable:false, searchable:false,
                 render: function(row){
