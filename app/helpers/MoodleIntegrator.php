@@ -254,4 +254,58 @@ class MoodleIntegrator
         // Asumimos que crearemos una carpeta "local/sigi" en moodle
         return MOODLE_URL . "/local/sigi/sso.php?token=" . $token;
     }
+
+
+
+    /**
+     * Extrae las calificaciones calculadas del Gradebook de Moodle para un curso.
+     * @param int $courseId ID del curso en Moodle
+     * @return array|false Retorna el array 'usergrades' o false en caso de error.
+     */
+    public function getCourseGrades(int $courseId)
+    {
+        $params = [
+            'courseid' => $courseId
+        ];
+
+        $resp = $this->call('gradereport_user_get_grade_items', $params);
+
+        // Moodle devuelve 'usergrades' si fue exitoso, o 'exception' si hubo error
+        if (isset($resp['exception']) || empty($resp['usergrades'])) {
+            error_log("Error Moodle getCourseGrades: " . json_encode($resp));
+            return false;
+        }
+
+        return $resp['usergrades'];
+    }
+
+    /**
+     * Obtiene los ítems de calificación (tareas, cuestionarios, foros) de un curso en Moodle.
+     * Útil para poblar selects de vinculación.
+     */
+    public function getGradeItemsConfig(int $courseId)
+    {
+        $params = ['courseid' => $courseId];
+        // core_grades_get_gradeitems es ideal para obtener la estructura del libro de calificaciones
+        $resp = $this->call('core_grades_get_gradeitems', $params);
+
+        if (isset($resp['exception']) || !isset($resp['gradeItems'])) {
+            return false;
+        }
+
+        $actividades = [];
+        foreach ($resp['gradeItems'] as $item) {
+            // Filtramos: Solo queremos actividades reales (ignoramos promedios de categoría o curso)
+            if ($item['itemtype'] === 'mod') {
+                $actividades[] = [
+                    'id' => $item['id'], // Este es el moodle_grade_item_id
+                    'cmid' => $item['iteminstance'], // Usualmente la instancia o cmid según la versión
+                    'nombre' => $item['itemname'],
+                    'modulo' => $item['itemmodule'], // ej: 'assign', 'quiz'
+                    'max_grade' => $item['grademax']
+                ];
+            }
+        }
+        return $actividades;
+    }
 }
