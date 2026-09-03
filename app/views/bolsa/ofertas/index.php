@@ -76,10 +76,29 @@
                     { data: 'fecha_cierre' },
                     { data: 'salario' },
                     { data: null, orderable: false, searchable: false, render: function(data, type, row) {
+                    <?php
+                        if(\Core\Auth::esAdminBolsa()):{
+
+                        }
+                    ?>
                         return `
+                            <a href="" class="btn btn-sm btn-info" title="ver postulaciones"><i class="fas fa-eye"></i></a>
                             <a href="<?= BASE_URL ?>/bolsa/ofertas/editar/${row.id}" class="btn btn-sm btn-primary">Editar</a>
                             <a href="<?= BASE_URL ?>/bolsa/ofertas/eliminar/${row.id}" class="btn btn-sm btn-danger" onclick="return confirm('¿Está seguro de que desea eliminar esta oferta?');">Eliminar</a>
                         `;
+                    <?php
+                        elseif(\Core\Auth::esEstudianteBolsa()):{
+
+                        }
+                        ?>
+                        return `
+                            <a href="<?= BASE_URL ?>/bolsa/ofertas/postular/${row.id}" class="btn btn-sm btn-primary">Postular</a>
+                        `;
+                    <?php
+
+                        endif;
+                    ?>
+
                     }}
                 ],
                 language: {
