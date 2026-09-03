@@ -12,20 +12,23 @@ use App\Models\Bolsa\Ofertas;
 use App\Models\Bolsa\Empresas;
 use App\Models\Sigi\Programa;
 
-class OfertasController extends Controller {
+class OfertasController extends Controller
+{
 
     protected $ofertasModel;
     protected $empresaModel;
     protected $programaModel;
 
-    public function __construct() {
+    public function __construct()
+    {
         parent::__construct();
         $this->ofertasModel = new Ofertas();
         $this->empresaModel = new Empresas();
         $this->programaModel = new Programa();
     }
 
-    public function index() {
+    public function index()
+    {
         if (!\Core\Auth::esAdminBolsa()) {
             header('Location: ' . BASE_URL . '/bolsa/ofertas');
             exit;
@@ -43,7 +46,8 @@ class OfertasController extends Controller {
         exit;
     }
 
-    public function data() {
+    public function data()
+    {
         if (\Core\Auth::esAdminBolsa()):
             header('Content-Type: application/json; charset=utf-8');
             $draw      = $_GET['draw']  ?? 1;
@@ -70,12 +74,13 @@ class OfertasController extends Controller {
         exit;
     }
 
-    public function nuevo() {
+    public function nuevo()
+    {
         if (!\Core\Auth::esAdminBolsa()) {
             header('Location: ' . BASE_URL . '/bolsa/ofertas');
             exit;
         }
-        
+
         $empresas = $this->empresaModel->listar();
         $programas = $this->programaModel->getTodosProgramas();
 
@@ -90,7 +95,8 @@ class OfertasController extends Controller {
         exit;
     }
 
-    public function editar($id) {
+    public function editar($id)
+    {
         if (!\Core\Auth::esAdminBolsa()) {
             header('Location: ' . BASE_URL . '/bolsa/ofertas');
             exit;
@@ -114,8 +120,9 @@ class OfertasController extends Controller {
         exit;
     }
 
-    public function guardar() {
-        if (\Core\Auth::esAdminBolsa()):    
+    public function guardar()
+    {
+        if (\Core\Auth::esAdminBolsa()):
             $id = $_POST['id'] ?? '';
 
             // Carpeta física donde se guardan las imágenes
@@ -201,11 +208,11 @@ class OfertasController extends Controller {
                 'detalle'           => $_POST['detalle'],
                 'fecha_publicacion' => $_POST['fecha_publicacion'],
                 'fecha_cierre'      => $_POST['fecha_cierre'],
-                'salario'           => $_POST['salario'],
+                'salario'           => $_POST['salario'] ?? "",
                 'requisitos'        => $_POST['requisitos'],
                 'ubicacion'         => $_POST['ubicacion'],
                 'tipo_contrato'     => $_POST['tipo_contrato'],
-                'foto'              => $fotoRuta,
+                'foto'              => $fotoRuta ?? "",
                 'estado'            => $_POST['estado']
             ];
             $this->ofertasModel->guardar($data);
@@ -214,7 +221,8 @@ class OfertasController extends Controller {
         exit;
     }
 
-    public function eliminar($id) {
+    public function eliminar($id)
+    {
         if (\Core\Auth::esAdminBolsa()):
             try {
                 $this->ofertasModel->eliminar($id);
