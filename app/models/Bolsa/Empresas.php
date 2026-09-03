@@ -4,11 +4,10 @@ namespace App\Models\Bolsa;
 
 use Core\Model;
 
-class Empresa extends Model {
+class Empresas extends Model {
     protected $table = 'bolsa_empresa';
 
-    public function listar()
-    {
+    public function listar() {
         $sql = "SELECT id, empresa FROM {$this->table} ORDER BY empresa ASC";
         $stmt = self::$db->prepare($sql);
         $stmt->execute();

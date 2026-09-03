@@ -5,11 +5,11 @@ namespace App\Controllers\Bolsa;
 use Core\Controller;
 
 require_once __DIR__ . '/../../models/Bolsa/Ofertas.php';
-require_once __DIR__ . '/../../models/Bolsa/Empresa.php';
+require_once __DIR__ . '/../../models/Bolsa/Empresas.php';
 require_once __DIR__ . '/../../models/Sigi/Programa.php';
 
 use App\Models\Bolsa\Ofertas;
-use App\Models\Bolsa\Empresa;
+use App\Models\Bolsa\Empresas;
 use App\Models\Sigi\Programa;
 
 class OfertasController extends Controller {
@@ -21,7 +21,7 @@ class OfertasController extends Controller {
     public function __construct() {
         parent::__construct();
         $this->ofertasModel = new Ofertas();
-        $this->empresaModel = new Empresa();
+        $this->empresaModel = new Empresas();
         $this->programaModel = new Programa();
     }
 

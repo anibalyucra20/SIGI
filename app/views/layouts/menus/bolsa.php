@@ -23,8 +23,8 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link"
-                            href="<?= BASE_URL ?>/bolsa/instituciones">
-                            <i class="fas fa-city"></i> Instituciones
+                            href="<?= BASE_URL ?>/bolsa/empresas">
+                            <i class="fas fa-city"></i> Empresas
                         </a>
                     </li>
                     <li class="nav-item">
