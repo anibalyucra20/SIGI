@@ -237,7 +237,7 @@ endif;
     <!-- Contenido principal -->
     <div class="main-content">
       <div class="page-content">
-        <div class="container-fluid">
+        <div class="container-fluid col-12">
           <?php if (!empty($errores)): ?>
             <div class="alert alert-danger">
               <ul>
