@@ -38,6 +38,52 @@ endif;
 
   <!-- Si usas Responsive de DataTables, descomenta estas dos líneas -->
   <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap4.min.css">
+  <style>
+    /* Ajustes para pantalla móvil (< 768px / md) */
+    @media (max-width: 767.98px) {
+      #page-topbar.custom-topbar {
+        height: auto !important;
+        min-height: 70px;
+        position: relative;
+        /* O si es fixed, asegúrate de darle padding-top a tu contenido */
+      }
+
+      #page-topbar .navbar-header {
+        height: auto !important;
+        padding-bottom: 8px;
+      }
+
+      .context-bar {
+        border-top: 1px solid rgba(0, 0, 0, 0.05);
+        /* sutil división con la fila superior */
+      }
+
+      .context-group {
+        gap: 8px;
+      }
+
+      .context-item {
+        flex: 1 1 calc(50% - 8px);
+        /* En teléfonos se acomodan en 2 columnas o fluidos */
+        min-width: 140px;
+      }
+
+      .context-item select {
+        width: 100% !important;
+      }
+    }
+
+    /* Ajustes para pantallas medianas y grandes (>= 768px / md) */
+    @media (min-width: 768px) {
+      .context-group {
+        gap: 12px;
+      }
+
+      .context-item select {
+        width: auto !important;
+      }
+    }
+  </style>
 
 
   <?php
@@ -54,86 +100,46 @@ endif;
   <div id="layout-wrapper">
     <!-- SIEMPRE muestra el header y logo -->
     <?php if ($logueado): ?>
-      <header id="page-topbar">
-        <div class="navbar-header">
-          <div class="navbar-brand-box d-flex align-items-left">
-            <a href="<?= BASE_URL . '/' . $_SESSION['modulo_vista']; ?>" class="logo">
+      <header id="page-topbar" class="custom-topbar">
+        <div class="navbar-header d-flex flex-wrap align-items-center justify-content-between px-3 w-100">
+
+          <!-- 1. LOGO Y BOTÓN HAMBURGUESA -->
+          <!-- En móvil toma orden 1; en md>= toma col-auto o col-md-3 -->
+          <div class="navbar-brand-box d-flex align-items-center order-1 col-auto col-md-3 p-0">
+            <a href="<?= BASE_URL . '/' . $_SESSION['modulo_vista']; ?>" class="logo d-flex align-items-center">
               <?php
-              if ($_SESSION['logo'] != '') {
+              if (!empty($_SESSION['logo'])) {
                 $ruta_logo = BASE_URL . '/images/' . $_SESSION['logo'];
               } else {
                 $ruta_logo = BASE_URL . '/img/logo_completo.png';
               }
               ?>
-              <i class="mdi"><img src="<?= $ruta_logo ?>" alt="" width="100px" height="30px"></i>
-              <span> SIGI</span>
+              <i class="mdi me-2">
+                <img src="<?= $ruta_logo ?>" alt="Logo" style="max-height: 30px; width: auto;">
+              </i>
+              <span class="font-weight-bold ml-1 text-dark">SIGI</span>
             </a>
-            <button type="button" class="btn btn-sm mr-2 font-size-16 d-lg-none header-item waves-effect waves-light"
+
+            <!-- Botón hamburguesa (oculto en md hacia arriba) -->
+            <button type="button" class="btn btn-sm ml-2 font-size-16 d-md-none header-item waves-effect waves-light"
               data-toggle="collapse" data-target="#topnav-menu-content">
               <i class="fa fa-fw fa-bars"></i>
             </button>
           </div>
-          <div class="d-flex align-items-center">
-            <div class="dropdown d-inline-block">
-              <form action="<?= BASE_URL ?>/sedes/cambiarSesion" method="get" class="d-flex align-items-center">
-                <label for="sedeee" class="me-2 small">Sede:</label>
-                <input type="hidden" name="redirect" value="<?= htmlspecialchars($_SERVER['REQUEST_URI']) ?>">
-                <select id="sedeee" name="sede" class="form-control me-2" onchange="this.form.submit()">
-                  <?php foreach ($sedess as $s): ?>
-                    <option value="<?= $s['id'] ?>" <?= $s['id'] == $sedeActual ? 'selected' : '' ?>>
-                      <?= $s['nombre'] ?>
-                    </option>
-                  <?php endforeach; ?>
-                </select>
-              </form>
-            </div>
-            <?php if ($_SESSION['sigi_modulo_actual'] != 0): ?>
-              <div class="dropdown d-inline-block">
-                <form action="<?= BASE_URL ?>/sigi/periodoAcademico/cambiarSesion" method="get" class="d-flex align-items-center">
-                  <label for="periodo" class="me-2 small">Periodo:</label>
-                  <input type="hidden" name="redirect" value="<?= htmlspecialchars($_SERVER['REQUEST_URI']) ?>">
-                  <select name="periodo" class="form-control me-2" onchange="this.form.submit()">
-                    <?php foreach ($periodos as $p): ?>
-                      <option value="<?= $p['id'] ?>" <?= $p['id'] == $periodoActual ? 'selected' : '' ?>>
-                        <?= $p['nombre'] ?>
-                      </option>
-                    <?php endforeach; ?>
-                  </select>
-                </form>
-              </div>
-            <?php endif; ?>
-            <?php if (!empty($_SESSION['sigi_permisos_usuario']) && $_SESSION['sigi_modulo_actual'] != 0): ?>
-              <div class="dropdown d-inline-block">
-                <form method="get" action="<?= BASE_URL ?>/sigi/rol/cambiarSesion" class="d-flex align-items-center">
-                  <label for="permiso" class="me-2 small">Rol:</label>
-                  <input type="hidden" name="redirect" value="<?= htmlspecialchars($_SERVER['REQUEST_URI']) ?>">
-                  <select name="permiso" id="permiso" class="form-control me-2" style="width:auto;" onchange="this.form.submit()">
-                    <?php
-                    $moduloActual = $_SESSION['sigi_modulo_actual'] ?? null;
-                    foreach ($_SESSION['sigi_permisos_usuario'] as $permiso):
-                      if ($permiso['id_sistema'] != $moduloActual) continue;
-                    ?>
-                      <option value="<?= $permiso['id_sistema'] ?>-<?= $permiso['id_rol'] ?>"
-                        <?= ($_SESSION['sigi_rol_actual'] == $permiso['id_rol']) ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($permiso['rol']) ?>
-                      </option>
-                    <?php endforeach; ?>
 
-                  </select>
-                </form>
-              </div>
-            <?php endif; ?>
-          </div>
-          <div class="d-flex align-items-center">
-            <div class="dropdown d-inline-block ml-2">
-              <button type="button" class="btn header-item waves-effect waves-light"
+          <!-- 2. PERFIL DE USUARIO -->
+          <!-- En móvil se va a la esquina superior derecha (order-2); en md>= pasa a la derecha (order-md-3) -->
+          <div class="d-flex align-items-center justify-content-end order-2 order-md-3 col-auto col-md-3 p-0">
+            <div class="dropdown d-inline-block">
+              <button type="button" class="btn header-item waves-effect waves-light d-flex align-items-center p-2"
                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <img class="rounded-circle header-profile-user"
                   src="<?= BASE_URL ?>/img/user.png"
-                  alt="Header Avatar">
-                <span class="d-none d-sm-inline-block ml-1"><?= $_SESSION['sigi_user_name'] ?? 'Usuario' ?></span>
-                <i class="mdi mdi-chevron-down d-none d-sm-inline-block"></i>
+                  alt="Header Avatar" style="width: 34px; height: 34px; object-fit: cover;">
+                <span class="d-none d-sm-inline-block ml-2"><?= $_SESSION['sigi_user_name'] ?? 'Usuario' ?></span>
+                <i class="mdi mdi-chevron-down d-none d-sm-inline-block ml-1"></i>
               </button>
+
               <div class="dropdown-menu dropdown-menu-right">
                 <a class="dropdown-item d-flex align-items-center justify-content-between"
                   href="<?= BASE_URL ?>/intranet/perfil">
@@ -143,6 +149,7 @@ endif;
                   href="<?= BASE_URL ?>/resetPassword?data=<?= base64_encode($_SESSION['sigi_user_id']) ?>&back=<?= urlencode($_SERVER['REQUEST_URI']) ?>">
                   <span>Cambiar contraseña</span>
                 </a>
+                <div class="dropdown-divider"></div>
                 <a class="dropdown-item d-flex align-items-center justify-content-between text-danger"
                   href="<?= BASE_URL ?>/logout">
                   <span>Cerrar sesión</span>
@@ -150,6 +157,69 @@ endif;
               </div>
             </div>
           </div>
+
+          <!-- 3. OPCIONES DE CONTEXTO (Sede, Periodo, Rol) -->
+          <!-- En móvil se va a una nueva línea abajo (order-3, col-12). En md>= queda al centro (order-md-2, col-md-6) -->
+          <div class="context-bar order-3 order-md-2 col-12 col-md-6 px-0 py-2 py-md-0">
+            <div class="d-flex flex-wrap align-items-center justify-content-start justify-content-md-center context-group">
+
+              <!-- Sede -->
+              <div class="context-item">
+                <form action="<?= BASE_URL ?>/sedes/cambiarSesion" method="get" class="d-flex align-items-center m-0">
+                  <label for="sedeee" class="mr-1 mb-0 font-weight-bold small text-muted">Sede:</label>
+                  <input type="hidden" name="redirect" value="<?= htmlspecialchars($_SERVER['REQUEST_URI']) ?>">
+                  <select id="sedeee" name="sede" class="form-control form-control-sm" onchange="this.form.submit()">
+                    <?php foreach ($sedess as $s): ?>
+                      <option value="<?= $s['id'] ?>" <?= $s['id'] == $sedeActual ? 'selected' : '' ?>>
+                        <?= $s['nombre'] ?>
+                      </option>
+                    <?php endforeach; ?>
+                  </select>
+                </form>
+              </div>
+
+              <!-- Periodo -->
+              <?php if ($_SESSION['sigi_modulo_actual'] != 0): ?>
+                <div class="context-item">
+                  <form action="<?= BASE_URL ?>/sigi/periodoAcademico/cambiarSesion" method="get" class="d-flex align-items-center m-0">
+                    <label for="periodo" class="mr-1 mb-0 font-weight-bold small text-muted">Periodo:</label>
+                    <input type="hidden" name="redirect" value="<?= htmlspecialchars($_SERVER['REQUEST_URI']) ?>">
+                    <select name="periodo" id="periodo" class="form-control form-control-sm" onchange="this.form.submit()">
+                      <?php foreach ($periodos as $p): ?>
+                        <option value="<?= $p['id'] ?>" <?= $p['id'] == $periodoActual ? 'selected' : '' ?>>
+                          <?= $p['nombre'] ?>
+                        </option>
+                      <?php endforeach; ?>
+                    </select>
+                  </form>
+                </div>
+              <?php endif; ?>
+
+              <!-- Rol -->
+              <?php if (!empty($_SESSION['sigi_permisos_usuario']) && $_SESSION['sigi_modulo_actual'] != 0): ?>
+                <div class="context-item">
+                  <form method="get" action="<?= BASE_URL ?>/sigi/rol/cambiarSesion" class="d-flex align-items-center m-0">
+                    <label for="permiso" class="mr-1 mb-0 font-weight-bold small text-muted">Rol:</label>
+                    <input type="hidden" name="redirect" value="<?= htmlspecialchars($_SERVER['REQUEST_URI']) ?>">
+                    <select name="permiso" id="permiso" class="form-control form-control-sm" onchange="this.form.submit()">
+                      <?php
+                      $moduloActual = $_SESSION['sigi_modulo_actual'] ?? null;
+                      foreach ($_SESSION['sigi_permisos_usuario'] as $permiso):
+                        if ($permiso['id_sistema'] != $moduloActual) continue;
+                      ?>
+                        <option value="<?= $permiso['id_sistema'] ?>-<?= $permiso['id_rol'] ?>"
+                          <?= ($_SESSION['sigi_rol_actual'] == $permiso['id_rol']) ? 'selected' : '' ?>>
+                          <?= htmlspecialchars($permiso['rol']) ?>
+                        </option>
+                      <?php endforeach; ?>
+                    </select>
+                  </form>
+                </div>
+              <?php endif; ?>
+
+            </div>
+          </div>
+
         </div>
       </header>
     <?php endif; ?>

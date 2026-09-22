@@ -4,7 +4,7 @@ require __DIR__ . '/../../layouts/header.php';
 ?>
 
 <?php if ((\Core\Auth::esDocenteAcademico() || \Core\Auth::esAdminAcademico()) && $permitido): ?>
-    <div class="card p-2">
+    <div class="card p-2 container-fluid" style="width: 100%;">
         <div class="col-4 col-md-2 mb-3">
             <a class="btn btn-danger mb-3 col-12" href="<?= BASE_URL; ?>/academico/calificaciones/ver/<?php echo $id_programacion_ud; ?>">Regresar</a>
             <a class="btn btn-info btn-sm btn-block mb-2 col-12" target="_blank" href="<?= BASE_URL ?>/academico/calificaciones/registroAuxiliar/<?= $id_programacion_ud ?>/<?= $nro_calificacion ?>">Imprimir</a>
