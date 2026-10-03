@@ -1,4 +1,5 @@
 vendor/
+database/
 config.php
 public/images/*.jpg
 public/images/*.ico
