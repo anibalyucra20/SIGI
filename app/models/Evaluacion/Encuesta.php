@@ -2,6 +2,8 @@
 
 namespace App\Models\Evaluacion;
 
+require_once __DIR__ . '/../Evaluacion/Banco.php';
+
 use Core\Model;
 use PDO;
 
