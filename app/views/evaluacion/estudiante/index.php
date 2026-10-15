@@ -70,8 +70,8 @@
                     <span class="font-weight-bold text-primary"><?= $porcentajeAvance ?>%</span>
                 </div>
                 <div class="progress" style="height: 10px;">
-                    <div class="progress-bar <?= $porcentajeAvance == 100 ? 'bg-success' : 'bg-primary' ?> progress-bar-striped progress-bar-animated" 
-                         role="progressbar" style="width: <?= $porcentajeAvance ?>%;" aria-valuenow="<?= $porcentajeAvance ?>" aria-valuemin="0" aria-valuemax="100">
+                    <div class="progress-bar <?= $porcentajeAvance == 100 ? 'bg-success' : 'bg-primary' ?> progress-bar-striped progress-bar-animated"
+                        role="progressbar" style="width: <?= $porcentajeAvance ?>%;" aria-valuenow="<?= $porcentajeAvance ?>" aria-valuemin="0" aria-valuemax="100">
                     </div>
                 </div>
             </div>
@@ -111,7 +111,8 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php $n = 1; foreach ($evaluaciones as $ev): ?>
+                                <?php $n = 1;
+                                foreach ($evaluaciones as $ev): ?>
                                     <tr>
                                         <td class="font-weight-bold text-muted"><?= $n++ ?></td>
                                         <td>
@@ -153,16 +154,16 @@
                                         <td class="text-right">
                                             <?php if ($ev['estado'] === 'PENDIENTE'): ?>
                                                 <?php if ($ev['encuesta_estado'] === 'ACTIVA'): ?>
-                                                    <a href="<?= BASE_URL ?>/evaluacion/realizar/evaluar/<?= $ev['id'] ?>" 
-                                                       class="btn btn-sm btn-primary shadow-sm font-weight-bold px-3">
+                                                    <a href="<?= BASE_URL ?>/evaluacion/realizar/evaluar/<?= $ev['id'] ?>"
+                                                        class="btn btn-sm btn-primary shadow-sm font-weight-bold px-3">
                                                         <i class="fas fa-pencil-alt mr-1"></i> Evaluar Docente
                                                     </a>
                                                 <?php else: ?>
                                                     <button class="btn btn-sm btn-secondary" disabled>Encuesta Cerrada</button>
                                                 <?php endif; ?>
                                             <?php else: ?>
-                                                <a href="<?= BASE_URL ?>/evaluacion/realizar/ver/<?= $ev['id'] ?>" 
-                                                   class="btn btn-sm btn-outline-info font-weight-semibold">
+                                                <a href="<?= BASE_URL ?>/evaluacion/realizar/ver/<?= $ev['id'] ?>"
+                                                    class="btn btn-sm btn-outline-info font-weight-semibold">
                                                     <i class="fas fa-eye mr-1"></i> Ver Constancia
                                                 </a>
                                             <?php endif; ?>

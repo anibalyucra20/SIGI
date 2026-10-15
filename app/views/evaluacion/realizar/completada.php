@@ -14,7 +14,7 @@
                     Tus respuestas han sido procesadas de forma confidencial y segura.
                 </p>
                 <div class="alert alert-info d-inline-block px-4 py-2 mb-0 font-size-13 text-left">
-                    <i class="fas fa-lock mr-2"></i> <strong>Inmutabilidad garantizada:</strong> Esta evaluación fue finalizada el 
+                    <i class="fas fa-lock mr-2"></i> <strong>Inmutabilidad garantizada:</strong> Esta evaluación fue finalizada el
                     <strong><?= date('d/m/Y H:i:s', strtotime($evaluacion['fecha_completado'] ?? 'now')) ?></strong> y ya no puede ser modificada.
                 </div>
             </div>
@@ -85,7 +85,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <?php 
+                        <?php
                         $etiquetas = [
                             1 => ['txt' => 'Deficiente', 'badge' => 'badge-danger'],
                             2 => ['txt' => 'Regular', 'badge' => 'badge-warning text-dark'],
@@ -117,7 +117,7 @@
         </div>
 
         <div class="text-center mb-5">
-            <a href="<?= BASE_URL ?>/evaluacion/misEvaluaciones" class="btn btn-primary btn-lg px-5 font-weight-bold shadow-sm">
+            <a href="<?= BASE_URL ?>/evaluacion" class="btn btn-primary btn-lg px-5 font-weight-bold shadow-sm">
                 <i class="fas fa-arrow-left mr-2"></i> Volver a Mis Evaluaciones
             </a>
         </div>
