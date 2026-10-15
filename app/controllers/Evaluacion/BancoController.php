@@ -2,6 +2,8 @@
 
 namespace App\Controllers\Evaluacion;
 
+require_once __DIR__ . '/../../../app/models/Evaluacion/Banco.php';
+
 use Core\Controller;
 use Core\Auth;
 use App\Models\Evaluacion\Banco;
