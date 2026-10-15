@@ -78,7 +78,7 @@ class RealizarController extends Controller
     public function guardar()
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: ' . BASE_URL . '/evaluacion/misEvaluaciones');
+            header('Location: ' . BASE_URL . '/evaluacion');
             exit;
         }
 
