@@ -2,6 +2,10 @@
 
 namespace App\Controllers\Evaluacion;
 
+require_once __DIR__ . '/../../../app/models/Evaluacion/Encuesta.php';
+require_once __DIR__ . '/../../../app/models/Evaluacion/EvaluacionEstudiante.php';
+require_once __DIR__ . '/../../../app/models/Evaluacion/Reporte.php';
+
 use Core\Controller;
 use Core\Auth;
 use Core\Model;
