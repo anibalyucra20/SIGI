@@ -10,13 +10,27 @@ class Auth
             session_start();
     }
 
+    public static function formatearNombreUsuario($texto): string
+    {
+        if (empty($texto)) return '';
+        $partes = explode('_', trim($texto));
+        if (count($partes) >= 3) {
+            $paterno = trim($partes[0]);
+            $materno = trim($partes[1]);
+            $nombres = trim(implode(' ', array_slice($partes, 2)));
+            return "$paterno $materno, $nombres";
+        } elseif (count($partes) === 2) {
+            return trim($partes[0] . ' ' . $partes[1]);
+        }
+        return str_replace('_', ' ', trim($texto));
+    }
+
     public static function login(array $user)
     {
         self::start();
         $_SESSION['sigi_session_id']   = $user['id_session'];
         $_SESSION['sigi_user_id']   = $user['id'];
-        $apellidos_nombres = explode('_', trim($user['apellidos_nombres']));
-        $_SESSION['sigi_user_name'] = $apellidos_nombres[0] . ' ' . $apellidos_nombres[1] . ', ' . $apellidos_nombres[2];
+        $_SESSION['sigi_user_name'] = self::formatearNombreUsuario($user['apellidos_nombres']);
         $_SESSION['sigi_token'] = $user['token'];
         // Sede por defecto = la que tiene el usuario
         $_SESSION['sigi_sede_actual'] = $user['id_sede'];
@@ -445,9 +459,6 @@ class Auth
         if (!isset($_SESSION['sigi_modulo_actual'], $_SESSION['sigi_rol_actual'])) {
             return false;
         }
-        /*if ($_SESSION['sigi_modulo_actual'] != 11) {
-            return false;
-        }*/
         if (empty($roles)) return true; // Cualquier rol en EFSRT
         return in_array($_SESSION['sigi_rol_actual'], (array)$roles);
     }
@@ -457,17 +468,29 @@ class Auth
             && $_SESSION['sigi_modulo_actual'] == 11    // EFSRT
             && $_SESSION['sigi_rol_actual'] == 1);     // ADMINISTRADOR
     }
+    public static function esDirectorEfsrt()
+    {
+        return (isset($_SESSION['sigi_modulo_actual'], $_SESSION['sigi_rol_actual'])
+            && $_SESSION['sigi_modulo_actual'] == 11    // EFSRT
+            && $_SESSION['sigi_rol_actual'] == 2);     // DIRECTOR
+    }
     public static function esSecretarioPEEfsrt()
     {
         return (isset($_SESSION['sigi_modulo_actual'], $_SESSION['sigi_rol_actual'])
             && $_SESSION['sigi_modulo_actual'] == 11    // EFSRT
-            && $_SESSION['sigi_rol_actual'] == 5);     // SECRETARIO ACADEMICO
+            && in_array($_SESSION['sigi_rol_actual'], [1, 3])); // SECRETARIO ACADEMICO O ADMIN
+    }
+    public static function esJUAEfsrt()
+    {
+        return (isset($_SESSION['sigi_modulo_actual'], $_SESSION['sigi_rol_actual'])
+            && $_SESSION['sigi_modulo_actual'] == 11    // EFSRT
+            && $_SESSION['sigi_rol_actual'] == 4);     // JEFE DE UNIDAD ACADEMICA
     }
     public static function esCoordinadorPEEfsrt()
     {
         return (isset($_SESSION['sigi_modulo_actual'], $_SESSION['sigi_rol_actual'])
             && $_SESSION['sigi_modulo_actual'] == 11    // EFSRT
-            && $_SESSION['sigi_rol_actual'] == 5);     // COORDINADOR ACADEMICO
+            && in_array($_SESSION['sigi_rol_actual'], [1, 5])); // COORDINADOR ACADEMICO O ADMIN
     }
     public static function esDocenteEfsrt()
     {
@@ -482,5 +505,85 @@ class Auth
             && $_SESSION['sigi_rol_actual'] == 7);     // ESTUDIANTE
     }
 
-    // ------------------------------------------ ROLES DE MODULOS X --------------------
+    // ------------------------------------------ ROLES EVALUACION DOCENTE (MODULO 12: EVALUACION) --------------------
+    public static function tieneRolEnEvaluacion($roles = [])
+    {
+        if (!isset($_SESSION['sigi_modulo_actual'], $_SESSION['sigi_rol_actual'])) {
+            return false;
+        }
+        if (empty($roles)) return true;
+        return in_array($_SESSION['sigi_rol_actual'], (array)$roles);
+    }
+    public static function tieneRolEnEvaluacionDocente($roles = []) { return self::tieneRolEnEvaluacion($roles); }
+
+    public static function esAdminEvaluacion()
+    {
+        return (isset($_SESSION['sigi_modulo_actual'], $_SESSION['sigi_rol_actual'])
+            && $_SESSION['sigi_modulo_actual'] == 12
+            && $_SESSION['sigi_rol_actual'] == 1);
+    }
+    public static function esAdminEvaluacionDocente() { return self::esAdminEvaluacion(); }
+
+    public static function esDirectorEvaluacion()
+    {
+        return (isset($_SESSION['sigi_modulo_actual'], $_SESSION['sigi_rol_actual'])
+            && $_SESSION['sigi_modulo_actual'] == 12
+            && $_SESSION['sigi_rol_actual'] == 2);
+    }
+    public static function esDirectorEvaluacionDocente() { return self::esDirectorEvaluacion(); }
+
+    public static function esSecretarioAcadEvaluacion()
+    {
+        return (isset($_SESSION['sigi_modulo_actual'], $_SESSION['sigi_rol_actual'])
+            && $_SESSION['sigi_modulo_actual'] == 12
+            && in_array($_SESSION['sigi_rol_actual'], [1, 3]));
+    }
+    public static function esSecretarioAcadEvaluacionDocente() { return self::esSecretarioAcadEvaluacion(); }
+
+    public static function esJUAEvaluacion()
+    {
+        return (isset($_SESSION['sigi_modulo_actual'], $_SESSION['sigi_rol_actual'])
+            && $_SESSION['sigi_modulo_actual'] == 12
+            && $_SESSION['sigi_rol_actual'] == 4);
+    }
+    public static function esJUAEvaluacionDocente() { return self::esJUAEvaluacion(); }
+
+    public static function esCoordinadorPEEvaluacion()
+    {
+        return (isset($_SESSION['sigi_modulo_actual'], $_SESSION['sigi_rol_actual'])
+            && $_SESSION['sigi_modulo_actual'] == 12
+            && in_array($_SESSION['sigi_rol_actual'], [1, 2, 3, 4, 5]));
+    }
+    public static function esCoordinadorPEEvaluacionDocente() { return self::esCoordinadorPEEvaluacion(); }
+
+    public static function puedeVerTodosLosProgramasEvaluacion()
+    {
+        if (!isset($_SESSION['sigi_rol_actual'])) {
+            return false;
+        }
+        // Roles 1 (Admin), 2 (Director), 3 (Secretario Académico), 4 (Jefe Unidad Académica)
+        return in_array((int)$_SESSION['sigi_rol_actual'], [1, 2, 3, 4]);
+    }
+
+    public static function esCoordinadorExclusivoEvaluacion()
+    {
+        return (isset($_SESSION['sigi_rol_actual'])
+            && (int)$_SESSION['sigi_rol_actual'] === 5);
+    }
+
+    public static function esDocenteEvaluacion()
+    {
+        return (isset($_SESSION['sigi_modulo_actual'], $_SESSION['sigi_rol_actual'])
+            && $_SESSION['sigi_modulo_actual'] == 12
+            && $_SESSION['sigi_rol_actual'] == 6);
+    }
+    public static function esDocenteEvaluacionDocente() { return self::esDocenteEvaluacion(); }
+
+    public static function esEstudianteEvaluacion()
+    {
+        return (isset($_SESSION['sigi_modulo_actual'], $_SESSION['sigi_rol_actual'])
+            && $_SESSION['sigi_modulo_actual'] == 12
+            && $_SESSION['sigi_rol_actual'] == 7);
+    }
+    public static function esEstudianteEvaluacionDocente() { return self::esEstudianteEvaluacion(); }
 }
