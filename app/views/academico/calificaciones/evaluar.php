@@ -15,7 +15,7 @@ require __DIR__ . '/../../layouts/header.php';
 
             - <span style="color:#4153a1;"><?php echo strtoupper($nombreUnidadDidactica ?? ''); ?></span>
         </h5>
-        <h6 class="text-center mb-4"><b>Indicador de Logro: </b><?= $indicadores_capacidad['I' . $nro_calificacion] ?></h6>
+        <h6 class="text-center mb-4"><b>Indicador de Logro: </b><?= htmlspecialchars($indicadores_capacidad['I' . $nro_calificacion] ?? $indicadores_capacidad[$nro_calificacion] ?? ($nombreIndicador ?? '')) ?></h6>
 
         <div class="table-responsive">
             <table class="table table-bordered" style="font-size:14px;">

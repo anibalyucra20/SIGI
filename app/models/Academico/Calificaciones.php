@@ -134,6 +134,17 @@ class Calificaciones extends Model
         $stmt->execute([$id_programacion_ud]);
         $nros_calificacion = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
+        // Si no hay calificaciones en acad_calificacion, obtener correlativo de indicadores de la UD
+        if (empty($nros_calificacion) && !empty($info['id_unidad_didactica'])) {
+            $stmtInd = self::$db->prepare("SELECT ROW_NUMBER() OVER (ORDER BY c.id ASC, ilc.id ASC) as nro
+                FROM sigi_capacidades c
+                INNER JOIN sigi_ind_logro_capacidad ilc ON ilc.id_capacidad = c.id
+                WHERE c.id_unidad_didactica = ?
+                ORDER BY c.id ASC, ilc.id ASC");
+            $stmtInd->execute([$info['id_unidad_didactica']]);
+            $nros_calificacion = $stmtInd->fetchAll(PDO::FETCH_COLUMN);
+        }
+
         // 3. Estudiantes matriculados
         $stmt = self::$db->prepare("SELECT u.id, u.dni, u.apellidos_nombres, dm.id as id_detalle_matricula, m.licencia as licencia
             FROM acad_detalle_matricula dm
@@ -247,13 +258,29 @@ class Calificaciones extends Model
     // =========================
     public function getDatosEvaluacion($id_programacion_ud, $nro_calificacion)
     {
-        // 1. Nombre UD
-        $stmt = self::$db->prepare("SELECT ud.nombre AS nombreUnidadDidactica
+        // 1. Nombre UD e Indicador
+        $stmt = self::$db->prepare("SELECT ud.id as id_unidad_didactica, ud.nombre AS nombreUnidadDidactica
             FROM acad_programacion_unidad_didactica pud
             INNER JOIN sigi_unidad_didactica ud ON pud.id_unidad_didactica = ud.id
             WHERE pud.id = ?");
         $stmt->execute([$id_programacion_ud]);
-        $nombreUnidadDidactica = $stmt->fetchColumn();
+        $udInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+        $nombreUnidadDidactica = $udInfo['nombreUnidadDidactica'] ?? '';
+        $id_unidad_didactica = $udInfo['id_unidad_didactica'] ?? 0;
+
+        $nombreIndicador = '';
+        if ($id_unidad_didactica > 0 && $nro_calificacion > 0) {
+            $stmtInd = self::$db->prepare("SELECT t.descripcion
+                FROM (
+                    SELECT ilc.descripcion, ROW_NUMBER() OVER (ORDER BY cap.id ASC, ilc.id ASC) as orden
+                    FROM sigi_capacidades cap
+                    INNER JOIN sigi_ind_logro_capacidad ilc ON ilc.id_capacidad = cap.id
+                    WHERE cap.id_unidad_didactica = ?
+                ) t
+                WHERE t.orden = ?");
+            $stmtInd->execute([$id_unidad_didactica, $nro_calificacion]);
+            $nombreIndicador = $stmtInd->fetchColumn() ?: '';
+        }
 
         // 2. Estudiantes
         $stmt = self::$db->prepare("SELECT u.id, u.dni, u.apellidos_nombres, dm.id as id_detalle_matricula, m.licencia as licencia
@@ -332,7 +359,7 @@ class Calificaciones extends Model
 
         return [
             'nombreUnidadDidactica' => $nombreUnidadDidactica,
-            'nombreIndicador' => '',
+            'nombreIndicador' => $nombreIndicador,
             'evaluacionesEstudiante' => $evaluacionesEstudiante,
             'estudiantes' => $estudiantes,
             'valores' => $valores,

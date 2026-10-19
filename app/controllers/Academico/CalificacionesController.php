@@ -97,8 +97,15 @@ class CalificacionesController extends Controller
         $id_ud = $programacion['id_unidad_didactica'];
         $indicadores = $this->objIndLogroCapacidad->getIndicadoresLogroCapacidad($id_ud);
         $indicadores_capacidad = [];
+        $i = 1;
         foreach ($indicadores as $value) {
-            $indicadores_capacidad[$value['codigo']] = $value['descripcion'];
+            $nro_ind = $value['orden'] ?? $i;
+            $indicadores_capacidad['I' . $nro_ind] = $value['descripcion'];
+            $indicadores_capacidad[$nro_ind] = $value['descripcion'];
+            if (!isset($indicadores_capacidad[$value['codigo']])) {
+                $indicadores_capacidad[$value['codigo']] = $value['descripcion'];
+            }
+            $i++;
         }
 
         $datos = $this->model->getDatosEvaluacion($id_programacion_ud, $nro_calificacion);
@@ -273,8 +280,15 @@ class CalificacionesController extends Controller
         $id_ud = $datos['idUnidadDidactica'];
         $indicadores = $this->objIndLogroCapacidad->getIndicadoresLogroCapacidad($id_ud);
         $indicadores_capacidad = [];
+        $i = 1;
         foreach ($indicadores as $value) {
-            $indicadores_capacidad[$value['codigo']] = $value['descripcion'];
+            $nro_ind = $value['orden'] ?? $i;
+            $indicadores_capacidad['I' . $nro_ind] = $value['descripcion'];
+            $indicadores_capacidad[$nro_ind] = $value['descripcion'];
+            if (!isset($indicadores_capacidad[$value['codigo']])) {
+                $indicadores_capacidad[$value['codigo']] = $value['descripcion'];
+            }
+            $i++;
         }
 
         $estudiantes = $datos['estudiantes'];

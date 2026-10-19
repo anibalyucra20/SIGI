@@ -89,11 +89,12 @@ class IndicadorLogroCapacidad extends Model
     // Lista de indicadores de logro de capacidad para el select
     public function getIndicadoresLogroCapacidad($id_unidad_didactica)
     {
-        $sql = "SELECT ilc.id, ilc.codigo, ilc.descripcion, cap.codigo as codigo_capacidad
+        $sql = "SELECT ilc.id, ilc.codigo, ilc.descripcion, cap.codigo as codigo_capacidad,
+                       ROW_NUMBER() OVER (ORDER BY cap.id ASC, ilc.id ASC) as orden
             FROM sigi_capacidades cap
             INNER JOIN sigi_ind_logro_capacidad ilc ON ilc.id_capacidad = cap.id
             WHERE cap.id_unidad_didactica = ?
-            ORDER BY ilc.id";
+            ORDER BY cap.id ASC, ilc.id ASC";
         $stmt = self::$db->prepare($sql);
         $stmt->execute([$id_unidad_didactica]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
