@@ -254,7 +254,7 @@ class Estudiantes extends Model
 
     public function buscarUsuarioPorDni($dni)
     {
-        $stmt = self::$db->prepare("SELECT * FROM sigi_usuarios WHERE dni = ?");
+        $stmt = self::$db->prepare("SELECT id,tipo_doc,dni,apellidos_nombres,genero,fecha_nacimiento,correo,telefono,correo_personal FROM sigi_usuarios WHERE dni = ?");
         $stmt->execute([$dni]);
         $data = $stmt->fetch(PDO::FETCH_ASSOC);
         if (empty($data)) {
