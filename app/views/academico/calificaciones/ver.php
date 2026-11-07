@@ -54,7 +54,8 @@ require __DIR__ . '/../../layouts/header.php'; ?>
                                     <th class="text-center" style="min-width:110px;">
                                         I.L.° <?= $nro ?> <br>
                                         <?php if (!$esCoordinadorPE): ?>
-                                        <a href="<?= BASE_URL ?>/academico/calificaciones/evaluar/<?= $id_programacion_ud ?>/<?= $nro ?>" class="btn btn-primary btn-sm ml-2 waves-effect waves-light" data-toggle="tooltip" data-placement="top" title data-original-title="<?= $indicadores_capacidad['I' . $nro] ?>" aria-describedby="tooltip280829">
+                                        <?php $desc_indicador = $indicadores_capacidad['I' . $nro] ?? $indicadores_capacidad[$nro] ?? ''; ?>
+                                        <a href="<?= BASE_URL ?>/academico/calificaciones/evaluar/<?= $id_programacion_ud ?>/<?= $nro ?>" class="btn btn-primary btn-sm ml-2 waves-effect waves-light" data-toggle="tooltip" data-placement="top" title="<?= htmlspecialchars($desc_indicador) ?>" data-original-title="<?= htmlspecialchars($desc_indicador) ?>">
                                             <i></i><?= ($periodo_vigente['vigente']) ? 'Evaluar' : 'Ver' ?>
                                         </a>
                                         <div>

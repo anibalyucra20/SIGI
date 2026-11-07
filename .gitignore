@@ -1,4 +1,5 @@
 vendor/
+database/
 config.php
 public/images/*.jpg
 public/images/*.ico
@@ -26,3 +27,5 @@ public/images/ofertas_bolsa_laboral/*.docx
 
 
 public/uploads/*
+scratch/*
+.gemini/*
