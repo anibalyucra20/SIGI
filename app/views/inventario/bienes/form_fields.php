@@ -1,12 +1,16 @@
 <div class="row mb-3">
     <div class="col-md-6">
-        <label class="form-label">Ambiente *</label>
-        <select name="id_inv_ambiente" class="form-control" required>
-            <option value="">Seleccione un ambiente...</option>
-            <option value="1" <?= (isset($data['id_inv_ambiente']) && $data['id_inv_ambiente'] == '1') ? 'selected' : '' ?>>Ambiente 1</option>
-            <option value="2" <?= (isset($data['id_inv_ambiente']) && $data['id_inv_ambiente'] == '2') ? 'selected' : '' ?>>Ambiente 2</option>
-        </select>
-    </div>
+    <label class="form-label">Ambiente *</label>
+    <select name="id_sigi_ambiente" class="form-control" id="id_sigi_ambiente" required>
+        <option value="">Seleccione un ambiente</option>
+        <?php
+        foreach ($ambientes as $ambiente){
+            $selected = ($isEdit && isset($data['id_inv_ambiente']) && $data['id_inv_ambiente'] == $ambiente['id_inventario']) ? 'selected' : '';            ?>
+            <option value="<?= $ambiente['id_inventario'] ?>" <?= $selected ?>><?= htmlspecialchars($ambiente['tipo_ambiente']) ?></option>            <?php
+        }
+        ?>
+    </select>
+</div>
     <div class="col-md-6">
         <label class="form-label">Código Patrimonial *</label>
         <input type="text" name="codigo_patrimonial" class="form-control" value="<?= htmlspecialchars($data['codigo_patrimonial'] ?? '') ?>" required>
