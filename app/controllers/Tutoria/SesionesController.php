@@ -293,8 +293,8 @@ class SesionesController extends Controller
         $pdf->SetTitle('Ficha de Tutoría Individual N° ' . $sesion['nro']);
         $pdf->setPrintHeader(false);
         $pdf->setPrintFooter(false);
-        $pdf->SetMargins(12, 12, 12);
-        $pdf->SetAutoPageBreak(true, 8);
+        $pdf->SetMargins(25, 10, 20);
+        $pdf->SetAutoPageBreak(false);
         $pdf->AddPage();
 
         $rutaLogo = __DIR__ . '/../../../public/img/logo.png';
@@ -559,8 +559,8 @@ class SesionesController extends Controller
         $pdf->SetTitle('Ficha de Tutoría Grupal N° ' . $sesion['id']);
         $pdf->setPrintHeader(false);
         $pdf->setPrintFooter(false);
-        $pdf->SetMargins(12, 12, 12);
-        $pdf->SetAutoPageBreak(true, 8);
+        $pdf->SetMargins(25, 10, 20);
+        $pdf->SetAutoPageBreak(false);
         $pdf->AddPage();
 
         $rutaLogo = __DIR__ . '/../../../public/img/logo.png';

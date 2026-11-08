@@ -231,6 +231,38 @@ class ProgramacionController extends Controller
         exit;
     }
 
+    /**
+     * Pantalla dedicada para asignar un nuevo estudiante a un tutor.
+     */
+    public function asignarEstudiante($id_programacion)
+    {
+        $programacion = $this->model->find($id_programacion);
+        if (!$programacion) {
+            $_SESSION['flash_error'] = "La programación de tutoría no existe.";
+            header('Location: ' . BASE_URL . '/tutoria/programacion');
+            exit;
+        }
+
+        $esAdmin = Auth::esAdminTutoria();
+        $esSuTutoria = (Auth::esDocenteTutoria() && (int)$programacion['id_docente'] === (int)($_SESSION['sigi_user_id'] ?? 0));
+        if (!$esAdmin && !$esSuTutoria) {
+            $_SESSION['flash_error'] = "No tiene autorización para asignar estudiantes a esta tutoría.";
+            header('Location: ' . BASE_URL . '/tutoria');
+            exit;
+        }
+
+        $programasEstudio = $this->objPrograma->getAll();
+
+        $this->view('tutoria/programacion/asignar_estudiante', [
+            'programacion' => $programacion,
+            'programas'    => $programasEstudio,
+            'esAdmin'      => $esAdmin,
+            'module'       => 'tutoria',
+            'pageTitle'    => 'Asignar Estudiante - ' . $programacion['docente_formato']
+        ]);
+        exit;
+    }
+
     public function guardarTutorando()
     {
         if (!Auth::tieneRolEnTutoria()) {
@@ -245,7 +277,7 @@ class ProgramacionController extends Controller
 
         if (!$id_programacion || !$id_estudiante) {
             $_SESSION['flash_error'] = "Debe seleccionar un estudiante válido para asignar a la tutoría.";
-            header('Location: ' . BASE_URL . '/tutoria/programacion/tutorandos/' . $id_programacion);
+            header('Location: ' . BASE_URL . '/tutoria/programacion/asignarEstudiante/' . $id_programacion);
             exit;
         }
 
@@ -268,11 +300,11 @@ class ProgramacionController extends Controller
         $ok = $this->objEstudianteTutoria->asignar($id_programacion, $id_estudiante, $observacion);
         if ($ok) {
             $_SESSION['flash_success'] = "Estudiante asignado al tutor correctamente.";
+            header('Location: ' . BASE_URL . '/tutoria/programacion/tutorandos/' . $id_programacion);
         } else {
             $_SESSION['flash_error'] = "El estudiante ya se encuentra asignado a esta programación de tutoría.";
+            header('Location: ' . BASE_URL . '/tutoria/programacion/asignarEstudiante/' . $id_programacion);
         }
-
-        header('Location: ' . BASE_URL . '/tutoria/programacion/tutorandos/' . $id_programacion);
         exit;
     }
 

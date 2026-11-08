@@ -639,8 +639,8 @@ class ReportesController extends Controller
         $pdf->SetTitle('Reporte Oficial de Tutoría - IESTP Huanta');
         $pdf->setPrintHeader(false);
         $pdf->setPrintFooter(false);
-        $pdf->SetMargins(12, 10, 12);
-        $pdf->SetAutoPageBreak(true, 8);
+        $pdf->SetMargins(25, 10, 20);
+        $pdf->SetAutoPageBreak(false);
 
         $rutaLogo = __DIR__ . '/../../../public/img/logo.png';
 

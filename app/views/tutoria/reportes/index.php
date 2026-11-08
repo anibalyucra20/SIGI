@@ -65,40 +65,40 @@
 <!-- Resumen Estadístico -->
 <div class="row mb-3">
     <div class="col-md-3 mb-2">
-        <div class="card shadow-sm border text-center p-3 h-100">
+        <div class="card text-center p-3 h-100">
             <h6 class="text-muted font-size-12 text-uppercase mb-1">Docentes Tutores</h6>
-            <h3 class="text-primary font-weight-bold mb-0"><?= $totalTutores ?></h3>
+            <h3 class="font-weight-bold mb-0"><?= $totalTutores ?></h3>
             <small class="text-muted">Docentes asignados</small>
         </div>
     </div>
     <div class="col-md-3 mb-2">
-        <div class="card shadow-sm border text-center p-3 h-100">
+        <div class="card text-center p-3 h-100">
             <h6 class="text-muted font-size-12 text-uppercase mb-1">Total Tutorandos</h6>
-            <h3 class="text-success font-weight-bold mb-0"><?= $totalTutorandos ?></h3>
+            <h3 class="font-weight-bold mb-0"><?= $totalTutorandos ?></h3>
             <small class="text-muted">Estudiantes atendidos</small>
         </div>
     </div>
     <div class="col-md-3 mb-2">
-        <div class="card shadow-sm border text-center p-3 h-100">
+        <div class="card text-center p-3 h-100">
             <h6 class="text-muted font-size-12 text-uppercase mb-1">Sesiones Grupales</h6>
-            <h3 class="text-info font-weight-bold mb-0"><?= $totalSesionesGrup ?></h3>
+            <h3 class="font-weight-bold mb-0"><?= $totalSesionesGrup ?></h3>
             <small class="text-muted">Talleres e inducciones</small>
         </div>
     </div>
     <div class="col-md-3 mb-2">
-        <div class="card shadow-sm border text-center p-3 h-100">
+        <div class="card text-center p-3 h-100">
             <h6 class="text-muted font-size-12 text-uppercase mb-1">Sesiones Individuales</h6>
-            <h3 class="text-warning font-weight-bold mb-0"><?= $totalSesionesInd ?></h3>
+            <h3 class="font-weight-bold mb-0"><?= $totalSesionesInd ?></h3>
             <small class="text-muted">Atenciones registradas</small>
         </div>
     </div>
 </div>
 
 <!-- Tabla 1: Consolidado por Tutor -->
-<div class="card shadow-sm mb-4">
+<div class="card mb-4">
     <div class="card-header bg-white d-flex justify-content-between align-items-center">
         <h5 class="card-title mb-0 font-weight-bold text-dark">
-            <i class="fas fa-chalkboard-teacher text-primary mr-2"></i>1. Balance de Cumplimiento por Docente Tutor
+            1. Balance de Cumplimiento por Docente Tutor
         </h5>
         <span class="badge badge-light border text-muted">Periodo Lectivo Activo</span>
     </div>
@@ -128,7 +128,7 @@
                                     <span class="badge badge-primary px-2 py-1"><?= $t['total_estudiantes'] ?> alumnos</span>
                                 </td>
                                 <td class="text-center">
-                                    <span class="badge badge-info px-2 py-1"><?= $t['total_sesiones_grupales'] ?> sesiones</span>
+                                    <span class="badge badge-light border"><?= $t['total_sesiones_grupales'] ?></span>
                                 </td>
                                 <td>
                                     <?php if (!empty($t['conclusiones'])): ?>
@@ -147,12 +147,12 @@
 </div>
 
 <!-- Tabla 2: Registro de Derivaciones Especializadas -->
-<div class="card shadow-sm mb-4">
+<div class="card mb-4">
     <div class="card-header bg-white d-flex justify-content-between align-items-center">
         <h5 class="card-title mb-0 font-weight-bold text-dark">
-            <i class="fas fa-share-square text-warning mr-2"></i>2. Relación de Estudiantes Derivados a Servicios Institucionales (<?= count($derivaciones) ?>)
+            2. Relación de Estudiantes Derivados a Servicios Institucionales (<?= count($derivaciones) ?>)
         </h5>
-        <span class="badge badge-warning p-1">Atención Multidisciplinaria</span>
+        <span class="badge badge-light border">Atención Multidisciplinaria</span>
     </div>
     <div class="card-body">
         <div class="table-responsive">

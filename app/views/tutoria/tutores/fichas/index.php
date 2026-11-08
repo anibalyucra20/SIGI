@@ -54,9 +54,9 @@
 
 <?php if ($progActual): ?>
     <!-- Información del Tutor Seleccionado -->
-    <div class="card shadow-sm mb-3">
+    <div class="card mb-3">
         <div class="card-body py-2 bg-light">
-            <strong class="text-primary font-size-15"><i class="fas fa-chalkboard-teacher mr-2"></i>Tutor: <?= htmlspecialchars($progActual['docente_formato']) ?></strong>
+            <strong>Tutor: <?= htmlspecialchars($progActual['docente_formato']) ?></strong>
             <span class="text-muted ml-2">| Sede: <?= htmlspecialchars($progActual['sede_nombre']) ?> | Periodo: <?= htmlspecialchars($progActual['periodo_nombre']) ?></span>
         </div>
     </div>
