@@ -16,24 +16,42 @@
             <?php if (\Core\Auth::tieneRolEnBolsa()): ?>
                 <?php if (\Core\Auth::esAdminBolsa()): ?>
                     <li class="nav-item">
-                        <a class="nav-link"
-                            href="<?= BASE_URL ?>/bolsa/ofertas">
+                        <a class="nav-link" href="<?= BASE_URL ?>/bolsa/ofertas">
                             <i class="far fa-address-book"></i> Ofertas Laborales
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link"
-                            href="<?= BASE_URL ?>/bolsa/empresas">
+                        <a class="nav-link" href="<?= BASE_URL ?>/bolsa/empresas">
                             <i class="fas fa-city"></i> Empresas
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link"
-                            href="<?= BASE_URL ?>/bolsa/reportes">
+                        <a class="nav-link" href="<?= BASE_URL ?>/bolsa/postulaciones">
+                            <i class="fas fa-users"></i> Postulaciones
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="<?= BASE_URL ?>/bolsa/reportes">
                             <i class="fas fa-chart-line"></i> Reportes
                         </a>
                     </li>
-                    
+                <?php endif; ?>
+                <?php if (\Core\Auth::esEstudianteBolsa()): ?>
+                    <li class="nav-item">
+                        <a class="nav-link" href="<?= BASE_URL ?>/bolsa/ofertas">
+                            <i class="far fa-address-book"></i> Ofertas Laborales
+                        </a>
+                    </li> 
+                    <li class="nav-item">
+                        <a class="nav-link" href="<?= BASE_URL ?>/bolsa/curriculum">
+                            <i class="fas fa-id-card"></i> Mis Currículums
+                        </a>
+                    </li> 
+                    <li class="nav-item">
+                        <a class="nav-link" href="<?= BASE_URL ?>/bolsa/postulaciones">
+                            <i class="fas fa-clipboard-list"></i> Mis Postulaciones
+                        </a>
+                    </li> 
                 <?php endif; ?>
             <?php else: ?>
                 <!-- Aquí va solo lo mínimo, o un mensaje, o nada -->

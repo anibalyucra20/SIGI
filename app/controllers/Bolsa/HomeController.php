@@ -12,27 +12,29 @@ class HomeController extends Controller
     {
         parent::__construct();
 
-        $moduloAcademico = 7;   // ID del sistema ACADEMICO (ajusta si es diferente)
-        $rolAdmin   = 1;   // ID del rol ADMINISTRADOR (ajusta si es diferente)
-        // Si el contexto NO es ACADEMICO
-        if ($_SESSION['sigi_modulo_actual'] != $moduloAcademico) {
-            // Buscar si tiene algún rol en ACADEMICO
+        $moduloBolsa = 7; // Bolsa Laboral
+        if (($_SESSION['sigi_modulo_actual'] ?? 0) != $moduloBolsa) {
             $tieneRolEnBolsa = false;
-            foreach ($_SESSION['sigi_permisos_usuario'] as $permiso) {
-                if ($permiso['id_sistema'] == $moduloAcademico) {
-                    // Cambia el contexto al primer rol disponible en SIGI
-                    $_SESSION['sigi_modulo_actual'] = $permiso['id_sistema'];
-                    $_SESSION['sigi_rol_actual']    = $permiso['id_rol'];
+            foreach (($_SESSION['sigi_permisos_usuario'] ?? []) as $permiso) {
+                if ($permiso['id_sistema'] == $moduloBolsa) {
+                    $_SESSION['sigi_modulo_actual'] = $moduloBolsa;
+                    $_SESSION['sigi_rol_actual']    = (int)$permiso['id_rol'];
                     $tieneRolEnBolsa = true;
                     break;
                 }
             }
-            /*if (!$tieneRolEnSigi) {
-                $_SESSION['flash_error'] = "No tienes permisos para acceder a este módulo.";
-                header('Location: ' . BASE_URL . '/intranet');
-                exit;
-            }*/
-            if (!\Core\Auth::tieneRolEnBolsa()) {
+            if (!$tieneRolEnBolsa && isset($_SESSION['sigi_user_id'])) {
+                $db = (new Model())->getDB();
+                $idUser = (int)$_SESSION['sigi_user_id'];
+                $rolUser = (int)$db->query("SELECT id_rol FROM sigi_usuarios WHERE id = $idUser")->fetchColumn();
+                if (in_array($rolUser, [1, 7, 8])) {
+                    $_SESSION['sigi_modulo_actual'] = $moduloBolsa;
+                    $_SESSION['sigi_rol_actual']    = $rolUser;
+                    $tieneRolEnBolsa = true;
+                }
+            }
+
+            if (!$tieneRolEnBolsa && !\Core\Auth::tieneRolEnBolsa()) {
                 $_SESSION['flash_error'] = "No tienes permisos para acceder a este módulo.";
                 header('Location: ' . BASE_URL . '/intranet');
                 exit;
@@ -47,20 +49,61 @@ class HomeController extends Controller
             header('Location: ' . BASE_URL . '/intranet');
             exit;
         }
-        $id_docente = $_SESSION['sigi_user_id'];
-        $id_periodo = $_SESSION['sigi_periodo_actual_id'];
-        $id_sede  = $_SESSION['sigi_sede_actual'];
-        $db = (new Model())->getDB();
-        // 1. Periodo actual
-        $periodo = $db->query("SELECT nombre FROM sigi_periodo_academico ORDER BY fecha_inicio DESC LIMIT 1")
-            ->fetchColumn();
-        $docentes = $db->query("SELECT COUNT(*) FROM sigi_usuarios WHERE id_rol IN (SELECT id FROM sigi_roles WHERE nombre LIKE '%DOCENTE%')")->fetchColumn();
 
+        $db = (new Model())->getDB();
+
+        // 1. Obtener Periodo Académico
+        $periodo = 'Actual';
+        try {
+            $periodoQuery = $db->query("SELECT nombre FROM sigi_periodo_academico ORDER BY fecha_inicio DESC LIMIT 1");
+            if ($periodoQuery) {
+                $periodo = $periodoQuery->fetchColumn() ?: 'Actual';
+            }
+        } catch (\PDOException $e) {
+            $periodo = 'Actual';
+        }
+
+        // 2. Conteo de ofertas vigentes (común para todos)
+        $totalOfertas = 0;
+        try {
+            $totalOfertas = (int)$db->query("SELECT COUNT(*) FROM bolsa_ofertas_laborales WHERE estado = 1")->fetchColumn();
+        } catch (\PDOException $e) {
+            $totalOfertas = 0;
+        }
+
+        // 3. Métricas según rol (Admin vs Estudiante)
+        $totalEmpresas = 0;
+        $totalPostulaciones = 0;
+
+        if (\Core\Auth::esAdminBolsa()) {
+            try {
+                $totalEmpresas = (int)$db->query("SELECT COUNT(*) FROM bolsa_empresa WHERE estado = 1")->fetchColumn();
+                $totalPostulaciones = (int)$db->query("SELECT COUNT(*) FROM bolsa_postulaciones")->fetchColumn();
+            } catch (\PDOException $e) {
+                $totalEmpresas = 0;
+                $totalPostulaciones = 0;
+            }
+        } else {
+            // Lógica para estudiante: contar solo sus postulaciones
+            $idUsuario = (int)($_SESSION['sigi_user_id'] ?? 0);
+            try {
+                $stmt = $db->prepare("SELECT COUNT(*) FROM bolsa_postulaciones WHERE id_usuario = :id");
+                $stmt->execute(['id' => $idUsuario]);
+                $totalPostulaciones = (int)$stmt->fetchColumn();
+            } catch (\PDOException $e) {
+                $totalPostulaciones = 0;
+            }
+        }
+
+        // 4. Renderizar la vista
         $this->view('bolsa/index', [
-            'periodo'   => $periodo,
-            'docentes'  => $docentes,
-            'pageTitle' => 'Sistema de Bolsa Laboral',
-            'module'    => 'bolsa'
+            'periodo'            => $periodo,
+            'totalOfertas'       => $totalOfertas,
+            'totalEmpresas'      => $totalEmpresas,
+            'totalPostulaciones' => $totalPostulaciones,
+            'pageTitle'          => 'Sistema de Bolsa Laboral',
+            'module'             => 'bolsa'
         ]);
+        exit;
     }
 }

@@ -76,8 +76,15 @@ class Ofertas extends Model {
         $orderColumnName = $columns[$orderCol] ?? 'empresa_nombre';
         $orderDir = strtolower($orderDir) === 'desc' ? 'DESC' : 'ASC';
         // FILTROS
-        $where = ['o.estado = 1'];
+        $where = ['1=1'];
         $params = [];
+
+        if (!empty($filters['solo_vigentes'])) {
+            $where[] = 'o.estado = 1';
+        } elseif (isset($filters['estado']) && $filters['estado'] !== '' && $filters['estado'] !== null) {
+            $where[] = 'o.estado = :estado';
+            $params[':estado'] = (int)$filters['estado'];
+        }
 
         // Filtro por empresa
         if (!empty($filters['id_empresa'])) {
@@ -98,10 +105,13 @@ class Ofertas extends Model {
                     o.id,
                     o.id_empresa,
                     e.empresa AS empresa_nombre,
+                    e.ruc AS empresa_ruc,
+                    e.direccion AS empresa_direccion,
                     o.programa_estudio,
                     p.nombre AS programa_nombre,
                     o.titulo,
                     o.detalle,
+                    o.requisitos,
                     o.fecha_publicacion,
                     o.fecha_cierre,
                     o.salario,
@@ -148,5 +158,35 @@ class Ofertas extends Model {
         $stmt = self::$db->prepare($sql);
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
         return $stmt->execute();
+    }
+
+    public function obtenerDetallePorId($id) {
+        $sql = "SELECT 
+                    o.id,
+                    o.id_empresa,
+                    e.empresa AS empresa_nombre,
+                    e.ruc AS empresa_ruc,
+                    e.direccion AS empresa_direccion,
+                    o.programa_estudio,
+                    p.nombre AS programa_nombre,
+                    o.titulo,
+                    o.detalle,
+                    o.requisitos,
+                    o.fecha_publicacion,
+                    o.fecha_cierre,
+                    o.salario,
+                    o.ubicacion,
+                    o.tipo_contrato,
+                    o.foto,
+                    o.estado
+                FROM {$this->table} o
+                LEFT JOIN bolsa_empresa e ON e.id = o.id_empresa
+                LEFT JOIN sigi_programa_estudios p ON p.id = o.programa_estudio
+                WHERE o.id = :id
+                LIMIT 1";
+        $stmt = self::$db->prepare($sql);
+        $stmt->bindValue(':id', (int)$id, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 }

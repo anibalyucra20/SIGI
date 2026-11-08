@@ -59,20 +59,20 @@
 
     <div class="col-md-8 mb-2">
         <label class="form-label">Título de la Oferta</label>
-        <input type="text" name="titulo" class="form-control" maxlength="200" placeholder="Ejemplo: Soporte Técnico" value="<?= htmlspecialchars($oferta['titulo'] ?? '') ?>" required>
+        <input type="text" name="titulo" class="form-control" maxlength="200" placeholder="" value="<?= htmlspecialchars($oferta['titulo'] ?? '') ?>" required>
     </div>
 
-<div class="col-md-4 mb-2">
-    <label class="form-label">Salario</label>
-    <div class="input-group">
-        <span class="input-group-text">S/</span>
-        <input type="number" name="salario" class="form-control" step="0.01" min="0" value="<?= htmlspecialchars($oferta['salario'] ?? '') ?>" placeholder="0.00" required>
+    <div class="col-md-4 mb-2">
+        <label class="form-label">Salario</label>
+        <div class="input-group">
+            <span class="input-group-text">S/</span>
+            <input type="number" name="salario" class="form-control" step="0.01" min="0" value="<?= htmlspecialchars($oferta['salario'] ?? '') ?>" placeholder="0.00" required>
+        </div>
     </div>
-</div>
 
     <div class="col-md-6 mb-2">
         <label class="form-label">Ubicación</label>
-        <input type="text" name="ubicacion" class="form-control" maxlength="200" placeholder="Ejemplo: Huanta, Ayacucho" value="<?= htmlspecialchars($oferta['ubicacion'] ?? '') ?>" required>
+        <input type="text" name="ubicacion" class="form-control" maxlength="200" placeholder="" value="<?= htmlspecialchars($oferta['ubicacion'] ?? '') ?>" required>
     </div>
 
     <div class="col-md-3 mb-2">
@@ -87,19 +87,12 @@
 
     <div class="col-md-6 mb-2">
         <label class="form-label">Detalle de la Oferta</label>
-        <textarea 
-            name="detalle"
-            class="form-control"
-            rows="5"
-            placeholder="Describa las funciones y características del puesto..."
-            required
-        ><?= htmlspecialchars($oferta['detalle'] ?? '') ?></textarea>
+        <textarea name="detalle" class="form-control" rows="5" placeholder="" required ><?= htmlspecialchars($oferta['detalle'] ?? '') ?></textarea>
     </div>
 
     <div class="col-md-6 mb-2">
         <label class="form-label">Requisitos</label>
-        <textarea name="requisitos" class="form-control" rows="5" placeholder="Ingrese los requisitos necesarios para el puesto..." required
-        ><?= htmlspecialchars($oferta['requisitos'] ?? '') ?></textarea>
+        <textarea name="requisitos" class="form-control" rows="5" placeholder="" required ><?= htmlspecialchars($oferta['requisitos'] ?? '') ?></textarea>
     </div>
 
     <div class="col-md-8 mb-2">
@@ -128,26 +121,3 @@
     </div>
 
 </div>
-
-<!-- Script para vista previa de la imagen -->
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-                
-        const inputFoto = document.getElementById('foto');
-        const previewFoto = document.getElementById('previewFoto');
-                
-        inputFoto.addEventListener('change', function () {
-                
-            const archivo = this.files[0];
-                
-            if (archivo) {
-                const url = URL.createObjectURL(archivo);
-                
-                previewFoto.src = url;
-                previewFoto.style.display = 'block';
-            }
-                
-        });
-                
-    });
-</script>

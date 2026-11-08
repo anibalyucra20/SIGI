@@ -25,12 +25,40 @@ class OfertasController extends Controller
         $this->ofertasModel = new Ofertas();
         $this->empresaModel = new Empresas();
         $this->programaModel = new Programa();
+
+        // Asegurar contexto de Bolsa Laboral (módulo 7)
+        $moduloBolsa = 7;
+        if (($_SESSION['sigi_modulo_actual'] ?? 0) != $moduloBolsa) {
+            foreach (($_SESSION['sigi_permisos_usuario'] ?? []) as $permiso) {
+                if ($permiso['id_sistema'] == $moduloBolsa) {
+                    $_SESSION['sigi_modulo_actual'] = $moduloBolsa;
+                    $_SESSION['sigi_rol_actual']    = (int)$permiso['id_rol'];
+                    break;
+                }
+            }
+            if (($_SESSION['sigi_modulo_actual'] ?? 0) != $moduloBolsa && isset($_SESSION['sigi_user_id'])) {
+                $db = (new \Core\Model())->getDB();
+                $idUser = (int)$_SESSION['sigi_user_id'];
+                $rolUser = (int)$db->query("SELECT id_rol FROM sigi_usuarios WHERE id = $idUser")->fetchColumn();
+                if (in_array($rolUser, [1, 7, 8])) {
+                    $_SESSION['sigi_modulo_actual'] = $moduloBolsa;
+                    $_SESSION['sigi_rol_actual']    = $rolUser;
+                }
+            }
+        }
+
+        if (!\Core\Auth::user() || !\Core\Auth::tieneRolEnBolsa()) {
+            $_SESSION['flash_error'] = "Debe iniciar sesión para acceder al módulo de Bolsa de Trabajo.";
+            header('Location: ' . BASE_URL . '/login');
+            exit;
+        }
     }
 
     public function index()
     {
-        if (!\Core\Auth::esAdminBolsa()) {
-            header('Location: ' . BASE_URL . '/bolsa/ofertas');
+        if (!\Core\Auth::esAdminBolsa() && !\Core\Auth::esEstudianteBolsa()) {
+            $_SESSION['flash_error'] = "No tienes permisos para acceder a este módulo.";
+            header('Location: ' . BASE_URL . '/intranet');
             exit;
         }
 
@@ -39,7 +67,7 @@ class OfertasController extends Controller
 
         $this->view('bolsa/ofertas/index', [
             'module'    => 'bolsa',
-            'pageTitle' => 'Ofertas',
+            'pageTitle' => 'Ofertas Laborales',
             'empresas'  => $empresas,
             'programas' => $programas
         ]);
@@ -48,29 +76,34 @@ class OfertasController extends Controller
 
     public function data()
     {
-        if (\Core\Auth::esAdminBolsa()):
+        if (!\Core\Auth::esAdminBolsa() && !\Core\Auth::esEstudianteBolsa()) {
             header('Content-Type: application/json; charset=utf-8');
-            $draw      = $_GET['draw']  ?? 1;
-            $start     = $_GET['start'] ?? 0;
-            $length    = $_GET['length'] ?? 10;
-            $orderCol  = $_GET['order'][0]['column'] ?? 1;
-            $orderDir  = $_GET['order'][0]['dir']    ?? 'asc';
-
-            $filters = [
-                'id_empresa'       => $_GET['filter_empresa'] ?? null,
-                'programa_estudio' => $_GET['filter_programa'] ?? null,
-            ];
-
-            $result = $this->ofertasModel->ObtenerOfertas($filters, $length, $start, $orderCol, $orderDir);
-
-            echo json_encode([
-                'draw'            => (int)$draw,
-                'recordsTotal'    => (int)$result['total'],
-                'recordsFiltered' => (int)$result['total'],
-                'data'            => $result['data']
-            ], JSON_UNESCAPED_UNICODE);
+            http_response_code(403);
+            echo json_encode(['error' => 'No autorizado']);
             exit;
-        endif;
+        }
+
+        header('Content-Type: application/json; charset=utf-8');
+        $draw      = $_GET['draw']  ?? 1;
+        $start     = $_GET['start'] ?? 0;
+        $length    = $_GET['length'] ?? 10;
+        $orderCol  = $_GET['order'][0]['column'] ?? 1;
+        $orderDir  = $_GET['order'][0]['dir']    ?? 'asc';
+
+        $filters = [
+            'id_empresa'       => $_GET['filter_empresa'] ?? null,
+            'programa_estudio' => $_GET['filter_programa'] ?? null,
+            'solo_vigentes'    => !\Core\Auth::esAdminBolsa(),
+        ];
+
+        $result = $this->ofertasModel->ObtenerOfertas($filters, $length, $start, $orderCol, $orderDir);
+
+        echo json_encode([
+            'draw'            => (int)$draw,
+            'recordsTotal'    => (int)$result['total'],
+            'recordsFiltered' => (int)$result['total'],
+            'data'            => $result['data']
+        ], JSON_UNESCAPED_UNICODE);
         exit;
     }
 
