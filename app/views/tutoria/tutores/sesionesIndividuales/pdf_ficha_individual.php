@@ -49,7 +49,7 @@ if (in_array(strtoupper($semestreNombre), ['I', 'II'])) {
         font-weight: bold;
         color: #111827;
         text-align: center;
-        line-height: 1.2;
+        line-height: 1.15;
     }
     .inst-sub {
         font-size: 9.5pt;
@@ -63,7 +63,7 @@ if (in_array(strtoupper($semestreNombre), ['I', 'II'])) {
         font-weight: bold;
         color: #0f172a;
         text-align: center;
-        margin-top: 4px;
+        margin-top: 3px;
         margin-bottom: 2px;
     }
     .doc-title {
@@ -71,17 +71,17 @@ if (in_array(strtoupper($semestreNombre), ['I', 'II'])) {
         font-weight: bold;
         color: #0f172a;
         text-align: center;
-        margin-bottom: 6px;
+        margin-bottom: 5px;
     }
     .table-main {
         width: 100%;
         border-collapse: collapse;
         border: 1px solid #000000;
-        font-size: 7.5pt;
+        font-size: 7.2pt;
     }
     .table-main td, .table-main th {
         border: 1px solid #000000;
-        padding: 3.5px 4px;
+        padding: 2px 3.5px;
         vertical-align: top;
     }
     .bg-header {
@@ -93,9 +93,9 @@ if (in_array(strtoupper($semestreNombre), ['I', 'II'])) {
         font-weight: bold;
     }
     .text-box {
-        min-height: 48px;
-        font-size: 7.5pt;
-        line-height: 1.25;
+        min-height: 28px;
+        font-size: 7.2pt;
+        line-height: 1.2;
     }
     .footer-text {
         font-size: 6.8pt;
@@ -107,24 +107,24 @@ if (in_array(strtoupper($semestreNombre), ['I', 'II'])) {
 <!-- ENCABEZADO INSTITUCIONAL -->
 <table width="100%" cellpadding="0" cellspacing="0" border="0">
     <tr>
-        <td width="16%" align="left" valign="middle">
+        <td width="15%" align="left" valign="middle">
             <?php if (file_exists($rutaLogo)): ?>
-                <img src="<?= $rutaLogo ?>" width="52" height="52" />
+                <img src="<?= $rutaLogo ?>" width="50" height="50" />
             <?php endif; ?>
         </td>
-        <td width="84%" align="center" valign="middle">
+        <td width="85%" align="center" valign="middle">
             <div class="inst-title">INSTITUTO DE EDUCACIÓN SUPERIOR PÚBLICO</div>
             <div class="inst-title">“HUANTA”</div>
-            <div style="height: 3px;"></div>
+            <div style="height: 2px;"></div>
             <div class="inst-sub">UNIDAD DE BIENESTAR Y EMPLEABILIDAD</div>
         </td>
     </tr>
 </table>
 
 <!-- LÍNEA AZUL DE SEPARACIÓN -->
-<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 4px; margin-bottom: 8px;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 3px; margin-bottom: 5px;">
     <tr>
-        <td style="border-bottom: 2.5px solid #0284c7; height: 1px;"></td>
+        <td style="border-bottom: 2px solid #0284c7; height: 1px;"></td>
     </tr>
 </table>
 
@@ -142,13 +142,13 @@ if (in_array(strtoupper($semestreNombre), ['I', 'II'])) {
 
     <!-- Información del Estudiante -->
     <tr class="bg-header">
-        <td colspan="2" style="text-align: center; font-size: 8pt; letter-spacing: 0.5px;">INFORMACIÓN DEL ESTUDIANTE</td>
+        <td colspan="2" style="text-align: center; font-size: 7.8pt; letter-spacing: 0.5px;">INFORMACIÓN DEL ESTUDIANTE</td>
     </tr>
 
     <!-- Apellidos y nombres, Sexo, Edad -->
     <tr>
-        <td width="60%"><strong>Apellidos y nombres:</strong> <?= htmlspecialchars($sesion['estudiante_formato'] ?? '') ?></td>
-        <td width="40%">
+        <td width="55%"><strong>Apellidos y nombres:</strong> <?= htmlspecialchars($sesion['estudiante_formato'] ?? '') ?></td>
+        <td width="45%">
             <strong>Sexo:</strong> &nbsp;
             F [ <?= ($genero === 'F') ? '<strong>X</strong>' : '&nbsp;&nbsp;' ?> ] &nbsp;&nbsp;
             M [ <?= ($genero === 'M') ? '<strong>X</strong>' : '&nbsp;&nbsp;' ?> ] &nbsp;&nbsp;&nbsp;&nbsp;
@@ -158,8 +158,8 @@ if (in_array(strtoupper($semestreNombre), ['I', 'II'])) {
 
     <!-- Programa de estudios, Año, Semestre -->
     <tr>
-        <td width="60%"><strong>Programa de estudios:</strong> <?= htmlspecialchars($sesion['programa_nombre'] ?? 'General') ?></td>
-        <td width="40%">
+        <td width="55%"><strong>Programa de estudios:</strong> <?= htmlspecialchars($sesion['programa_nombre'] ?? 'General') ?></td>
+        <td width="45%">
             <strong>Año:</strong> <?= htmlspecialchars($anioEstudio) ?> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
             <strong>Semestre:</strong> <?= htmlspecialchars($semestreNombre) ?>
         </td>
@@ -179,13 +179,13 @@ if (in_array(strtoupper($semestreNombre), ['I', 'II'])) {
 
     <!-- Motivo -->
     <tr>
-        <td colspan="2" style="padding: 3px 4px;">
+        <td colspan="2" style="padding: 2px 4px;">
             <table width="100%" cellpadding="1" cellspacing="0" border="0" style="font-size: 7.2pt;">
                 <tr>
-                    <td width="10%" rowspan="2" valign="middle"><strong>Motivo:</strong></td>
+                    <td width="12%" rowspan="2" valign="middle"><strong>Motivo</strong></td>
                     <td width="20%">Académico: [ <?= $motAcad ? '<strong>X</strong>' : '&nbsp;&nbsp;' ?> ]</td>
-                    <td width="16%">Salud [ <?= $motSalud ? '<strong>X</strong>' : '&nbsp;&nbsp;' ?> ]</td>
-                    <td width="25%">Socioemocional [ <?= $motSocio ? '<strong>X</strong>' : '&nbsp;&nbsp;' ?> ]</td>
+                    <td width="15%">Salud [ <?= $motSalud ? '<strong>X</strong>' : '&nbsp;&nbsp;' ?> ]</td>
+                    <td width="24%">Socioemocional [ <?= $motSocio ? '<strong>X</strong>' : '&nbsp;&nbsp;' ?> ]</td>
                     <td width="29%">Otro: [ <?= $motOtro ? '<strong>X</strong>' : '&nbsp;&nbsp;' ?> ] Especifique: <?= $motOtro ? htmlspecialchars($sesion['motivo']) : '' ?></td>
                 </tr>
                 <tr>
@@ -203,7 +203,7 @@ if (in_array(strtoupper($semestreNombre), ['I', 'II'])) {
         <td colspan="2"><strong>Contenidos tratados:</strong></td>
     </tr>
     <tr>
-        <td colspan="2" style="min-height: 60px;">
+        <td colspan="2" style="min-height: 50px;">
             <div class="text-box">
                 <?= !empty($sesion['contenidos_tratados']) ? nl2br(htmlspecialchars($sesion['contenidos_tratados'])) : '<br/><br/><br/>' ?>
             </div>
@@ -215,7 +215,7 @@ if (in_array(strtoupper($semestreNombre), ['I', 'II'])) {
         <td colspan="2"><strong>Recomendaciones:</strong></td>
     </tr>
     <tr>
-        <td colspan="2" style="min-height: 50px;">
+        <td colspan="2" style="min-height: 45px;">
             <div class="text-box">
                 <?= !empty($sesion['recomendaciones']) ? nl2br(htmlspecialchars($sesion['recomendaciones'])) : '<br/><br/><br/>' ?>
             </div>
@@ -227,7 +227,7 @@ if (in_array(strtoupper($semestreNombre), ['I', 'II'])) {
         <td colspan="2"><strong>Compromiso del estudiante:</strong></td>
     </tr>
     <tr>
-        <td colspan="2" style="min-height: 50px;">
+        <td colspan="2" style="min-height: 45px;">
             <div class="text-box">
                 <?= !empty($sesion['compromiso_estudiante']) ? nl2br(htmlspecialchars($sesion['compromiso_estudiante'])) : '<br/><br/><br/>' ?>
             </div>
@@ -261,7 +261,7 @@ if (in_array(strtoupper($semestreNombre), ['I', 'II'])) {
 
     <!-- Nota al pie de Servicios -->
     <tr>
-        <td colspan="2" style="font-size: 6.8pt; color: #334155; line-height: 1.2;">
+        <td colspan="2" style="font-size: 6.8pt; color: #334155; line-height: 1.15;">
             <strong>(1) Servicios de la Unidad de Bienestar y Empleabilidad:</strong><br/>
             &bull; Social &nbsp;&nbsp;&nbsp;&nbsp;&bull; Psicopedagógico &nbsp;&nbsp;&nbsp;&nbsp;&bull; Salud &nbsp;&nbsp;&nbsp;&bull; Inserción laboral &nbsp;&nbsp;&nbsp;&bull; Capacitación
         </td>
@@ -269,13 +269,13 @@ if (in_array(strtoupper($semestreNombre), ['I', 'II'])) {
 </table>
 
 <!-- FIRMAS -->
-<div style="height: 38px;"></div>
-<table width="100%" cellpadding="0" cellspacing="0" border="0" style="text-align: center; font-size: 7.8pt;">
+<div style="height: 18px;"></div>
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="text-align: center; font-size: 7.5pt;">
     <tr>
         <td width="44%" align="center">
             __________________________________________<br/>
             <strong>Firma del tutor(a)</strong><br/>
-            <span style="font-size: 6.8pt; color: #475569;"><?= htmlspecialchars($sesion['docente_formato'] ?? '') ?></span>
+            <span style="font-size: 6.5pt; color: #475569;"><?= htmlspecialchars($sesion['docente_formato'] ?? '') ?></span>
         </td>
         <td width="12%">&nbsp;</td>
         <td width="44%" align="center">
@@ -287,12 +287,11 @@ if (in_array(strtoupper($semestreNombre), ['I', 'II'])) {
 </table>
 
 <!-- PIE DE PÁGINA -->
-<div style="height: 20px;"></div>
+<div style="height: 8px;"></div>
 <table width="100%" cellpadding="0" cellspacing="0" border="0">
     <tr>
-        <td style="border-top: 1px solid #cbd5e1; padding-top: 3px;" class="footer-text">
+        <td style="border-top: 1px solid #cbd5e1; padding-top: 2px;" class="footer-text">
             TEL: 66 322296 &nbsp;&nbsp;&nbsp;&bull;&nbsp;&nbsp;&nbsp; Dirección: Jr. Córdova N° 650 - Huanta &nbsp;&nbsp;&nbsp;&bull;&nbsp;&nbsp;&nbsp; Correo: contactos@iestphuanta.edu.pe &nbsp;&nbsp;&nbsp;&bull;&nbsp;&nbsp;&nbsp; Web: www.iestphuanta.edu.pe
         </td>
     </tr>
 </table>
-

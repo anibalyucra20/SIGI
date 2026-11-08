@@ -41,6 +41,10 @@
                         </div>
                     <?php endif; ?>
 
+                    <button type="button" class="btn btn-danger btn-sm font-weight-bold mb-2 mr-2" id="btn_export_pdf">
+                        <i class="fas fa-file-pdf mr-1"></i> Reporte Oficial PDF
+                    </button>
+
                     <button type="button" class="btn btn-success btn-sm font-weight-bold mb-2 mr-2" id="btn_export_consolidado">
                         <i class="fas fa-file-excel mr-1"></i> Informe Consolidado (.xlsx)
                     </button>
@@ -203,6 +207,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const sel = document.getElementById('filtro_tutor_reporte');
         return sel && sel.value ? '?id_docente=' + sel.value : '';
     }
+
+    document.getElementById('btn_export_pdf').addEventListener('click', function() {
+        window.open('<?= BASE_URL ?>/tutoria/reportes/exportarReportePdf' + getDocenteParam(), '_blank');
+    });
 
     document.getElementById('btn_export_consolidado').addEventListener('click', function() {
         window.location.href = '<?= BASE_URL ?>/tutoria/reportes/exportarConsolidadoExcel' + getDocenteParam();

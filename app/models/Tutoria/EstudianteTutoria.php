@@ -56,15 +56,33 @@ class EstudianteTutoria extends Model
         $sql = "SELECT te.*,
                        u.dni,
                        u.apellidos_nombres,
+                       u.genero,
+                       u.fecha_nacimiento,
+                       u.distrito_nacimiento,
+                       u.direccion,
+                       u.discapacidad,
                        u.correo,
                        u.telefono,
                        pe.nombre AS programa_nombre,
                        tp.id_sede,
                        tp.id_periodo_academico,
-                       tp.id_docente
+                       tp.id_docente,
+                       pa.nombre AS periodo_nombre,
+                       s.nombre AS sede_nombre,
+                       ud.apellidos_nombres AS docente_apellidos_nombres,
+                       ud.dni AS docente_dni,
+                       (SELECT ss.descripcion 
+                        FROM acad_matricula am
+                        INNER JOIN sigi_semestre ss ON am.id_semestre = ss.id
+                        WHERE am.id_estudiante = te.id_estudiante 
+                          AND am.id_periodo_academico = tp.id_periodo_academico 
+                        ORDER BY am.id DESC LIMIT 1) AS semestre_nombre
                 FROM tutoria_estudiantes te
                 INNER JOIN sigi_usuarios u ON te.id_estudiante = u.id
                 INNER JOIN tutoria_programacion tp ON te.id_programacion_tutoria = tp.id
+                LEFT JOIN sigi_periodo_academico pa ON tp.id_periodo_academico = pa.id
+                LEFT JOIN sigi_sedes s ON tp.id_sede = s.id
+                LEFT JOIN sigi_usuarios ud ON tp.id_docente = ud.id
                 LEFT JOIN sigi_programa_estudios pe ON u.id_programa_estudios = pe.id
                 WHERE te.id = :id";
 
@@ -79,6 +97,27 @@ class EstudianteTutoria extends Model
             $row['ApellidoMaterno'] = $nombres[1] ?? '';
             $row['Nombres']         = $nombres[2] ?? '';
             $row['nombre_completo'] = trim(($nombres[0] ?? '') . ' ' . ($nombres[1] ?? '') . ', ' . ($nombres[2] ?? ''));
+
+            // Docente
+            if (!empty($row['docente_apellidos_nombres'])) {
+                $docPartes = explode('_', trim($row['docente_apellidos_nombres']));
+                $row['docente_formato'] = trim(($docPartes[0] ?? '') . ' ' . ($docPartes[1] ?? '') . ', ' . ($docPartes[2] ?? ''));
+            } else {
+                $row['docente_formato'] = 'Docente Tutor';
+            }
+
+            // Calcular edad si fecha_nacimiento existe
+            if (!empty($row['fecha_nacimiento']) && $row['fecha_nacimiento'] !== '0000-00-00' && $row['fecha_nacimiento'] !== '2000-01-01') {
+                try {
+                    $fn = new \DateTime($row['fecha_nacimiento']);
+                    $hoy = new \DateTime();
+                    $row['edad'] = $hoy->diff($fn)->y;
+                } catch (\Throwable $e) {
+                    $row['edad'] = '';
+                }
+            } else {
+                $row['edad'] = '';
+            }
         }
 
         return $row;

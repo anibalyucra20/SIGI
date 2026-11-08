@@ -283,6 +283,10 @@ class SesionesController extends Controller
             $this->validarPermisoTutorando($tutorando);
         }
 
+        if (!defined('K_PATH_CACHE')) {
+            define('K_PATH_CACHE', sys_get_temp_dir() . '/');
+        }
+
         $pdf = new TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
         $pdf->SetCreator('SIGI - Sistema Integrado de Gestión Institucional');
         $pdf->SetAuthor('IESTP Huanta - Unidad de Bienestar y Empleabilidad');
@@ -544,6 +548,10 @@ class SesionesController extends Controller
 
         $estudiantes = $this->objEstudianteTutoria->listarPorProgramacion($sesion['id_tutoria']);
         $asistentesIds = json_decode($sesion['asistentes'] ?? '[]', true) ?: [];
+
+        if (!defined('K_PATH_CACHE')) {
+            define('K_PATH_CACHE', sys_get_temp_dir() . '/');
+        }
 
         $pdf = new TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
         $pdf->SetCreator('SIGI - Sistema Integrado de Gestión Institucional');

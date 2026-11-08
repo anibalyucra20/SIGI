@@ -125,4 +125,45 @@ class FichasController extends Controller
         $ctrl = new SesionesController();
         $ctrl->grupalPdf($id);
     }
+
+    /**
+     * Genera e imprime la Ficha de Evaluación Socioeconómica (Anexo 03) en PDF con TCPDF.
+     */
+    public function pdf($id_tutoria_estudiante)
+    {
+        $tutorando = $this->objEstudianteTutoria->find($id_tutoria_estudiante);
+        if (!$tutorando) {
+            $_SESSION['flash_error'] = "Estudiante no encontrado para generar ficha.";
+            header('Location: ' . BASE_URL . '/tutoria/tutores/fichas');
+            exit;
+        }
+
+        $items = $this->objRecojoInformacion->obtenerPorTutorando($id_tutoria_estudiante);
+
+        if (!defined('K_PATH_CACHE')) {
+            define('K_PATH_CACHE', sys_get_temp_dir() . '/');
+        }
+
+        $pdf = new \TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
+        $pdf->SetCreator('SIGI - Sistema Integrado de Gestión Institucional');
+        $pdf->SetAuthor('IESTP Huanta - Unidad de Bienestar y Empleabilidad');
+        $pdf->SetTitle('Ficha Socioeconómica - ' . $tutorando['nombre_completo']);
+        $pdf->setPrintHeader(false);
+        $pdf->setPrintFooter(false);
+        $pdf->SetMargins(12, 10, 12);
+        $pdf->SetAutoPageBreak(true, 8);
+        $pdf->AddPage();
+
+        $rutaLogo = __DIR__ . '/../../../public/img/logo.png';
+
+        ob_start();
+        include __DIR__ . '/../../views/tutoria/tutores/fichas/pdf_ficha_socioeconomica.php';
+        $html = ob_get_clean();
+
+        $pdf->writeHTML($html, true, false, true, false, '');
+
+        $nombreArchivo = 'Ficha_Socioeconomica_Anexo03_' . preg_replace('/[^A-Za-z0-9_]/', '', $tutorando['dni']) . '_' . date('Ymd') . '.pdf';
+        $pdf->Output($nombreArchivo, 'I');
+        exit;
+    }
 }

@@ -600,4 +600,108 @@ class ReportesController extends Controller
         $writer->save('php://output');
         exit;
     }
+
+    /**
+     * Genera el Reporte Oficial de Tutoría en formato PDF con TCPDF.
+     * Consolida las fichas oficiales (Anexo 05 - Ficha Individual y Anexo 04 - Ficha Grupal)
+     * reproduciendo fielmente la estructura del documento oficial de referencia.
+     */
+    public function exportarReportePdf()
+    {
+        $id_sede    = $_SESSION['sigi_sede_actual'] ?? 0;
+        $id_periodo = $_SESSION['sigi_periodo_actual_id'] ?? 0;
+        $esAdmin    = Auth::esAdminTutoria();
+
+        $id_docente = null;
+        if (!$esAdmin && Auth::esDocenteTutoria()) {
+            $id_docente = $_SESSION['sigi_user_id'] ?? 0;
+        } elseif (!empty($_GET['id_docente'])) {
+            $id_docente = (int)$_GET['id_docente'];
+        }
+
+        $filters = [
+            'id_sede'    => $id_sede,
+            'id_periodo' => $id_periodo,
+            'id_docente' => $id_docente
+        ];
+
+        // Obtener última sesión individual y última sesión grupal para el reporte muestra o según filtro
+        $sesionesInd  = $this->objSesionIndividual->listarParaReporte($filters);
+        $sesionesGrup = $this->objSesionGrupal->listarParaReporte($filters);
+
+        if (!defined('K_PATH_CACHE')) {
+            define('K_PATH_CACHE', sys_get_temp_dir() . '/');
+        }
+
+        $pdf = new \TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
+        $pdf->SetCreator('SIGI - Sistema Integrado de Gestión Institucional');
+        $pdf->SetAuthor('IESTP Huanta - Unidad de Bienestar y Empleabilidad');
+        $pdf->SetTitle('Reporte Oficial de Tutoría - IESTP Huanta');
+        $pdf->setPrintHeader(false);
+        $pdf->setPrintFooter(false);
+        $pdf->SetMargins(12, 10, 12);
+        $pdf->SetAutoPageBreak(true, 8);
+
+        $rutaLogo = __DIR__ . '/../../../public/img/logo.png';
+
+        // PÁGINA 1: FICHA DE TUTORÍA INDIVIDUAL (ANEXO 05)
+        $sesion = !empty($sesionesInd) ? $this->objSesionIndividual->find($sesionesInd[0]['id']) : [
+            'nro' => 1,
+            'docente_formato' => 'Docente Tutor Asignado',
+            'fecha_hora' => date('Y-m-d H:i:s'),
+            'estudiante_formato' => 'Estudiante Tutorando',
+            'estudiante_genero' => 'M',
+            'edad' => '20',
+            'programa_nombre' => 'Desarrollo de Sistemas de Información',
+            'semestre_nombre' => 'I',
+            'periodo_nombre' => date('Y'),
+            'solicitante' => 'TUTOR',
+            'motivo' => 'Académico y seguimiento de adaptación institucional',
+            'contenidos_tratados' => "1. Orientación sobre metodologías de estudio y organización del tiempo.\n2. Revisión de avance académico en unidades didácticas.",
+            'recomendaciones' => "1. Establecer un horario de estudio personal de 2 horas diarias.\n2. Asistir puntualmente a las sesiones de reforzamiento programadas.",
+            'compromiso_estudiante' => "El estudiante se compromete a cumplir con la entrega oportuna de tareas y participar activamente en clases.",
+            'seguimiento' => 1,
+            'fecha_prox_sesion' => date('Y-m-d H:i:s', strtotime('+15 days')),
+            'derivacion' => 0,
+            'servicio_derivacion' => ''
+        ];
+
+        $pdf->AddPage();
+        ob_start();
+        include __DIR__ . '/../../views/tutoria/tutores/sesionesIndividuales/pdf_ficha_individual.php';
+        $html1 = ob_get_clean();
+        $pdf->writeHTML($html1, true, false, true, false, '');
+
+        // PÁGINA 2: FICHA DE TUTORÍA GRUPAL (ANEXO 04)
+        $sesionGrupItem = !empty($sesionesGrup) ? $sesionesGrup[0] : null;
+        if ($sesionGrupItem) {
+            $sesion = $this->objSesionGrupal->find($sesionGrupItem['id']);
+            $estudiantes = $this->objEstudianteTutoria->listarPorProgramacion($sesion['id_tutoria']);
+            $asistentesIds = json_decode($sesion['asistentes'] ?? '[]', true) ?: [];
+        } else {
+            $sesion = [
+                'id' => 1,
+                'docente_formato' => 'Docente Tutor Asignado',
+                'fecha_hora' => date('Y-m-d H:i:s'),
+                'programa_nombre' => 'Desarrollo de Sistemas de Información',
+                'periodo_nombre' => date('Y'),
+                'objetivo_sesion' => 'Inducción, orientación institucional y reforzamiento académico integral.',
+                'contenidos' => "1. Presentación del plan de tutoría y reglamentos académicos.\n2. Estrategias de trabajo en equipo y habilidades blandas.",
+                'logro_objetivo' => 'Logrado',
+                'observaciones_sesion' => 'Participación activa y colaborativa de los estudiantes convocados.',
+                'recomendaciones' => 'Continuar con el acompañamiento en las semanas posteriores de evaluación.'
+            ];
+            $estudiantes = [];
+            $asistentesIds = [];
+        }
+
+        $pdf->AddPage();
+        ob_start();
+        include __DIR__ . '/../../views/tutoria/tutores/sesionesGrupales/pdf_ficha_grupal.php';
+        $html2 = ob_get_clean();
+        $pdf->writeHTML($html2, true, false, true, false, '');
+
+        $pdf->Output('Reporte_Oficial_Tutoria_' . date('Ymd_His') . '.pdf', 'I');
+        exit;
+    }
 }

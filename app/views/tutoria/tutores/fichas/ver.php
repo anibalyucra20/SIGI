@@ -5,6 +5,9 @@
         <div class="page-title-box d-flex align-items-center justify-content-between mb-3">
             <h4 class="mb-0">Ficha Diagnóstica y Recojo de Información</h4>
             <div class="page-title-right">
+                <a href="<?= BASE_URL ?>/tutoria/fichas/pdf/<?= $tutorando['id'] ?>" target="_blank" class="btn btn-danger btn-sm mr-2">
+                    <i class="fas fa-file-pdf mr-1"></i> Generar PDF (Anexo 03)
+                </a>
                 <a href="<?= BASE_URL ?>/tutoria/fichas/editar/<?= $tutorando['id'] ?>" class="btn btn-warning btn-sm mr-2">
                     <i class="fas fa-edit mr-1"></i> Modificar Respuestas
                 </a>

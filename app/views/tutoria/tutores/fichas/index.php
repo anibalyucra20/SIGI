@@ -100,6 +100,9 @@
                                         <a href="<?= BASE_URL ?>/tutoria/fichas/ver/<?= $est['id_tutoria_estudiante'] ?>" class="btn btn-info btn-sm" title="Ver Ficha Diagnóstica">
                                             <i class="fas fa-eye mr-1"></i> Diagnóstico
                                         </a>
+                                        <a href="<?= BASE_URL ?>/tutoria/fichas/pdf/<?= $est['id_tutoria_estudiante'] ?>" target="_blank" class="btn btn-danger btn-sm ml-1" title="Generar PDF Anexo 03">
+                                            <i class="fas fa-file-pdf"></i> PDF
+                                        </a>
                                         <a href="<?= BASE_URL ?>/tutoria/fichas/editar/<?= $est['id_tutoria_estudiante'] ?>" class="btn btn-primary btn-sm ml-1" title="Llenar o Editar Diagnóstico">
                                             <i class="fas fa-edit mr-1"></i> <?= $est['total_fichas'] > 0 ? 'Editar' : 'Llenar' ?>
                                         </a>

@@ -20,7 +20,7 @@ if (!empty($estudiantes) && is_array($estudiantes)) {
     }
 }
 $programas = array_unique($programas);
-$programaNombreStr = !empty($programas) ? implode(', ', $programas) : 'Todos los Programas';
+$programaNombreStr = !empty($programas) ? implode(', ', $programas) : 'General';
 
 // Periodo / Semestre
 $periodoSemestreStr = !empty($sesion['periodo_nombre']) ? $sesion['periodo_nombre'] : date('Y');
@@ -35,17 +35,17 @@ $asistentesIds = !empty($asistentesIds) ? $asistentesIds : [];
     body {
         font-family: helvetica, sans-serif;
         color: #000000;
-        font-size: 8pt;
+        font-size: 7.8pt;
     }
     .inst-title {
-        font-size: 11pt;
+        font-size: 10.5pt;
         font-weight: bold;
         color: #111827;
         text-align: center;
-        line-height: 1.2;
+        line-height: 1.15;
     }
     .inst-sub {
-        font-size: 9.5pt;
+        font-size: 9pt;
         font-weight: bold;
         color: #0284c7;
         text-align: center;
@@ -60,15 +60,15 @@ $asistentesIds = !empty($asistentesIds) ? $asistentesIds : [];
         margin-bottom: 2px;
     }
     .doc-title {
-        font-size: 10pt;
+        font-size: 9.5pt;
         font-weight: bold;
         color: #0f172a;
         text-align: center;
-        margin-bottom: 6px;
+        margin-bottom: 4px;
     }
     .tipo-box {
         border: 1px solid #000000;
-        font-size: 6.8pt;
+        font-size: 6.5pt;
         font-weight: bold;
         padding: 4px;
         text-align: center;
@@ -78,11 +78,11 @@ $asistentesIds = !empty($asistentesIds) ? $asistentesIds : [];
         width: 100%;
         border-collapse: collapse;
         border: 1px solid #000000;
-        font-size: 7.5pt;
+        font-size: 7pt;
     }
     .table-main td, .table-main th {
         border: 1px solid #000000;
-        padding: 3.5px 4px;
+        padding: 2px 3px;
         vertical-align: top;
     }
     .bg-header {
@@ -96,14 +96,14 @@ $asistentesIds = !empty($asistentesIds) ? $asistentesIds : [];
     .table-asistencia {
         width: 100%;
         border-collapse: collapse;
-        font-size: 7.2pt;
+        font-size: 6.5pt;
     }
     .table-asistencia td, .table-asistencia th {
         border: 1px solid #000000;
-        padding: 2.5px 3px;
+        padding: 1.2px 2.5px;
     }
     .footer-text {
-        font-size: 6.8pt;
+        font-size: 6.5pt;
         color: #64748b;
         text-align: center;
     }
@@ -112,29 +112,29 @@ $asistentesIds = !empty($asistentesIds) ? $asistentesIds : [];
 <!-- ENCABEZADO INSTITUCIONAL CON CUADRO DE TIPO A LA DERECHA -->
 <table width="100%" cellpadding="0" cellspacing="0" border="0">
     <tr>
-        <td width="15%" align="left" valign="middle">
+        <td width="14%" align="left" valign="middle">
             <?php if (file_exists($rutaLogo)): ?>
-                <img src="<?= $rutaLogo ?>" width="50" height="50" />
+                <img src="<?= $rutaLogo ?>" width="46" height="46" />
             <?php endif; ?>
         </td>
-        <td width="55%" align="center" valign="middle">
+        <td width="56%" align="center" valign="middle">
             <div class="inst-title">INSTITUTO DE EDUCACIÓN SUPERIOR PÚBLICO</div>
             <div class="inst-title">“HUANTA”</div>
-            <div style="height: 3px;"></div>
+            <div style="height: 2px;"></div>
             <div class="inst-sub">UNIDAD DE BIENESTAR Y EMPLEABILIDAD</div>
         </td>
         <td width="30%" align="right" valign="top">
             <div class="tipo-box">
-                TIPO: NIVELACIÓN, REFORZAMIENTO ACADÉMICO, MENTORÍA.
+                TIPO : NIVELACIÓN, REFORZAMIENTO ACADÉMICO, MENTORÍA .
             </div>
         </td>
     </tr>
 </table>
 
 <!-- LÍNEA AZUL DE SEPARACIÓN -->
-<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 4px; margin-bottom: 6px;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 3px; margin-bottom: 4px;">
     <tr>
-        <td style="border-bottom: 2.5px solid #0284c7; height: 1px;"></td>
+        <td style="border-bottom: 2px solid #0284c7; height: 1px;"></td>
     </tr>
 </table>
 
@@ -143,7 +143,7 @@ $asistentesIds = !empty($asistentesIds) ? $asistentesIds : [];
 <div class="doc-title">FICHA DE TUTORÍA GRUPAL N° <?= htmlspecialchars(str_pad($sesion['id'] ?? '1', 4, '0', STR_PAD_LEFT)) ?></div>
 
 <!-- TABLA PRINCIPAL DE LA FICHA GRUPAL -->
-<table class="table-main" cellpadding="3" cellspacing="0">
+<table class="table-main" cellpadding="2" cellspacing="0">
     <!-- Tutor y Fecha -->
     <tr>
         <td width="65%"><strong>Tutor(a):</strong> <?= htmlspecialchars($sesion['docente_formato'] ?? '') ?></td>
@@ -165,23 +165,27 @@ $asistentesIds = !empty($asistentesIds) ? $asistentesIds : [];
     <!-- Contenidos tratados -->
     <tr>
         <td colspan="2">
-            <strong>Contenidos tratados:</strong><br/>
-            <?= !empty($sesion['contenidos']) ? nl2br(htmlspecialchars($sesion['contenidos'])) : '1.<br/>2.' ?>
+            <strong>Contenidos tratados</strong><br/>
+            <?php if (!empty($sesion['contenidos'])): ?>
+                <?= nl2br(htmlspecialchars($sesion['contenidos'])) ?>
+            <?php else: ?>
+                1.<br/>2.
+            <?php endif; ?>
         </td>
     </tr>
 
     <!-- Asistencia de estudiantes (Encabezado) -->
     <tr class="bg-header">
-        <td colspan="2" align="center" style="font-size: 7.8pt; letter-spacing: 0.5px;">Asistencia de estudiantes</td>
+        <td colspan="2" align="center" style="font-size: 7.2pt; letter-spacing: 0.5px;">Asistencia de estudiantes</td>
     </tr>
 
     <!-- Subtabla de Asistencia (N° | Apellidos y Nombres | Firma) -->
     <tr>
         <td colspan="2" style="padding: 0;">
-            <table class="table-asistencia" cellpadding="2" cellspacing="0">
+            <table class="table-asistencia" cellpadding="1.5" cellspacing="0">
                 <tr class="bg-sub">
-                    <th width="8%" align="center"><strong>N°</strong></th>
-                    <th width="64%" align="left"><strong>Apellidos y Nombres</strong></th>
+                    <th width="7%" align="center"><strong>N°</strong></th>
+                    <th width="65%" align="left"><strong>Apellidos y Nombres</strong></th>
                     <th width="28%" align="center"><strong>Firma</strong></th>
                 </tr>
                 <?php
@@ -191,10 +195,10 @@ $asistentesIds = !empty($asistentesIds) ? $asistentesIds : [];
                     $asistio = $est ? in_array((int)$est['id_estudiante'], $asistentesIds) : false;
                 ?>
                 <tr>
-                    <td align="center" width="8%"><?= str_pad($i + 1, 2, '0', STR_PAD_LEFT) ?></td>
-                    <td width="64%"><?= $est ? htmlspecialchars($est['nombre_completo']) : '&nbsp;' ?></td>
+                    <td align="center" width="7%"><?= str_pad($i + 1, 2, '0', STR_PAD_LEFT) ?></td>
+                    <td width="65%"><?= $est ? htmlspecialchars($est['nombre_completo']) : '&nbsp;' ?></td>
                     <td width="28%" align="center">
-                        <?= $asistio ? '<span style="color:#0284c7; font-size:6.5pt; font-weight:bold;">[ ASISTIÓ ]</span>' : '&nbsp;' ?>
+                        <?= $asistio ? '<span style="color:#0284c7; font-size:6.2pt; font-weight:bold;">[ ASISTIÓ ]</span>' : '&nbsp;' ?>
                     </td>
                 </tr>
                 <?php endfor; ?>
@@ -204,8 +208,8 @@ $asistentesIds = !empty($asistentesIds) ? $asistentesIds : [];
 
     <!-- Logro del objetivo -->
     <tr>
-        <td colspan="2" style="padding: 3px 4px;">
-            <table width="100%" cellpadding="1" cellspacing="0" border="0" style="font-size: 7.2pt;">
+        <td colspan="2" style="padding: 2px 3px;">
+            <table width="100%" cellpadding="1" cellspacing="0" border="0" style="font-size: 7pt;">
                 <tr>
                     <td width="28%"><strong>Logro del objetivo: (Marque)</strong></td>
                     <td width="18%">No logrado [ <?= ($logroNormalizado === 'no logrado') ? '<strong>X</strong>' : '&nbsp;&nbsp;' ?> ]</td>
@@ -219,11 +223,11 @@ $asistentesIds = !empty($asistentesIds) ? $asistentesIds : [];
 
     <!-- Observaciones de la sesión -->
     <tr class="bg-sub">
-        <td colspan="2"><strong>Observaciones de la sesión:</strong></td>
+        <td colspan="2"><strong>Observaciones de la sesión :</strong></td>
     </tr>
     <tr>
-        <td colspan="2" style="min-height: 40px;">
-            <?= !empty($sesion['observaciones_sesion']) ? nl2br(htmlspecialchars($sesion['observaciones_sesion'])) : '<br/><br/>' ?>
+        <td colspan="2" style="min-height: 20px;">
+            <?= !empty($sesion['observaciones_sesion']) ? nl2br(htmlspecialchars($sesion['observaciones_sesion'])) : '<br/>' ?>
         </td>
     </tr>
 
@@ -232,20 +236,20 @@ $asistentesIds = !empty($asistentesIds) ? $asistentesIds : [];
         <td colspan="2"><strong>Recomendaciones:</strong></td>
     </tr>
     <tr>
-        <td colspan="2" style="min-height: 40px;">
-            <?= !empty($sesion['recomendaciones']) ? nl2br(htmlspecialchars($sesion['recomendaciones'])) : '<br/><br/>' ?>
+        <td colspan="2" style="min-height: 20px;">
+            <?= !empty($sesion['recomendaciones']) ? nl2br(htmlspecialchars($sesion['recomendaciones'])) : '<br/>' ?>
         </td>
     </tr>
 </table>
 
 <!-- FIRMAS -->
-<div style="height: 38px;"></div>
-<table width="100%" cellpadding="0" cellspacing="0" border="0" style="text-align: center; font-size: 7.8pt;">
+<div style="height: 16px;"></div>
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="text-align: center; font-size: 7.2pt;">
     <tr>
         <td width="44%" align="center">
             __________________________________________<br/>
             <strong>Firma del tutor(a)</strong><br/>
-            <span style="font-size: 6.8pt; color: #475569;"><?= htmlspecialchars($sesion['docente_formato'] ?? '') ?></span>
+            <span style="font-size: 6.2pt; color: #475569;"><?= htmlspecialchars($sesion['docente_formato'] ?? '') ?></span>
         </td>
         <td width="12%">&nbsp;</td>
         <td width="44%" align="center">
@@ -257,12 +261,11 @@ $asistentesIds = !empty($asistentesIds) ? $asistentesIds : [];
 </table>
 
 <!-- PIE DE PÁGINA -->
-<div style="height: 20px;"></div>
+<div style="height: 6px;"></div>
 <table width="100%" cellpadding="0" cellspacing="0" border="0">
     <tr>
-        <td style="border-top: 1px solid #cbd5e1; padding-top: 3px;" class="footer-text">
+        <td style="border-top: 1px solid #cbd5e1; padding-top: 2px;" class="footer-text">
             TEL: 66 322296 &nbsp;&nbsp;&nbsp;&bull;&nbsp;&nbsp;&nbsp; Dirección: Jr. Córdova N° 650 - Huanta &nbsp;&nbsp;&nbsp;&bull;&nbsp;&nbsp;&nbsp; Correo: contactos@iestphuanta.edu.pe &nbsp;&nbsp;&nbsp;&bull;&nbsp;&nbsp;&nbsp; Web: www.iestphuanta.edu.pe
         </td>
     </tr>
 </table>
-
