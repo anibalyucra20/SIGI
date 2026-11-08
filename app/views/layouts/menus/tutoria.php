@@ -12,36 +12,27 @@
                     <i class="mdi mdi-home-analytics"></i> Inicio
                 </a>
             </li>
-            <!-- Menú normal solo si es administrador -->
-            <?php if (\Core\Auth::tieneRolEnTutoria()): ?>
-                <?php if (\Core\Auth::esAdminTutoria()): ?>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle arrow-none" href="#" id="nav-periodos" role="button"
-                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <i class="mdi mdi-account-circle"></i> Tutores<div class="arrow-down"></div>
-                        </a>
-                        <div class="dropdown-menu" aria-labelledby="nav-periodos">
-                            <a href="<?= BASE_URL ?>/tutoria/programacion" class="dropdown-item">Tutores</a>
-                            <a href="<?= BASE_URL ?>/tutoria/tutores/sesiones" class="dropdown-item">Sesiones de Tutoria</a>
-                            <a href="<?= BASE_URL ?>/tutoria/tutores/fichas" class="dropdown-item">Reportes de Tutores</a>
-                        </div>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link"
-                            href="<?= BASE_URL ?>/tutoria/favoritos">
-                            <i class="far fa-user"></i> Estudiantes
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link <?= strpos($_SERVER['REQUEST_URI'], '/reportes') !== false ? 'active' : '' ?>"
-                            href="<?= BASE_URL ?>/tutoria/reportes">
-                            <i class="mdi mdi-book"></i> Reportes
-                        </a>
-                    </li>
-                <?php endif; ?>
-            <?php else: ?>
-                <!-- Aquí va solo lo mínimo, o un mensaje, o nada -->
-                <!-- O simplemente no muestres nada más -->
+            <?php if (\Core\Auth::esAdminTutoria() || \Core\Auth::esDocenteTutoria()): ?>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle arrow-none" href="#" id="nav-tutoria" role="button"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="mdi mdi-account-circle"></i> <?= \Core\Auth::esAdminTutoria() ? 'Gestión de Tutoría' : 'Mi Tutoría' ?><div class="arrow-down"></div>
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="nav-tutoria">
+                        <?php if (\Core\Auth::esAdminTutoria()): ?>
+                            <a href="<?= BASE_URL ?>/tutoria/programacion" class="dropdown-item">Programación de Tutores</a>
+                        <?php endif; ?>
+                        <a href="<?= BASE_URL ?>/tutoria/tutores/sesionesIndividuales" class="dropdown-item">Sesiones Individuales</a>
+                        <a href="<?= BASE_URL ?>/tutoria/tutores/sesionesGrupales" class="dropdown-item">Sesiones Grupales</a>
+                        <a href="<?= BASE_URL ?>/tutoria/tutores/fichas" class="dropdown-item">Fichas de Tutoría</a>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= strpos($_SERVER['REQUEST_URI'], '/reportes') !== false ? 'active' : '' ?>"
+                        href="<?= BASE_URL ?>/tutoria/reportes">
+                        <i class="mdi mdi-book"></i> Reportes
+                    </a>
+                </li>
             <?php endif; ?>
         </ul>
     </div>
