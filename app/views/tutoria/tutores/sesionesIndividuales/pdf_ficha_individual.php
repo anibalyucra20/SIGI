@@ -31,8 +31,8 @@ $motOtro  = (!$motAcad && !$motSalud && !$motSocio && !$motFam && !$motEcon && !
 $motOtroEsp = $motOtro ? trim($sesion['motivo']) : '';
 
 // Año y Semestre
-$semestreNombre = !empty($sesion['semestre_nombre']) ? $sesion['semestre_nombre'] : '-';
-$anioEstudio = '-';
+$semestreNombre = !empty($sesion['semestre_nombre']) ? $sesion['semestre_nombre'] : '';
+$anioEstudio = '';
 if (in_array(strtoupper($semestreNombre), ['I', 'II'])) {
     $anioEstudio = '1°';
 } elseif (in_array(strtoupper($semestreNombre), ['III', 'IV'])) {
@@ -72,14 +72,29 @@ if (!function_exists('tutoria_dividir_lineas')) {
     }
 }
 
-$lineasContenidos      = tutoria_dividir_lineas($sesion['contenidos_tratados'] ?? '', 4, 88);
+// 3 líneas para contenidos, 4 para recomendaciones, 4 para compromiso (idéntico al PDF original)
+$lineasContenidos      = tutoria_dividir_lineas($sesion['contenidos_tratados'] ?? '', 3, 88);
 $lineasRecomendaciones = tutoria_dividir_lineas($sesion['recomendaciones'] ?? '', 4, 88);
 $lineasCompromiso      = tutoria_dividir_lineas($sesion['compromiso_estudiante'] ?? '', 4, 88);
 
-// Logo institucional
-$logoPath = __DIR__ . '/../../logo_institucion.jpg';
-if (!file_exists($logoPath)) {
-    $logoPath = __DIR__ . '/../../../../public/img/logo.png';
+// Resolución de ruta absoluta del logo oficial
+$candidatosLogo = [
+    __DIR__ . '/logo_institucion.jpg',
+    __DIR__ . '/../../logo_institucion.jpg',
+    __DIR__ . '/../../../../public/img/logo.png'
+];
+$logoPath = '';
+foreach ($candidatosLogo as $cand) {
+    if (file_exists($cand)) {
+        $logoPath = str_replace('\\', '/', realpath($cand));
+        break;
+    }
+}
+
+// Inserción directa de alta precisión del logo en TCPDF
+if (isset($pdf) && is_object($pdf) && $logoPath && file_exists($logoPath)) {
+    // Coordenadas exactas extraídas del PDF original: X=25.0mm, Y=10.0mm, W=29.35mm, H=10.18mm
+    $pdf->Image($logoPath, 25, 10, 29.35, 10.18, '', '', '', true, 300, '', false, false, 0, false, false, false);
 }
 ?>
 <style>
@@ -90,7 +105,7 @@ if (!file_exists($logoPath)) {
     }
     .inst-title {
         font-family: Arial, Helvetica, sans-serif;
-        font-size: 11.5pt;
+        font-size: 11pt;
         font-weight: bold;
         color: #001F5F;
         text-align: center;
@@ -98,7 +113,7 @@ if (!file_exists($logoPath)) {
     }
     .inst-sub {
         font-family: Arial, Helvetica, sans-serif;
-        font-size: 10.5pt;
+        font-size: 10pt;
         font-weight: bold;
         color: #006FC0;
         text-align: center;
@@ -106,18 +121,18 @@ if (!file_exists($logoPath)) {
     }
     .anexo-title {
         font-family: Arial, Helvetica, sans-serif;
-        font-size: 10.5pt;
+        font-size: 10pt;
         font-weight: bold;
-        color: #4F81BC;
+        color: #000000;
         text-align: center;
-        margin-top: 4px;
+        margin-top: 5px;
         margin-bottom: 2px;
     }
     .doc-title {
         font-family: Arial, Helvetica, sans-serif;
-        font-size: 10.5pt;
+        font-size: 10pt;
         font-weight: bold;
-        color: #4F81BC;
+        color: #000000;
         text-align: center;
         margin-bottom: 5px;
     }
@@ -128,21 +143,9 @@ if (!file_exists($logoPath)) {
         font-size: 8.5pt;
     }
     table.ficha-table td {
-        border: 0.5pt solid #4F81BC;
-        padding: 2.5px 4px;
+        border: 0.5pt solid #000000;
+        padding: 2px 4px;
         vertical-align: middle;
-    }
-    .lbl {
-        color: #4F81BC;
-        font-weight: bold;
-    }
-    .val {
-        color: #000000;
-    }
-    .chk {
-        font-family: Arial, Helvetica, sans-serif;
-        font-weight: bold;
-        color: #000000;
     }
     .ruled-line {
         height: 16px;
@@ -150,18 +153,25 @@ if (!file_exists($logoPath)) {
         font-size: 8pt;
         padding-left: 6px;
         vertical-align: middle;
+        border: 0.5pt solid #000000;
+    }
+    .chk {
+        font-weight: bold;
+        color: #000000;
     }
 </style>
 
 <!-- ENCABEZADO INSTITUCIONAL -->
 <table width="100%" cellpadding="0" cellspacing="0" border="0">
     <tr>
-        <td width="22%" align="left" valign="middle">
-            <?php if (file_exists($logoPath)): ?>
-                <img src="<?= $logoPath ?>" width="105" height="36" />
+        <td width="22%" align="left" valign="top">
+            <?php if (!isset($pdf) && $logoPath): ?>
+                <img src="<?= $logoPath ?>" width="104" height="36" />
+            <?php else: ?>
+                &nbsp;
             <?php endif; ?>
         </td>
-        <td width="78%" align="center" valign="middle">
+        <td width="78%" align="center" valign="top">
             <div class="inst-title">INSTITUTO DE EDUCACIÓN SUPERIOR PÚBLICO</div>
             <div class="inst-title">“HUANTA”</div>
             <div class="inst-sub">UNIDAD DE BIENESTAR Y EMPLEABILIDAD</div>
@@ -169,25 +179,32 @@ if (!file_exists($logoPath)) {
     </tr>
 </table>
 
+<!-- LÍNEA SEPARADORA AZUL SUPERIOR -->
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 3px; margin-bottom: 5px;">
+    <tr>
+        <td style="border-bottom: 1.5pt solid #006FC0; height: 1px;"></td>
+    </tr>
+</table>
+
 <!-- TÍTULO DEL DOCUMENTO -->
 <div class="anexo-title">ANEXO 05</div>
-<div class="doc-title">FICHA DE TUTORÍA INDIVIDUAL N° <?= !empty($sesion['nro']) ? htmlspecialchars(str_pad($sesion['nro'], 4, '0', STR_PAD_LEFT)) : '______' ?></div>
+<div class="doc-title">FICHA DE TUTORÍA INDIVIDUAL N° <?= !empty($sesion['nro']) ? htmlspecialchars(str_pad($sesion['nro'], 3, '0', STR_PAD_LEFT)) : '______' ?></div>
 
 <!-- TABLA PRINCIPAL DE LA FICHA INDIVIDUAL -->
 <table class="ficha-table" cellpadding="2.5" cellspacing="0">
     <!-- Fila 1: Tutor y Fecha -->
     <tr>
         <td width="71%">
-            <span class="lbl">Tutor(a):</span> <span class="val"><?= htmlspecialchars($sesion['docente_formato'] ?? '') ?></span>
+            Tutor(a): <?= htmlspecialchars($sesion['docente_formato'] ?? '') ?>
         </td>
         <td width="29%">
-            <span class="lbl">Fecha:</span> <span class="val"><?= !empty($sesion['fecha_hora']) ? date('d/m/Y', strtotime($sesion['fecha_hora'])) : date('d/m/Y') ?></span>
+            Fecha: <?= !empty($sesion['fecha_hora']) ? date('d/m/Y', strtotime($sesion['fecha_hora'])) : '' ?>
         </td>
     </tr>
 
     <!-- Fila 2: Cabecera Estudiante -->
     <tr>
-        <td colspan="2" align="center" style="font-weight: bold; color: #4F81BC; font-size: 9pt;">
+        <td colspan="2" align="center" style="font-weight: normal; font-size: 8.8pt;">
             INFORMACIÓN DEL ESTUDIANTE
         </td>
     </tr>
@@ -195,89 +212,77 @@ if (!file_exists($logoPath)) {
     <!-- Fila 3: Apellidos y nombres, Sexo, Edad -->
     <tr>
         <td width="71%">
-            <span class="lbl">Apellidos y nombres:</span> <span class="val"><?= htmlspecialchars($sesion['estudiante_formato'] ?? '') ?></span>
+            Apellidos y nombres: <?= htmlspecialchars($sesion['estudiante_formato'] ?? '') ?>
         </td>
         <td width="29%">
-            <span class="lbl">Sexo:</span>
-            <span class="lbl">F [</span> <span class="chk"><?= ($genero === 'F') ? 'X' : '&nbsp;' ?></span> <span class="lbl">]</span>
-            <span class="lbl">M [</span> <span class="chk"><?= ($genero === 'M') ? 'X' : '&nbsp;' ?></span> <span class="lbl">]</span>
-            &nbsp;
-            <span class="lbl">Edad:</span> <span class="val"><?= htmlspecialchars($edad ?: '-') ?></span>
+            Sexo: &nbsp; F [ <span class="chk"><?= ($genero === 'F') ? 'X' : '&nbsp;' ?></span> ] &nbsp; M [ <span class="chk"><?= ($genero === 'M') ? 'X' : '&nbsp;' ?></span> ] &nbsp; Edad: <?= htmlspecialchars($edad ?: '') ?>
         </td>
     </tr>
 
     <!-- Fila 4: Programa de estudios, Año, Semestre -->
     <tr>
         <td width="71%">
-            <span class="lbl">Programa de estudios:</span> <span class="val"><?= htmlspecialchars($sesion['programa_nombre'] ?? 'General') ?></span>
+            Programa de estudios: <?= htmlspecialchars($sesion['programa_nombre'] ?? '') ?>
         </td>
         <td width="29%">
-            <span class="lbl">Año:</span> <span class="val"><?= htmlspecialchars($anioEstudio) ?></span>
-            &nbsp;&nbsp;&nbsp;&nbsp;
-            <span class="lbl">Semestre:</span> <span class="val"><?= htmlspecialchars($semestreNombre) ?></span>
+            Año: <?= htmlspecialchars($anioEstudio) ?> &nbsp;&nbsp;&nbsp;&nbsp; Semestre: <?= htmlspecialchars($semestreNombre) ?>
         </td>
     </tr>
 
     <!-- Fila 5: Solicitante -->
     <tr>
         <td colspan="2">
-            <span class="lbl">Solicitante:</span>
-            &nbsp;&nbsp;&nbsp;
-            <span class="lbl">Docente [</span> <span class="chk"><?= ($solicitanteTipo === 'DOCENTE') ? 'X' : '&nbsp;' ?></span> <span class="lbl">]</span>
-            &nbsp;&nbsp;
-            <span class="lbl">Estudiante: [</span> <span class="chk"><?= ($solicitanteTipo === 'ESTUDIANTE') ? 'X' : '&nbsp;' ?></span> <span class="lbl">]</span>
-            &nbsp;&nbsp;
-            <span class="lbl">Familiar: [</span> <span class="chk"><?= ($solicitanteTipo === 'FAMILIAR') ? 'X' : '&nbsp;' ?></span> <span class="lbl">]</span>
-            &nbsp;&nbsp;
-            <span class="lbl">Otro: [</span> <span class="chk"><?= ($solicitanteTipo === 'OTRO') ? 'X' : '&nbsp;' ?></span> <span class="lbl">]</span>
-            &nbsp;&nbsp;
-            <span class="lbl">Especifique:</span> <span class="val"><?= htmlspecialchars($solicitanteEspecifique) ?></span>
+            Solicitante: &nbsp;&nbsp;
+            Docente [ <span class="chk"><?= ($solicitanteTipo === 'DOCENTE') ? 'X' : '&nbsp;' ?></span> ] &nbsp;&nbsp;
+            Estudiante: [ <span class="chk"><?= ($solicitanteTipo === 'ESTUDIANTE') ? 'X' : '&nbsp;' ?></span> ] &nbsp;&nbsp;
+            Familiar: [ <span class="chk"><?= ($solicitanteTipo === 'FAMILIAR') ? 'X' : '&nbsp;' ?></span> ] &nbsp;&nbsp;
+            Otro: [ <span class="chk"><?= ($solicitanteTipo === 'OTRO') ? 'X' : '&nbsp;' ?></span> ] &nbsp;&nbsp;
+            Especifique: <?= htmlspecialchars($solicitanteEspecifique) ?>
         </td>
     </tr>
 
-    <!-- Fila 6: Motivo (Estructura de 2 filas con 5 columnas internas) -->
+    <!-- Fila 6: Motivo (Estructura de 2 filas y 5 columnas) -->
     <tr>
         <td colspan="2" style="padding: 0;">
             <table width="100%" cellpadding="2.5" cellspacing="0" style="border-collapse: collapse; font-family: Arial, Helvetica, sans-serif; font-size: 8.5pt;">
                 <tr>
-                    <td width="10%" rowspan="2" align="center" valign="middle" style="border: none; border-right: 0.5pt solid #4F81BC; color: #4F81BC; font-weight: bold;">
+                    <td width="9%" rowspan="2" align="center" valign="middle" style="border: none; border-right: 0.5pt solid #000000;">
                         Motivo
                     </td>
-                    <td width="20%" style="border: none; border-right: 0.5pt solid #4F81BC; border-bottom: 0.5pt solid #4F81BC;">
-                        <span class="lbl">Académico: [</span> <span class="chk"><?= $motAcad ? 'X' : '&nbsp;' ?></span> <span class="lbl">]</span>
+                    <td width="20%" style="border: none; border-right: 0.5pt solid #000000; border-bottom: 0.5pt solid #000000;">
+                        Académico: [ <span class="chk"><?= $motAcad ? 'X' : '&nbsp;' ?></span> ]
                     </td>
-                    <td width="16%" style="border: none; border-right: 0.5pt solid #4F81BC; border-bottom: 0.5pt solid #4F81BC;">
-                        <span class="lbl">Salud [</span> <span class="chk"><?= $motSalud ? 'X' : '&nbsp;' ?></span> <span class="lbl">]</span>
+                    <td width="16%" style="border: none; border-right: 0.5pt solid #000000; border-bottom: 0.5pt solid #000000;">
+                        Salud [ <span class="chk"><?= $motSalud ? 'X' : '&nbsp;' ?></span> ]
                     </td>
-                    <td width="23%" style="border: none; border-right: 0.5pt solid #4F81BC; border-bottom: 0.5pt solid #4F81BC;">
-                        <span class="lbl">Socioemocional [</span> <span class="chk"><?= $motSocio ? 'X' : '&nbsp;' ?></span> <span class="lbl">]</span>
+                    <td width="24%" style="border: none; border-right: 0.5pt solid #000000; border-bottom: 0.5pt solid #000000;">
+                        Socioemocional [ <span class="chk"><?= $motSocio ? 'X' : '&nbsp;' ?></span> ]
                     </td>
-                    <td width="31%" style="border: none; border-bottom: 0.5pt solid #4F81BC;">
-                        <span class="lbl">Otro: [</span> <span class="chk"><?= $motOtro ? 'X' : '&nbsp;' ?></span> <span class="lbl">]</span>
-                        <span class="lbl">Especifique:</span> <span class="val"><?= htmlspecialchars($motOtroEsp) ?></span>
+                    <td width="31%" style="border: none; border-bottom: 0.5pt solid #000000;">
+                        Otro: [ <span class="chk"><?= $motOtro ? 'X' : '&nbsp;' ?></span> ] Especifique: <?= htmlspecialchars($motOtroEsp) ?>
                     </td>
                 </tr>
                 <tr>
-                    <td style="border: none; border-right: 0.5pt solid #4F81BC;">
-                        <span class="lbl">Familiar: [</span> <span class="chk"><?= $motFam ? 'X' : '&nbsp;' ?></span> <span class="lbl">]</span>
+                    <td style="border: none; border-right: 0.5pt solid #000000;">
+                        Familiar: [ <span class="chk"><?= $motFam ? 'X' : '&nbsp;' ?></span> ]
                     </td>
-                    <td style="border: none; border-right: 0.5pt solid #4F81BC;">
-                        <span class="lbl">Económico [</span> <span class="chk"><?= $motEcon ? 'X' : '&nbsp;' ?></span> <span class="lbl">]</span>
+                    <td style="border: none; border-right: 0.5pt solid #000000;">
+                        Económico [ <span class="chk"><?= $motEcon ? 'X' : '&nbsp;' ?></span> ]
                     </td>
-                    <td style="border: none; border-right: 0.5pt solid #4F81BC;">
-                        <span class="lbl">Laboral: [</span> <span class="chk"><?= $motLab ? 'X' : '&nbsp;' ?></span> <span class="lbl">]</span>
+                    <td style="border: none; border-right: 0.5pt solid #000000;">
+                        Laboral: [ <span class="chk"><?= $motLab ? 'X' : '&nbsp;' ?></span> ]
                     </td>
                     <td style="border: none;">
-                        <span class="lbl">Horario: [</span> <span class="chk"><?= $motHor ? 'X' : '&nbsp;' ?></span> <span class="lbl">]</span>
+                        Horario: [ <span class="chk"><?= $motHor ? 'X' : '&nbsp;' ?></span> ]
                     </td>
                 </tr>
             </table>
         </td>
     </tr>
 
-    <!-- Fila 7: Contenidos tratados (Cabecera + 4 líneas pautadas) -->
+    <!-- Fila 7: Contenidos tratados (Cabecera + 3 líneas pautadas) -->
     <tr>
-        <td colspan="2" class="lbl" style="background-color: #ffffff;">Contenidos tratados:</td>
+        <td colspan="2">Contenidos tratados:</td>
     </tr>
     <?php foreach ($lineasContenidos as $l): ?>
     <tr>
@@ -287,7 +292,7 @@ if (!file_exists($logoPath)) {
 
     <!-- Fila 8: Recomendaciones (Cabecera + 4 líneas pautadas) -->
     <tr>
-        <td colspan="2" class="lbl" style="background-color: #ffffff;">Recomendaciones:</td>
+        <td colspan="2">Recomendaciones:</td>
     </tr>
     <?php foreach ($lineasRecomendaciones as $l): ?>
     <tr>
@@ -297,7 +302,7 @@ if (!file_exists($logoPath)) {
 
     <!-- Fila 9: Compromiso del estudiante (Cabecera + 4 líneas pautadas) -->
     <tr>
-        <td colspan="2" class="lbl" style="background-color: #ffffff;">Compromiso del estudiante:</td>
+        <td colspan="2">Compromiso del estudiante:</td>
     </tr>
     <?php foreach ($lineasCompromiso as $l): ?>
     <tr>
@@ -308,69 +313,67 @@ if (!file_exists($logoPath)) {
     <!-- Fila 10: Seguimiento -->
     <tr>
         <td width="55%">
-            <span class="lbl">Se recomienda seguimiento:</span>
-            &nbsp;&nbsp;&nbsp;&nbsp;
-            <span class="lbl">Si [</span> <span class="chk"><?= ($sesion['seguimiento'] == 1) ? 'X' : '&nbsp;' ?></span> <span class="lbl">]</span>
-            &nbsp;&nbsp;
-            <span class="lbl">No [</span> <span class="chk"><?= ($sesion['seguimiento'] == 0) ? 'X' : '&nbsp;' ?></span> <span class="lbl">]</span>
+            Se recomienda seguimiento: &nbsp;&nbsp;
+            Si [ <span class="chk"><?= ($sesion['seguimiento'] === 1 || $sesion['seguimiento'] === '1') ? 'X' : '&nbsp;' ?></span> ] &nbsp;&nbsp;
+            No [ <span class="chk"><?= ($sesion['seguimiento'] === 0 || $sesion['seguimiento'] === '0') ? 'X' : '&nbsp;' ?></span> ]
         </td>
         <td width="45%">
-            <span class="lbl">Fecha próxima sesión:</span>
-            <span class="val"><?= ($sesion['seguimiento'] == 1 && !empty($sesion['fecha_prox_sesion']) && $sesion['fecha_prox_sesion'] !== '2000-01-01 00:00:00') ? date('d/m/Y', strtotime($sesion['fecha_prox_sesion'])) : '' ?></span>
+            Fecha próxima sesión: <?= ($sesion['seguimiento'] == 1 && !empty($sesion['fecha_prox_sesion']) && $sesion['fecha_prox_sesion'] !== '2000-01-01 00:00:00') ? date('d/m/Y', strtotime($sesion['fecha_prox_sesion'])) : '' ?>
         </td>
     </tr>
 
     <!-- Fila 11: Derivación -->
     <tr>
         <td width="55%">
-            <span class="lbl">Se recomienda derivación:</span>
-            &nbsp;&nbsp;&nbsp;&nbsp;
-            <span class="lbl">Si [</span> <span class="chk"><?= ($sesion['derivacion'] == 1) ? 'X' : '&nbsp;' ?></span> <span class="lbl">]</span>
-            &nbsp;&nbsp;
-            <span class="lbl">No [</span> <span class="chk"><?= ($sesion['derivacion'] == 0) ? 'X' : '&nbsp;' ?></span> <span class="lbl">]</span>
+            Se recomienda derivación: &nbsp;&nbsp;
+            Si [ <span class="chk"><?= ($sesion['derivacion'] === 1 || $sesion['derivacion'] === '1') ? 'X' : '&nbsp;' ?></span> ] &nbsp;&nbsp;
+            No [ <span class="chk"><?= ($sesion['derivacion'] === 0 || $sesion['derivacion'] === '0') ? 'X' : '&nbsp;' ?></span> ]
         </td>
         <td width="45%">
-            <span class="lbl">Servicio</span> <sup>(1)</sup> <span class="lbl">Especifique:</span>
-            <span class="val"><?= ($sesion['derivacion'] == 1) ? htmlspecialchars($sesion['servicio_derivacion'] ?? '') : '' ?></span>
+            Servicio <sup>(1)</sup> Especifique: <?= ($sesion['derivacion'] == 1) ? htmlspecialchars($sesion['servicio_derivacion'] ?? '') : '' ?>
         </td>
     </tr>
 
     <!-- Fila 12: Nota al pie de Servicios -->
     <tr>
-        <td colspan="2" style="font-size: 8.5pt; color: #4F81BC; line-height: 1.25; padding: 4px 6px;">
-            <div style="font-weight: bold; margin-bottom: 2px;">(1) Servicios de la Unidad de Bienestar y Empleabilidad:</div>
-            <div style="padding-left: 8px;">
-                &bull; Social<br/>
-                &bull; Psicopedagógico<br/>
-                &bull; Salud<br/>
-                &bull; Inserción laboral<br/>
-                &bull; Capacitación
+        <td colspan="2" style="font-size: 8.5pt; color: #000000; line-height: 1.25; padding: 4px 6px;">
+            <div style="margin-bottom: 2px;">(1) Servicios de la Unidad de Bienestar y Empleabilidad:</div>
+            <div style="padding-left: 20px;">
+                Social<br/>
+                Psicopedagógico<br/>
+                Salud<br/>
+                Inserción laboral<br/>
+                Capacitación
             </div>
         </td>
     </tr>
 </table>
 
 <!-- FIRMAS -->
-<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 18px; text-align: center; color: #4F81BC; font-family: Arial, Helvetica, sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 25px; text-align: center; color: #000000; font-family: Arial, Helvetica, sans-serif;">
     <tr>
         <td width="45%" align="center" valign="top">
-            <div style="color: #4F81BC; font-size: 10pt;">______________________________</div>
-            <div style="color: #4F81BC; font-size: 9.5pt; font-weight: normal; margin-top: 2px;">Firma del tutor(a)</div>
-            <?php if (!empty($sesion['docente_formato'])): ?>
-                <div style="font-size: 7.5pt; color: #334155; margin-top: 2px;"><?= htmlspecialchars($sesion['docente_formato']) ?></div>
-            <?php endif; ?>
+            <div style="font-size: 10pt;">______________________</div>
+            <div style="font-size: 9.5pt; margin-top: 2px;">Firma del tutor(a)</div>
         </td>
         <td width="10%">&nbsp;</td>
         <td width="45%" align="center" valign="top">
-            <div style="color: #4F81BC; font-size: 10pt;">______________________________</div>
-            <div style="color: #4F81BC; font-size: 9.5pt; font-weight: normal; margin-top: 2px;">V°B° Responsable</div>
-            <div style="color: #4F81BC; font-size: 8.5pt; font-weight: normal; margin-top: 1px;">Unidad de Bienestar y Empleabilidad</div>
+            <div style="font-size: 10pt;">__________________________</div>
+            <div style="font-size: 9.5pt; margin-top: 2px;">V°B° Responsable</div>
+            <div style="font-size: 8.5pt; margin-top: 1px;">Unidad de Bienestar y Empleabilidad</div>
         </td>
     </tr>
 </table>
 
+<!-- LÍNEA SEPARADORA AZUL INFERIOR -->
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 16px; margin-bottom: 4px;">
+    <tr>
+        <td style="border-bottom: 1.5pt solid #006FC0; height: 1px;"></td>
+    </tr>
+</table>
+
 <!-- PIE DE PÁGINA -->
-<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 12px; text-align: center; font-family: Calibri, Arial, sans-serif; font-size: 7.5pt;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="text-align: center; font-family: Calibri, Arial, sans-serif; font-size: 7.5pt;">
     <tr>
         <td style="color: #006FC0;">
             TEL: 66 322296 &nbsp;&nbsp;&bull;&nbsp;&nbsp; Dirección: Jr. Córdova N° 650 - Huanta &nbsp;&nbsp;&bull;&nbsp;&nbsp; Correo: <a href="mailto:contactos@iestphuanta.edu.pe" style="color: #0462C1; text-decoration: underline;">contactos@iestphuanta.edu.pe</a>
