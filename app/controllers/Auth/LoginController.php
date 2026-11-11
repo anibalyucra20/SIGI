@@ -46,6 +46,10 @@ class LoginController extends Controller
     /* Formulario */
     public function index()
     {
+        if ((\Core\Auth::user() !== null && \Core\Auth::validarSesion()) || \Core\Auth::intentarAutoLogin()) {
+            header('Location: ' . BASE_URL . '/intranet');
+            exit;
+        }
         $datosSistema = $this->objDatosSistema->buscar();
         $this->view('auth/login', [
             'datosSistema' => $datosSistema,
@@ -97,6 +101,15 @@ class LoginController extends Controller
             if (!empty($_SESSION['sigi_permisos_usuario'])) {
                 $_SESSION['sigi_modulo_actual'] = $_SESSION['sigi_permisos_usuario'][0]['id_sistema'];
                 $_SESSION['sigi_rol_actual']    = $_SESSION['sigi_permisos_usuario'][0]['id_rol'];
+            }
+            if (!empty($_POST['recordarme'])) {
+                \Core\Auth::emitirRememberToken(
+                    (int)$user['id'],
+                    (int)($_SESSION['sigi_modulo_actual'] ?? 0),
+                    (int)($_SESSION['sigi_rol_actual'] ?? 0),
+                    (int)($_SESSION['sigi_sede_actual'] ?? 0),
+                    (int)($_SESSION['sigi_periodo_actual_id'] ?? 0)
+                );
             }
             // registro de log
             (new \Core\Model())->log($user['id'], 'LOGIN', 'Ingreso al sistema');

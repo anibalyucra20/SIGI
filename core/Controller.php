@@ -26,8 +26,14 @@ class Controller
 
         if (!$isAuthRoute && !$isRutaPublica) {
             if (!$isUserLogged || !\Core\Auth::validarSesion()) {
-                header('Location: ' . BASE_URL . '/login');
-                exit;
+                if (!\Core\Auth::intentarAutoLogin()) {
+                    header('Location: ' . BASE_URL . '/login');
+                    exit;
+                }
+                $isUserLogged = \Core\Auth::user() !== null;
+                if ($current !== '') {
+                    \Core\Auth::sincronizarContextoDesdeRuta($current, (int)($_SESSION['sigi_rol_actual'] ?? 0));
+                }
             }
         }
         // Refresca permisos SOLO si está logueado y la ruta no es pública

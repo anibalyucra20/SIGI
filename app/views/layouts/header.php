@@ -20,6 +20,33 @@ if ($logueado):
   // Definir el id de admin en una variable por claridad
   $rolAdmin = 1;
   $rolActual = $_SESSION['sigi_rol_actual'] ?? null;
+
+  // Registrar última vista trabajada para acceso rápido en móvil/PWA
+  if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
+      $rutaActual = trim((string)($_GET['url'] ?? ''), '/');
+      $seg0 = strtolower(explode('/', $rutaActual)[0] ?? '');
+      $ignorarVista = ($rutaActual === '' || in_array($seg0, ['intranet', 'auth', 'login', 'logout', 'recuperar', 'restablecer', 'sedes'], true))
+          || stripos($rutaActual, 'cambiarSesion') !== false;
+      if (!$ignorarVista) {
+          if (!empty($nombreUnidadDidactica)) {
+              if (strpos($rutaActual, 'asistencia') !== false) {
+                  $tituloVista = 'Asistencia — ' . $nombreUnidadDidactica;
+              } elseif (strpos($rutaActual, 'calificaciones/evaluar') !== false && isset($nro_calificacion)) {
+                  $tituloVista = 'Evaluar I.L. ' . $nro_calificacion . ' — ' . $nombreUnidadDidactica;
+              } elseif (strpos($rutaActual, 'calificaciones') !== false) {
+                  $tituloVista = 'Calificaciones — ' . $nombreUnidadDidactica;
+              } else {
+                  $tituloVista = $nombreUnidadDidactica;
+              }
+          } elseif (!empty($pageTitle)) {
+              $tituloVista = $pageTitle;
+          } else {
+              $partesRuta = array_slice(explode('/', $rutaActual), 0, 2);
+              $tituloVista = ucwords(str_replace(['-', '_'], ' ', implode(' › ', $partesRuta)));
+          }
+          Auth::registrarUltimaVista($rutaActual, $tituloVista);
+      }
+  }
 endif;
 ?>
 <!DOCTYPE html>

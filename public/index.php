@@ -4,10 +4,12 @@ $basePath = dirname(dirname($_SERVER['SCRIPT_NAME']));
 if ($basePath === '\\' || $basePath === '' || $basePath === '/') {
     $basePath = '/';
 }
+$isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+    || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
 session_set_cookie_params([
     'lifetime' => 0,
     'path'     => $basePath,
-    'secure'   => false,
+    'secure'   => $isHttps,
     'httponly' => true,
     'samesite' => 'Lax'
 ]);

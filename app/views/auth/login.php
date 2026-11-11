@@ -95,18 +95,22 @@
                 <form action="<?= BASE_URL ?>/login/acceder" method="post">
                     <div class="form-group">
                         <label for="dni">Usuario</label>
-                        <input type="text" name="dni" id="dni" class="form-control" placeholder="Ingrese su usuario" required>
+                        <input type="text" name="dni" id="dni" class="form-control" placeholder="Ingrese su usuario" autocomplete="username" required>
                     </div>
                     <div class="form-group">
                         <label for="password">Contraseña</label>
                         <div class="input-group">
-                            <input type="password" name="password" id="password" class="form-control" placeholder="Ingrese su contraseña" required>
+                            <input type="password" name="password" id="password" class="form-control" placeholder="Ingrese su contraseña" autocomplete="current-password" required>
                             <div class="input-group-append">
                                 <span class="input-group-text" id="togglePassword" style="cursor: pointer;">
                                     <i class="fas fa-eye"></i>
                                 </span>
                             </div>
                         </div>
+                    </div>
+                    <div class="form-group form-check mb-3">
+                        <input type="checkbox" class="form-check-input" id="recordarme" name="recordarme" value="1">
+                        <label class="form-check-label small text-muted" for="recordarme">Mantener sesión iniciada en este dispositivo</label>
                     </div>
                     <button type="submit" class="btn btn-primary btn-block">Ingresar</button>
                 </form>
@@ -148,6 +152,17 @@
                 icon.classList.toggle('fa-eye');
                 icon.classList.toggle('fa-eye-slash');
             });
+
+            // En celulares o PWA instalada, marcar "Mantener sesión iniciada" por defecto
+            const chkRecordarme = document.getElementById('recordarme');
+            if (chkRecordarme) {
+                const isMobileOrPwa = window.matchMedia('(display-mode: standalone)').matches
+                    || window.navigator.standalone === true
+                    || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                if (isMobileOrPwa) {
+                    chkRecordarme.checked = true;
+                }
+            }
         });
     </script>
 </body>

@@ -223,11 +223,13 @@ if (!$encontroHoy && !empty($sesiones)) {
         }
 
         @media (max-width: 767.98px) {
+
             /* En modo tabla móvil, dejar fija solo la columna de nombre compacta */
             #tabla-asistencia .left-col {
                 position: static;
                 min-width: 82px;
             }
+
             #tabla-asistencia .left-col2 {
                 left: 0;
                 min-width: 145px;
@@ -236,17 +238,20 @@ if (!$encontroHoy && !empty($sesiones)) {
                 font-size: 12px;
                 box-shadow: 2px 0 6px rgba(0, 0, 0, 0.08);
             }
+
             #tabla-asistencia .select-asistencia,
             #tabla-asistencia .select-masivo {
                 min-width: 52px;
                 font-size: 14px;
             }
+
             .mobile-sticky-controls {
                 position: sticky;
                 top: 4px;
                 z-index: 15;
                 box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
             }
+
             .asist-card {
                 border: 1px solid #e3e6f0;
                 border-radius: 10px;
@@ -254,23 +259,27 @@ if (!$encontroHoy && !empty($sesiones)) {
                 margin-bottom: 8px;
                 background: #fff;
             }
+
             .asist-card-name {
                 font-size: 14px;
                 font-weight: 600;
                 color: #1f2937;
                 line-height: 1.25;
             }
+
             .asist-pill-btn {
                 min-width: 44px;
                 min-height: 38px;
                 font-weight: 700;
                 font-size: 14px;
             }
+
             .asistencia-submit-bar {
                 position: sticky;
                 bottom: 8px;
                 z-index: 20;
             }
+
             .asistencia-submit-bar .btn-guardar-asist {
                 width: 100%;
                 padding-top: 10px;
@@ -326,8 +335,12 @@ if (!$encontroHoy && !empty($sesiones)) {
             }
 
             if (btnModoSesion && btnModoTabla) {
-                btnModoSesion.addEventListener('click', function() { setModoMovil('sesion'); });
-                btnModoTabla.addEventListener('click', function() { setModoMovil('tabla'); });
+                btnModoSesion.addEventListener('click', function() {
+                    setModoMovil('sesion');
+                });
+                btnModoTabla.addEventListener('click', function() {
+                    setModoMovil('tabla');
+                });
             }
 
             function recalcularFila($tr) {
@@ -353,7 +366,9 @@ if (!$encontroHoy && !empty($sesiones)) {
                 var sesionId = sesionPicker.value;
                 var filtro = (buscador ? buscador.value : '').trim().toLowerCase();
                 var html = '';
-                var cntP = 0, cntF = 0, cntV = 0;
+                var cntP = 0,
+                    cntF = 0,
+                    cntV = 0;
 
                 $('#tabla-asistencia tbody tr').each(function() {
                     var $tr = $(this);
@@ -385,28 +400,28 @@ if (!$encontroHoy && !empty($sesiones)) {
                     var controlesHtml = '';
                     if (periodoFinalizado) {
                         var lbl = val === 'P' ? '<span class="badge badge-success px-3 py-2">Presente (P)</span>' :
-                                  (val === 'F' ? '<span class="badge badge-danger px-3 py-2">Falta (F)</span>' :
-                                  '<span class="badge badge-secondary px-3 py-2">Sin registro</span>');
+                            (val === 'F' ? '<span class="badge badge-danger px-3 py-2">Falta (F)</span>' :
+                                '<span class="badge badge-secondary px-3 py-2">Sin registro</span>');
                         controlesHtml = lbl;
                     } else {
                         controlesHtml =
                             '<div class="btn-group btn-group-sm" role="group">' +
-                                '<button type="button" class="btn asist-pill-btn js-card-asist ' + (val === 'P' ? 'btn-success' : 'btn-outline-success') + '" data-id-detalle="' + idDetalle + '" data-val="P">P</button>' +
-                                '<button type="button" class="btn asist-pill-btn js-card-asist ' + (val === 'F' ? 'btn-danger' : 'btn-outline-danger') + '" data-id-detalle="' + idDetalle + '" data-val="F">F</button>' +
-                                '<button type="button" class="btn asist-pill-btn js-card-asist ' + (val === '' ? 'btn-secondary' : 'btn-outline-secondary') + '" data-id-detalle="' + idDetalle + '" data-val="">—</button>' +
+                            '<button type="button" class="btn asist-pill-btn js-card-asist ' + (val === 'P' ? 'btn-success' : 'btn-outline-success') + '" data-id-detalle="' + idDetalle + '" data-val="P">P</button>' +
+                            '<button type="button" class="btn asist-pill-btn js-card-asist ' + (val === 'F' ? 'btn-danger' : 'btn-outline-danger') + '" data-id-detalle="' + idDetalle + '" data-val="F">F</button>' +
+                            '<button type="button" class="btn asist-pill-btn js-card-asist ' + (val === '' ? 'btn-secondary' : 'btn-outline-secondary') + '" data-id-detalle="' + idDetalle + '" data-val="">—</button>' +
                             '</div>';
                     }
 
                     html +=
                         '<div class="asist-card d-flex justify-content-between align-items-center" style="' + cardBorder + '">' +
-                            '<div class="pr-2" style="min-width: 0;">' +
-                                '<div class="asist-card-name">' + orden + '. ' + escapeHtml(nombre) + '</div>' +
-                                '<div class="small text-muted mt-1">' +
-                                    'DNI: ' + escapeHtml(dni) + ' ' +
-                                    '<span class="badge ' + badgePorcClass + ' ml-1">Inasist: ' + porc + '%</span>' +
-                                '</div>' +
-                            '</div>' +
-                            '<div class="flex-shrink-0">' + controlesHtml + '</div>' +
+                        '<div class="pr-2" style="min-width: 0;">' +
+                        '<div class="asist-card-name">' + orden + '. ' + escapeHtml(nombre) + '</div>' +
+                        '<div class="small text-muted mt-1">' +
+                        'DNI: ' + escapeHtml(dni) + ' ' +
+                        '<span class="badge ' + badgePorcClass + ' ml-1">Inasist: ' + porc + '%</span>' +
+                        '</div>' +
+                        '</div>' +
+                        '<div class="flex-shrink-0">' + controlesHtml + '</div>' +
                         '</div>';
                 });
 

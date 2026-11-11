@@ -141,7 +141,21 @@ class App
                 require_once $ctrlFile;
                 array_shift($segments);
             } else {
-                return $this->render404("Controlador no encontrado");
+                $homeFile = __DIR__ . "/../app/controllers/{$this->module}/HomeController.php";
+                $homeClass = "App\\Controllers\\{$this->module}\\HomeController";
+                if (file_exists($homeFile)) {
+                    require_once $homeFile;
+                }
+                if (
+                    substr($segments[0], 0, 2) !== '__' &&
+                    class_exists($homeClass) &&
+                    method_exists($homeClass, $segments[0]) &&
+                    (new \ReflectionMethod($homeClass, $segments[0]))->isPublic()
+                ) {
+                    $this->controller = 'HomeController';
+                } else {
+                    return $this->render404("Controlador no encontrado");
+                }
             }
         } else {
             // controlador por defecto dentro del módulo

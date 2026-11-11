@@ -47,8 +47,33 @@ class HomeController extends Controller
             'sistemas' => $sistemas,
             'datos_sistema' => $datos_sistema,
             'id_moodle' => $id_moodle,
+            'ultimaVista' => Auth::obtenerUltimaVista(),
             'pageTitle' => 'Panel principal',
             'module'   => 'intranet'
         ]);
+    }
+
+    public function continuar()
+    {
+        $ultima = Auth::obtenerUltimaVista();
+        if (empty($ultima['ruta'])) {
+            header('Location: ' . BASE_URL . '/intranet');
+            exit;
+        }
+        $ruta = ltrim((string)$ultima['ruta'], '/');
+        if ($ruta === '' || strpos($ruta, '://') !== false || strpos($ruta, '..') !== false) {
+            header('Location: ' . BASE_URL . '/intranet');
+            exit;
+        }
+        Auth::sincronizarContextoDesdeRuta($ruta, (int)($ultima['rol_id'] ?? 0));
+        header('Location: ' . BASE_URL . '/' . $ruta);
+        exit;
+    }
+
+    public function descartarUltimaVista()
+    {
+        Auth::limpiarUltimaVista();
+        header('Location: ' . BASE_URL . '/intranet');
+        exit;
     }
 }
