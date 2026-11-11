@@ -37,8 +37,9 @@
                     </div>
                 <?php endif; ?>
                 <input type="file" name="logo_file" class="form-control d-none" maxlength="100"
-                    value="<?= htmlspecialchars($sistema['logo'] ?? '') ?>" readonly accept="image/png,image/jpeg,image/svg+xml">
+                    value="<?= htmlspecialchars($sistema['logo'] ?? '') ?>" readonly accept="image/png,image/jpeg,image/webp,image/svg+xml">
                 <input type="hidden" name="logo" value="<?= htmlspecialchars($sistema['logo'] ?? '') ?>">
+                <small class="form-text text-muted">Al subir un logo en PNG o JPG se generarán automáticamente los íconos de la app móvil (PWA).</small>
             </div>
             <div class="mb-3">
                 <label class="form-label">Nombre Completo *</label>
@@ -79,6 +80,7 @@
                 <label class="form-label">Color Institucional *</label>
                 <input type="color" name="color_correo" class="form-control" maxlength="20" required
                     value="<?= htmlspecialchars($sistema['color_correo'] ?? '') ?>" readonly>
+                <small class="form-text text-muted">Este color también se utiliza como tema principal de la aplicación móvil (PWA).</small>
             </div>
             <div class="mb-3">
                 <label class="form-label">Cantidad de Semanas *</label>

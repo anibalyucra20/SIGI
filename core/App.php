@@ -22,6 +22,27 @@ class App
         }
         // =================================================================
         $segments = $this->parseUrl();   // ej: ['sigi','docentes','edit',5]
+        $firstSegment = strtolower($segments[0] ?? '');
+        if ($firstSegment === 'manifest.json') {
+            require_once __DIR__ . '/../app/helpers/PwaHelper.php';
+            \App\Helpers\PwaHelper::renderManifest();
+            exit;
+        }
+        if ($firstSegment === 'offline.html') {
+            require_once __DIR__ . '/../app/helpers/PwaHelper.php';
+            \App\Helpers\PwaHelper::renderOfflinePage();
+            exit;
+        }
+        if ($firstSegment === 'sw.js') {
+            $swPath = __DIR__ . '/../sw.js';
+            if (is_file($swPath)) {
+                require_once __DIR__ . '/../app/helpers/PwaHelper.php';
+                header('Content-Type: application/javascript; charset=utf-8');
+                header('Service-Worker-Allowed: ' . \App\Helpers\PwaHelper::getBasePath());
+                readfile($swPath);
+                exit;
+            }
+        }
         if (!empty($segments[0]) && strtolower($segments[0]) === 'logout') {
             $this->module     = 'Auth';
             $this->controller = 'LoginController';
@@ -160,9 +181,13 @@ class App
         if (!empty($_GET['url'])) {
             $route = rtrim($_GET['url'], '/');
         } else {
-            $base  = '/'; // ajusta si cambias folder
-            $uri   = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '/';
-            $route = trim(substr($uri, strlen($base)), '/');
+            $basePath = parse_url(BASE_URL, PHP_URL_PATH) ?: '/';
+            $base = '/' . trim($basePath, '/');
+            $base = $base === '/' ? '/' : $base . '/';
+            $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '/';
+            $route = strpos($uri, $base) === 0
+                ? trim(substr($uri, strlen($base)), '/')
+                : trim($uri, '/');
         }
         $route = filter_var($route, FILTER_SANITIZE_URL);
         // Aquí agregas la redirección a intranet si está vacío

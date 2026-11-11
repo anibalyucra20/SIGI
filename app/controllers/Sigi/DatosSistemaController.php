@@ -6,7 +6,9 @@ use Core\Controller;
 // Incluir manualmente el modelo
 require_once __DIR__ . '/../../../app/models/Sigi/DatosSistema.php';
 require_once __DIR__ . '/../../../app/models/Sigi/Sistema.php';
+require_once __DIR__ . '/../../../app/helpers/PwaHelper.php';
 
+use App\Helpers\PwaHelper;
 use App\Models\Sigi\DatosSistema;
 use App\Models\Sigi\Sistema;
 
@@ -110,29 +112,61 @@ class DatosSistemaController extends Controller
                     exit;
                 }
             }
+            $imagesDir = __DIR__ . '/../../../public/images/';
+            if (!is_dir($imagesDir)) {
+                mkdir($imagesDir, 0755, true);
+            }
+
             // Subida de Favicon
-            if (!empty($_FILES['favicon_file']['name'])) {
-                $ext = pathinfo($_FILES['favicon_file']['name'], PATHINFO_EXTENSION);
-                $filename = 'favicon.' . $ext;
-                move_uploaded_file($_FILES['favicon_file']['tmp_name'], __DIR__ . '/../../../public/images/' . $filename);
-                $data['favicon'] = $filename;
+            if (!empty($_FILES['favicon_file']['name']) && ($_FILES['favicon_file']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
+                $ext = strtolower(pathinfo($_FILES['favicon_file']['name'], PATHINFO_EXTENSION));
+                if ($ext !== '') {
+                    $filename = 'favicon.' . $ext;
+                    if (move_uploaded_file($_FILES['favicon_file']['tmp_name'], $imagesDir . $filename)) {
+                        $data['favicon'] = $filename;
+                    }
+                }
             }
-            // Subida de Logo
-            if (!empty($_FILES['logo_file']['name'])) {
-                $ext = pathinfo($_FILES['logo_file']['name'], PATHINFO_EXTENSION);
-                $filename = 'logo.' . $ext;
-                move_uploaded_file($_FILES['logo_file']['tmp_name'], __DIR__ . '/../../../public/images/' . $filename);
-                $data['logo'] = $filename;
+
+            // Subida de Logo y generación automática de íconos PWA
+            $notaPwa = '';
+            $logoSubido = false;
+            if (!empty($_FILES['logo_file']['name']) && ($_FILES['logo_file']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
+                $ext = strtolower(pathinfo($_FILES['logo_file']['name'], PATHINFO_EXTENSION));
+                $permitidas = ['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg'];
+                if (in_array($ext, $permitidas, true)) {
+                    $filename = 'logo.' . $ext;
+                    $destinoLogo = $imagesDir . $filename;
+                    if (move_uploaded_file($_FILES['logo_file']['tmp_name'], $destinoLogo)) {
+                        $data['logo'] = $filename;
+                        $logoSubido = true;
+                        if (PwaHelper::generarIconosDesdeLogo($destinoLogo)) {
+                            $notaPwa = ' Íconos PWA generados automáticamente.';
+                        } else {
+                            PwaHelper::limpiarIconosPersonalizados();
+                            $notaPwa = ' (Para generar íconos PWA automáticos, sube el logo en PNG o JPG).';
+                        }
+                    }
+                }
+            } elseif (!empty($data['logo']) && !PwaHelper::tieneIconosPersonalizados()) {
+                $logoExistente = $imagesDir . $data['logo'];
+                if (is_file($logoExistente) && PwaHelper::generarIconosDesdeLogo($logoExistente)) {
+                    $notaPwa = ' Íconos PWA generados desde el logo actual.';
+                }
             }
+
             // Subida de Fondo Carnet
-            if (!empty($_FILES['fondo_carnet_file']['name'])) {
-                $ext = pathinfo($_FILES['fondo_carnet_file']['name'], PATHINFO_EXTENSION);
-                $filename = 'fondo_carnet.' . $ext;
-                move_uploaded_file($_FILES['fondo_carnet_file']['tmp_name'], __DIR__ . '/../../../public/images/' . $filename);
-                $data['fondo_carnet'] = $filename;
+            if (!empty($_FILES['fondo_carnet_file']['name']) && ($_FILES['fondo_carnet_file']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
+                $ext = strtolower(pathinfo($_FILES['fondo_carnet_file']['name'], PATHINFO_EXTENSION));
+                if ($ext !== '') {
+                    $filename = 'fondo_carnet.' . $ext;
+                    if (move_uploaded_file($_FILES['fondo_carnet_file']['tmp_name'], $imagesDir . $filename)) {
+                        $data['fondo_carnet'] = $filename;
+                    }
+                }
             }
             $this->model->guardar($data);
-            $_SESSION['flash_success'] = "Datos del sistema guardados correctamente.";
+            $_SESSION['flash_success'] = "Datos del sistema guardados correctamente." . $notaPwa;
         endif;
         header('Location: ' . BASE_URL . '/sigi/datosSistema/index');
         exit;

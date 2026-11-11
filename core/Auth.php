@@ -514,7 +514,10 @@ class Auth
         if (empty($roles)) return true;
         return in_array($_SESSION['sigi_rol_actual'], (array)$roles);
     }
-    public static function tieneRolEnEvaluacionDocente($roles = []) { return self::tieneRolEnEvaluacion($roles); }
+    public static function tieneRolEnEvaluacionDocente($roles = [])
+    {
+        return self::tieneRolEnEvaluacion($roles);
+    }
 
     public static function esAdminEvaluacion()
     {
@@ -522,7 +525,10 @@ class Auth
             && $_SESSION['sigi_modulo_actual'] == 12
             && $_SESSION['sigi_rol_actual'] == 1);
     }
-    public static function esAdminEvaluacionDocente() { return self::esAdminEvaluacion(); }
+    public static function esAdminEvaluacionDocente()
+    {
+        return self::esAdminEvaluacion();
+    }
 
     public static function esDirectorEvaluacion()
     {
@@ -530,7 +536,10 @@ class Auth
             && $_SESSION['sigi_modulo_actual'] == 12
             && $_SESSION['sigi_rol_actual'] == 2);
     }
-    public static function esDirectorEvaluacionDocente() { return self::esDirectorEvaluacion(); }
+    public static function esDirectorEvaluacionDocente()
+    {
+        return self::esDirectorEvaluacion();
+    }
 
     public static function esSecretarioAcadEvaluacion()
     {
@@ -538,7 +547,10 @@ class Auth
             && $_SESSION['sigi_modulo_actual'] == 12
             && in_array($_SESSION['sigi_rol_actual'], [1, 3]));
     }
-    public static function esSecretarioAcadEvaluacionDocente() { return self::esSecretarioAcadEvaluacion(); }
+    public static function esSecretarioAcadEvaluacionDocente()
+    {
+        return self::esSecretarioAcadEvaluacion();
+    }
 
     public static function esJUAEvaluacion()
     {
@@ -546,7 +558,10 @@ class Auth
             && $_SESSION['sigi_modulo_actual'] == 12
             && $_SESSION['sigi_rol_actual'] == 4);
     }
-    public static function esJUAEvaluacionDocente() { return self::esJUAEvaluacion(); }
+    public static function esJUAEvaluacionDocente()
+    {
+        return self::esJUAEvaluacion();
+    }
 
     public static function esCoordinadorPEEvaluacion()
     {
@@ -554,7 +569,10 @@ class Auth
             && $_SESSION['sigi_modulo_actual'] == 12
             && in_array($_SESSION['sigi_rol_actual'], [1, 2, 3, 4, 5]));
     }
-    public static function esCoordinadorPEEvaluacionDocente() { return self::esCoordinadorPEEvaluacion(); }
+    public static function esCoordinadorPEEvaluacionDocente()
+    {
+        return self::esCoordinadorPEEvaluacion();
+    }
 
     public static function puedeVerTodosLosProgramasEvaluacion()
     {
@@ -577,7 +595,10 @@ class Auth
             && $_SESSION['sigi_modulo_actual'] == 12
             && $_SESSION['sigi_rol_actual'] == 6);
     }
-    public static function esDocenteEvaluacionDocente() { return self::esDocenteEvaluacion(); }
+    public static function esDocenteEvaluacionDocente()
+    {
+        return self::esDocenteEvaluacion();
+    }
 
     public static function esEstudianteEvaluacion()
     {
@@ -585,5 +606,8 @@ class Auth
             && $_SESSION['sigi_modulo_actual'] == 12
             && $_SESSION['sigi_rol_actual'] == 7);
     }
-    public static function esEstudianteEvaluacionDocente() { return self::esEstudianteEvaluacion(); }
+    public static function esEstudianteEvaluacionDocente()
+    {
+        return self::esEstudianteEvaluacion();
+    }
 }

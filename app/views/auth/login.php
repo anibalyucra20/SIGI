@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Login - SIGI</title>
+    <?php include dirname(__DIR__) . '/layouts/pwa_head.php'; ?>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <?php
@@ -121,6 +122,9 @@
                     <a href="https://wa.me/+51986067472?text=Hola,%20necesito%20soporte%20con%20el%20sistema%20SIGI.%0A%0A*Por%20favor,%20completa%20tus%20datos:*%0A-%20DNI:%20%0A-%20Nombres%20completos:%20%0A-%20Programa%20de%20estudios:%20%0A-%20Semestre:%20" target="_blank" class="btn btn-whatsapp btn-block">
                         <i class="fab fa-whatsapp mr-1"></i> Contactar a Soporte
                     </a>
+                    <button type="button" id="btn-instalar-pwa" class="btn btn-outline-primary btn-block mt-2 d-none">
+                        <i class="fas fa-mobile-alt mr-1"></i> Instalar App SIGI
+                    </button>
                 </div>
                 <!-- Fin Botón de WhatsApp -->
 

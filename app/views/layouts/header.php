@@ -29,6 +29,7 @@ endif;
   <meta charset="utf-8" />
   <title><?= $pageTitle ?? 'SIGI' ?></title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <?php include __DIR__ . '/pwa_head.php'; ?>
   <link href="<?= BASE_URL ?>/assets/css/bootstrap.min.css" rel="stylesheet" />
   <link href="<?= BASE_URL ?>/assets/css/sweetalert2.min.css" rel="stylesheet" />
   <link href="<?= BASE_URL ?>/assets/css/icons.min.css" rel="stylesheet" />
